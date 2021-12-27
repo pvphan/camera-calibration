@@ -1,0 +1,114 @@
+import numpy as np
+
+
+def loadImage(data, key):
+    image = np.ascontiguousarray(data[key][:,:,::-1]).astype(np.uint8)
+    return image
+
+
+def eulerToRotationMatrix(rXrYrZ):
+    # input in degrees
+    rx, ry, rz = rXrYrZ
+    w1 = col((1, 0, 0))
+    w2 = col((0, 1, 0))
+    w3 = col((0, 0, 1))
+
+    Rx = exp(np.radians(rx) * skew(w1))
+    Ry = exp(np.radians(ry) * skew(w2))
+    Rz = exp(np.radians(rz) * skew(w3))
+    R = Rz @ Ry @ Rx
+    return R
+
+
+def col(v):
+    # create a column vector out of a list / tuple
+    return np.array(v).reshape(-1, 1)
+
+
+def exp(wHat: np.ndarray):
+    # exponential mapping of a skew symmetric matrix so(3) onto
+    #   the rotation matrix group SO(3), uses Rodrigues' formula
+    w = unskew(wHat)
+    wNorm = np.linalg.norm(w)
+    I = np.eye(3)
+    if np.isclose(wNorm, 0):
+        term1 = 0
+    else:
+        term1 = (wHat / wNorm) * np.sin(wNorm)
+    if np.isclose(wNorm, 0):
+        term2 = 0
+    else:
+        term2 = ((wHat @ wHat) / (wNorm**2)) * (1 - np.cos(wNorm))
+    R = I + term1 + term2
+    return R
+
+
+def skew(v):
+    # converts vector into a skew symmetric matrix, aka 'hat' operator
+    # only works for v of shape (3,1)
+    requiredShape = (3,1)
+    if v.shape != requiredShape:
+        raise ValueError(f"Input vector v must be of shape {requiredShape}, got {v.shape}")
+    a = v[:,0]
+    vHat = np.array([
+        [    0, -a[2],  a[1]],
+        [ a[2],     0, -a[0]],
+        [-a[1],  a[0],     0],
+    ])
+    return vHat
+
+
+def unskew(vHat):
+    requiredShape = (3,3)
+    if vHat.shape != requiredShape:
+        raise ValueError(f"Input matrix vHat must be of shape {requiredShape}, got {v.shape}")
+    return np.array([vHat[2,1], vHat[0,2], vHat[1,0]])
+
+
+def project(K, pose, X_0):
+    # K     -- the intrinsic parameter matrix
+    # g     -- the camera pose in world
+    # X_0   -- the 3D points (homogeneous) in the world
+    # xp    -- x' the projected 2D points in the camera (homogeneous)
+
+    # Π0    -- standard projection matrix
+    Π_0 = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+    ])
+
+    # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
+    g = np.linalg.inv(pose)
+    lambdaxp = (K @ Π_0 @ g @ X_0.T).T
+    xp = lambdaxp / col(lambdaxp[:, -1])
+    return xp
+
+
+def stack(A):
+    # stacks the columns of a matrix into a single column
+    return col(A.T.ravel())
+
+
+def unstack(As):
+    # unstacks the column vector into a squre matrix
+    Nsquared = As.size
+    N = int(np.sqrt(Nsquared))
+    return As.reshape((N, N)).T
+
+
+def homog(v):
+    # v is Nx2 or Nx3
+    vh = np.hstack((v, np.ones((v.shape[0], 1))))
+    return vh
+
+
+def normalize(A):
+    return A / A.ravel()[-1]
+
+
+def poseFromRT(R, C):
+    world_M_camera = np.eye(4)
+    world_M_camera[:3,:3] = R
+    world_M_camera[:3,3] = C.ravel()
+    return world_M_camera
