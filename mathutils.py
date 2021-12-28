@@ -4,11 +4,6 @@ Math utility functions based on lectures from Prof. Daniel Cremers' Multiple Vie
 import numpy as np
 
 
-def loadImage(data, key):
-    image = np.ascontiguousarray(data[key][:,:,::-1]).astype(np.uint8)
-    return image
-
-
 def eulerToRotationMatrix(rXrYrZ):
     # input in degrees
     rx, ry, rz = rXrYrZ
@@ -49,9 +44,7 @@ def exp(wHat: np.ndarray):
 def skew(v):
     # converts vector into a skew symmetric matrix, aka 'hat' operator
     # only works for v of shape (3,1)
-    requiredShape = (3,1)
-    if v.shape != requiredShape:
-        raise ValueError(f"Input vector v must be of shape {requiredShape}, got {v.shape}")
+    validateShape(v, (3,1))
     a = v[:,0]
     vHat = np.array([
         [    0, -a[2],  a[1]],
@@ -62,10 +55,13 @@ def skew(v):
 
 
 def unskew(vHat):
-    requiredShape = (3,3)
-    if vHat.shape != requiredShape:
-        raise ValueError(f"Input matrix vHat must be of shape {requiredShape}, got {v.shape}")
+    validateShape(vHat, (3,3))
     return np.array([vHat[2,1], vHat[0,2], vHat[1,0]])
+
+
+def validateShape(input, requiredShape):
+    if input.shape != requiredShape:
+        raise ValueError(f"Input must be of shape {requiredShape}, got {input.shape}")
 
 
 def project(K, cameraPose, X_0):

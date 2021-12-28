@@ -6,14 +6,13 @@ Usage: TBD
 This code is based on the tutorial written by Wilhelm Burger on Zhengyou Zhang's calibration method:
 [Zhang's Camera Calibration Algorithm: In-Depth Tutorial and Implementation](https://www.researchgate.net/publication/303233579_Zhang's_Camera_Calibration_Algorithm_In-Depth_Tutorial_and_Implementation).
 
-Another goal of this is to rely on external libraries as little as possible.
-Exceptions to this are:
-- NumPy: SVD, QR-decomposition
-- SciPy: optimize
+Another goal of this is to rely on external libraries as little as possible (namely OpenCV) in order to learn by doing.
+Exceptions to this for now are: NumPy {SVD, QR-decomposition}, SciPy {optimize}.
 
 
 Some helpful videos:
 - [Prof. Cyrill Stachniss: Direct Linear Transform](https://www.youtube.com/watch?v=3NcQbZu6xt8&ab_channel=CyrillStachniss)
+- [Prof. Cyrill Stachniss: Camera Calibration using Zhang's Method](https://www.youtube.com/watch?v=-9He7Nu3u8s&ab_channel=CyrillStachniss)
 
 
 Notes:
@@ -30,7 +29,7 @@ Notes:
         - K = K * R(z, 180)
         - R = R(z, 180) * R
 
-- DLT  in a nutshell
+- DLT in a nutshell
     1. Build M for the linear system: M is (2 * i, 12) and p is (12, 1). M * p = 0.
         For every point we measure, we add 2 rows to the matrix M (minimum of 6 points which is 12 rows).
 

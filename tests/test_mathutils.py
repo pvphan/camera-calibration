@@ -5,7 +5,7 @@ import numpy as np
 import mathutils as mu
 
 
-class TestMVG(unittest.TestCase):
+class TestMathUtils(unittest.TestCase):
     def testcol(self):
         v = mu.col((1,1,1))
         self.assertEqual(v.shape, (3,1))
