@@ -2,23 +2,23 @@ import unittest
 
 import numpy as np
 
-import mvg
+import mathutils as mu
 
 
 class TestMVG(unittest.TestCase):
     def testcol(self):
-        v = mvg.col((1,1,1))
+        v = mu.col((1,1,1))
         self.assertEqual(v.shape, (3,1))
 
     def testskew(self):
-        v = mvg.col((0.5, 1.0, -0.25))
+        v = mu.col((0.5, 1.0, -0.25))
         vHatExpected = np.array([
             [0, 0.25, 1.0],
             [-0.25, 0, -0.5],
             [-1.0, 0.5, 0],
         ])
 
-        vHat = mvg.skew(v)
+        vHat = mu.skew(v)
 
         self.assertEqual(vHat.shape, (3,3))
         self.assertTrue(np.allclose(vHatExpected, vHat))
@@ -32,26 +32,26 @@ class TestMVG(unittest.TestCase):
         ])
         vExpected = (0.5, 1.0, -0.25)
 
-        v = mvg.unskew(vHat)
+        v = mu.unskew(vHat)
         self.assertTrue(np.allclose(vExpected, v))
 
     def testexp(self):
-        z = mvg.col((0, 0, 1))
+        z = mu.col((0, 0, 1))
         theta = 90
         expectedRotation = np.array([
             [0, -1, 0],
             [1, 0, 0],
             [0, 0, 1],
         ])
-        computedRotation = mvg.exp(np.radians(theta) * mvg.skew(z))
+        computedRotation = mu.exp(np.radians(theta) * mu.skew(z))
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation))
 
     def testexpZeroRot(self):
-        z = mvg.col((0, 0, 1))
+        z = mu.col((0, 0, 1))
         theta = 0
         expectedRotation = np.eye(3)
-        computedRotation = mvg.exp(np.radians(theta) * mvg.skew(z))
+        computedRotation = mu.exp(np.radians(theta) * mu.skew(z))
 
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation))
@@ -64,7 +64,7 @@ class TestMVG(unittest.TestCase):
         ])
         eulerAngles = (0, 0, 90)
 
-        computedRotation = mvg.eulerToRotationMatrix(eulerAngles)
+        computedRotation = mu.eulerToRotationMatrix(eulerAngles)
 
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
@@ -78,7 +78,7 @@ class TestMVG(unittest.TestCase):
         ])
         eulerAngles = (0, 180, 0)
 
-        computedRotation = mvg.eulerToRotationMatrix(eulerAngles)
+        computedRotation = mu.eulerToRotationMatrix(eulerAngles)
 
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
@@ -92,7 +92,7 @@ class TestMVG(unittest.TestCase):
         ])
         eulerAngles = (0, 90, 90)
 
-        computedRotation = mvg.eulerToRotationMatrix(eulerAngles)
+        computedRotation = mu.eulerToRotationMatrix(eulerAngles)
 
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
@@ -116,10 +116,10 @@ class TestMVG(unittest.TestCase):
         ], dtype=np.float64)
 
         pointsInCamera = (np.linalg.inv(world_M_camera) @ pointsInWorld.T).T
-        pointsInCameraNormalized = (pointsInCamera / mvg.col(pointsInCamera[:,2]))[:,:3]
+        pointsInCameraNormalized = (pointsInCamera / mu.col(pointsInCamera[:,2]))[:,:3]
         expectedPointsInCamera = (K @ pointsInCameraNormalized.T).T
 
-        computedPointsInCamera = mvg.project(K, np.eye(4), pointsInWorld)
+        computedPointsInCamera = mu.project(K, np.eye(4), pointsInWorld)
         # x, y values are the same
         self.assertTrue(np.allclose(expectedPointsInCamera[:,:2], computedPointsInCamera[:,:2]))
         # z values are all 1, homogeneous
@@ -131,9 +131,9 @@ class TestMVG(unittest.TestCase):
             [2, 5, 8],
             [3, 6, 9],
         ], dtype=int)
-        expectedAs = mvg.col(range(1,10))
+        expectedAs = mu.col(range(1,10))
 
-        As = mvg.stack(A)
+        As = mu.stack(A)
 
         self.assertTrue(np.allclose(expectedAs, As))
 
@@ -143,9 +143,9 @@ class TestMVG(unittest.TestCase):
             [2, 5, 8],
             [3, 6, 9],
         ], dtype=int)
-        As = mvg.col(range(1,10))
+        As = mu.col(range(1,10))
 
-        A = mvg.unstack(As)
+        A = mu.unstack(As)
 
         self.assertTrue(np.allclose(expectedA, A))
 
@@ -158,7 +158,7 @@ class TestMVG(unittest.TestCase):
         x = 0.1
         y = 0.5
         z = -2.0
-        T = mvg.col((x, y, z))
+        T = mu.col((x, y, z))
         world_M_camera_expected = np.array([
             [0, -1, 0, x],
             [1, 0, 0, y],
@@ -166,7 +166,7 @@ class TestMVG(unittest.TestCase):
             [0, 0, 0, 1],
         ])
 
-        world_M_camera = mvg.poseFromRT(R, T)
+        world_M_camera = mu.poseFromRT(R, T)
 
         self.assertTrue(np.allclose(world_M_camera_expected, world_M_camera))
 
