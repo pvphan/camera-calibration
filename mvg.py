@@ -1,3 +1,6 @@
+"""
+Math utility functions based on lectures from Prof. Daniel Cremers' Multiple View Geometry course.
+"""
 import numpy as np
 
 
@@ -9,13 +12,13 @@ def loadImage(data, key):
 def eulerToRotationMatrix(rXrYrZ):
     # input in degrees
     rx, ry, rz = rXrYrZ
-    w1 = col((1, 0, 0))
-    w2 = col((0, 1, 0))
-    w3 = col((0, 0, 1))
+    wx = col((1, 0, 0))
+    wy = col((0, 1, 0))
+    wz = col((0, 0, 1))
 
-    Rx = exp(np.radians(rx) * skew(w1))
-    Ry = exp(np.radians(ry) * skew(w2))
-    Rz = exp(np.radians(rz) * skew(w3))
+    Rx = exp(np.radians(rx) * skew(wx))
+    Ry = exp(np.radians(ry) * skew(wy))
+    Rz = exp(np.radians(rz) * skew(wz))
     R = Rz @ Ry @ Rx
     return R
 
@@ -65,13 +68,13 @@ def unskew(vHat):
     return np.array([vHat[2,1], vHat[0,2], vHat[1,0]])
 
 
-def project(K, pose, X_0):
-    # K     -- the intrinsic parameter matrix
-    # g     -- the camera pose in world
-    # X_0   -- the 3D points (homogeneous) in the world
-    # xp    -- x' the projected 2D points in the camera (homogeneous)
+def project(K, cameraPose, X_0):
+    # K             -- the intrinsic parameter matrix
+    # cameraPose    -- the camera pose in world
+    # X_0           -- the 3D points (homogeneous) in the world
+    # xp            -- x' the projected 2D points in the camera (homogeneous)
 
-    # Π0    -- standard projection matrix
+    # Π0            -- standard projection matrix
     Π_0 = np.array([
         [1, 0, 0, 0],
         [0, 1, 0, 0],
@@ -79,7 +82,7 @@ def project(K, pose, X_0):
     ])
 
     # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
-    g = np.linalg.inv(pose)
+    g = np.linalg.inv(cameraPose)
     lambdaxp = (K @ Π_0 @ g @ X_0.T).T
     xp = lambdaxp / col(lambdaxp[:, -1])
     return xp
@@ -107,8 +110,8 @@ def normalize(A):
     return A / A.ravel()[-1]
 
 
-def poseFromRT(R, C):
+def poseFromRT(R, T):
     world_M_camera = np.eye(4)
     world_M_camera[:3,:3] = R
-    world_M_camera[:3,3] = C.ravel()
+    world_M_camera[:3,3] = T.ravel()
     return world_M_camera
