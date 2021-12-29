@@ -64,26 +64,6 @@ def validateShape(input, requiredShape):
         raise ValueError(f"Input must be of shape {requiredShape}, got {input.shape}")
 
 
-def project(K, cameraPose, X_0):
-    # K             -- the intrinsic parameter matrix
-    # cameraPose    -- the camera pose in world
-    # X_0           -- the 3D points (homogeneous) in the world
-    # xp            -- x' the projected 2D points in the camera (homogeneous)
-
-    # Π0            -- standard projection matrix
-    Π_0 = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-    ])
-
-    # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
-    g = np.linalg.inv(cameraPose)
-    lambdaxp = (K @ Π_0 @ g @ X_0.T).T
-    xp = lambdaxp / col(lambdaxp[:, -1])
-    return xp
-
-
 def stack(A):
     # stacks the columns of a matrix into a single column
     return col(A.T.ravel())

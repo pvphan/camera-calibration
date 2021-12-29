@@ -98,33 +98,6 @@ class TestMathUtils(unittest.TestCase):
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
                 f"\nexpected:\n{expectedRotation}\n\ncomputed:\n{computedRotation}")
 
-    def testproject(self):
-        pointsInWorld = np.array([
-            [1, -1, 0.4, 1],
-            [1, -1, 0.4, 1],
-            [0.3, -0.1, 2.0, 1],
-            [0.3, -0.1, 2.0, 1],
-            [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.4, 1.2, 1],
-        ])
-        world_M_camera = np.eye(4)
-
-        K = np.array([
-            [450,   0, 360],
-            [  0, 450, 240],
-            [  0,   0,   1],
-        ], dtype=np.float64)
-
-        pointsInCamera = (np.linalg.inv(world_M_camera) @ pointsInWorld.T).T
-        pointsInCameraNormalized = (pointsInCamera / mu.col(pointsInCamera[:,2]))[:,:3]
-        expectedPointsInCamera = (K @ pointsInCameraNormalized.T).T
-
-        computedPointsInCamera = mu.project(K, np.eye(4), pointsInWorld)
-        # x, y values are the same
-        self.assertTrue(np.allclose(expectedPointsInCamera[:,:2], computedPointsInCamera[:,:2]))
-        # z values are all 1, homogeneous
-        self.assertTrue(np.allclose(computedPointsInCamera[:,2], 1))
-
     def teststack(self):
         A = np.array([
             [1, 4, 7],
