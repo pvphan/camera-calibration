@@ -2,7 +2,7 @@
 
 Current status: WIP
 
-Usage: TBD
+Usage: `make calibrate <input_file_path>`
 
 
 ## Goals:
@@ -23,6 +23,7 @@ Don't use OpenCV, instead code it by hand.
 - Under what conditions will this calibration method fail?
 
     - If the calibration target undergoes pure, unknown translation, Zhang's method will not work.
+    - This is because additional views on the same model plane do not add additional constraints.
     - But if the translation of the target is precisely known, then calibration is possible if we impose those constraints.
 
 - At a high level, what are the steps to the Zhang calibration algorithm?
@@ -34,9 +35,16 @@ Don't use OpenCV, instead code it by hand.
 
 - What is SVD, DLT, and QR, and how do they relate to Zhang calibration?
 
-    - QR-decomposition is used to decouple the intrinsics (K) and the rotation matrix (R) from the full projection matrix P
-    - x = P * X, P = [H | h], H = K * R
-    - QR-decomposition separates H into its two products: an orthogonal matrix (the rotation matrix, R) and an upper-diagonal matrix (the intrinsic matrix, K)
+    - In the DLT case, QR-decomposition is used to decouple the intrinsics (K) and the rotation matrix (R) from the full projection matrix P.
+        - But in Zhang's method, we cannot use QR-decomposition because the product contains the intrinsic matrix and a matrix which is not orthogonal (r1, r2, t)
+        - x = P * X, P = [H | h], H = K * R
+        - QR-decomposition separates H into its two products: an orthogonal matrix (the rotation matrix, R) and an upper-diagonal matrix (the intrinsic matrix, K)
+
+    - Still need to estimate K from H: H = K * [r1 r2 t]. So we need a custom solution to exploit properties we know about K, r1, and r2
+        1. Exploit constraints on K, r1, r2
+        2. Define a matrix B = K^-T * K^-1
+        3. Compute B by solving another homogeneous linear system
+        4. Decompose matrix B to get K
 
 
 ## Notes:

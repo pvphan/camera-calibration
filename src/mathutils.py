@@ -4,9 +4,8 @@ Math utility functions based on lectures from Prof. Daniel Cremers' Multiple Vie
 import numpy as np
 
 
-def eulerToRotationMatrix(rXrYrZ):
-    # input in degrees
-    rx, ry, rz = rXrYrZ
+def eulerToRotationMatrix(rXrYrZDegrees):
+    rx, ry, rz = rXrYrZDegrees
     wx = col((1, 0, 0))
     wy = col((0, 1, 0))
     wz = col((0, 0, 1))
@@ -44,7 +43,7 @@ def exp(wHat: np.ndarray):
 def skew(v):
     # converts vector into a skew symmetric matrix, aka 'hat' operator
     # only works for v of shape (3,1)
-    validateShape(v, (3,1))
+    validateShape(v.shape, (3,1))
     a = v[:,0]
     vHat = np.array([
         [    0, -a[2],  a[1]],
@@ -55,13 +54,14 @@ def skew(v):
 
 
 def unskew(vHat):
-    validateShape(vHat, (3,3))
+    validateShape(vHat.shape, (3,3))
     return np.array([vHat[2,1], vHat[0,2], vHat[1,0]])
 
 
-def validateShape(input, requiredShape):
-    if input.shape != requiredShape:
-        raise ValueError(f"Input must be of shape {requiredShape}, got {input.shape}")
+def validateShape(inputShape, requiredShape):
+    for i in range(len(inputShape)):
+        if requiredShape[i] is not None and requiredShape[i] != inputShape[i]:
+            raise ValueError(f"Expected shape {requiredShape}, got {inputShape}")
 
 
 def stack(A):
