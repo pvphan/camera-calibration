@@ -1,21 +1,28 @@
 # Camera Calibration using Zhang Method
 
 Current status: WIP
+
 Usage: TBD
 
-This code is based on the tutorial written by Wilhelm Burger on Zhengyou Zhang's calibration method:
-[Zhang's Camera Calibration Algorithm: In-Depth Tutorial and Implementation](https://www.researchgate.net/publication/303233579_Zhang's_Camera_Calibration_Algorithm_In-Depth_Tutorial_and_Implementation).
 
-Another goal of this is to rely on external libraries as little as possible (namely OpenCV) in order to learn by doing.
-Exceptions to this for now are: NumPy {SVD, QR-decomposition}, SciPy {optimize}.
+## Goals:
 
+### Write Zhang calibration by hand
 
-Some helpful videos:
-- [Prof. Cyrill Stachniss: Direct Linear Transform](https://www.youtube.com/watch?v=3NcQbZu6xt8&ab_channel=CyrillStachniss)
-- [Prof. Cyrill Stachniss: Camera Calibration using Zhang's Method](https://www.youtube.com/watch?v=-9He7Nu3u8s&ab_channel=CyrillStachniss)
+Create a simple interface for calibrating camera intrinsics from a text file of 2D to 3D point correspondences.
+Don't use OpenCV, instead code it by hand.
 
 
-Notes:
+### Answer the following questions
+
+- What were the innovations of Zhang calibration over the prior state of the art?
+
+- At a high level, what are the steps to the Zhang calibration method?
+
+- What is SVD, DLT, and QR, and how do they relate to Zhang calibration?
+
+
+## Notes:
 - Need 6 points to find transform matrix P in the equation x = P * X. 11 unknowns, each point gives 2 variables, so 11 / 2 = 5.5 ~= 6
 - P = [H | h]
 - X0 = -H^-1 * h
@@ -41,3 +48,12 @@ Notes:
         - K = (1/K33) * K * R(z, 180)
 
 - numpy has SVD and QR
+
+
+## References:
+- (paper) [Zhengyou Zhang: A Flexible New Technique for Camera Calibration](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr98-71.pdf)
+- (paper) [Wilhelm Burger: Zhang's Camera Calibration Algorithm: In-Depth Tutorial and Implementation](https://www.researchgate.net/publication/303233579_Zhang's_Camera_Calibration_Algorithm_In-Depth_Tutorial_and_Implementation).
+- (video) [Cyrill Stachniss: Direct Linear Transform](https://www.youtube.com/watch?v=3NcQbZu6xt8&ab_channel=CyrillStachniss)
+- (video) [Cyrill Stachniss: Camera Calibration using Zhang's Method](https://www.youtube.com/watch?v=-9He7Nu3u8s&ab_channel=CyrillStachniss)
+
+
