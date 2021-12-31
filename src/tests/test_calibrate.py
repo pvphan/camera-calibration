@@ -40,7 +40,7 @@ class TestCalibrate(unittest.TestCase):
         k2 = 0.2
         p1 = 0
         p2 = 0
-        k3 = 0.01
+        k3 = 0
         distortionCoeffients = (k1, k2, p1, p2, k3)
 
         normalizedPointsNx2 = (self.pointsInWorld / mu.col(self.pointsInWorld[:,2]))[:,:2]
