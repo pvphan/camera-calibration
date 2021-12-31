@@ -26,6 +26,8 @@ class TestCheckerboard(unittest.TestCase):
 
 class TestVirtualCamera(unittest.TestCase):
     def testmeasureDetectedPoints(self):
+        imageWidth = 720
+        imageHeight = 480
         intrinsicMatrix = np.array([
             [450,   0, 360],
             [  0, 450, 240],
@@ -50,16 +52,20 @@ class TestVirtualCamera(unittest.TestCase):
         ])
         checkerboard.getCornerPositions.return_value = cornerPositions
 
-        virtualCamera = dataset.VirtualCamera(intrinsicMatrix, distortionCoeffients)
+        virtualCamera = dataset.VirtualCamera(intrinsicMatrix, distortionCoeffients,
+                imageWidth, imageHeight)
 
         R = mu.eulerToRotationMatrix((0, 0, 180))
         t = (0.05, 0.05, 2)
         cameraPoseInBoard = mu.poseFromRT(R, t)
         boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
 
-        measuredPoints = virtualCamera.measureDetectedPoints(checkerboard, boardPoseInCamera)
+        measuredPointsSensor, measuredPointsPosition = virtualCamera.measureDetectedPoints(
+                checkerboard, boardPoseInCamera)
 
-        self.assertEqual(measuredPoints.shape[0], cornerPositions.shape[0])
+        self.assertEqual(measuredPointsSensor.shape[0], measuredPointsPosition.shape[0])
+        self.assertEqual(measuredPointsSensor.shape[1], 2)
+        self.assertEqual(measuredPointsPosition.shape[1], 3)
 
 
 if __name__ == "__main__":
