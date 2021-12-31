@@ -9,7 +9,7 @@ IMAGE_TAG=pvphan/camera-calibration:0.1
 test: image
 	docker run --rm -it \
 		--volume=${REPO_PATH}:${WORKDIR_PATH}:ro \
-		${IMAGE_TAG} python3 -m unittest #discover -s src/tests
+		${IMAGE_TAG} python3 -m unittest discover -s tests/
 
 shell: image
 	docker run --rm -it \

@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 
-from calibration import visualize
+from context import src
+from src import visualize
 
 
 class TestVisualize(unittest.TestCase):
