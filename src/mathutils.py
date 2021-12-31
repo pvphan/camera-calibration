@@ -78,6 +78,8 @@ def unstack(As):
 
 def homog(v):
     # v is Nx2 or Nx3
+    if isinstance(v, tuple) or isinstance(v, list):
+        v = np.array(v).reshape(-1, len(v))
     vh = np.hstack((v, np.ones((v.shape[0], 1))))
     return vh
 
@@ -89,5 +91,7 @@ def normalize(A):
 def poseFromRT(R, T):
     world_M_camera = np.eye(4)
     world_M_camera[:3,:3] = R
-    world_M_camera[:3,3] = T.ravel()
+    if isinstance(T, np.ndarray):
+        T = T.ravel()
+    world_M_camera[:3,3] = T
     return world_M_camera

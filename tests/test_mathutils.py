@@ -99,6 +99,30 @@ class TestMathUtils(unittest.TestCase):
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
                 f"\nexpected:\n{expectedRotation}\n\ncomputed:\n{computedRotation}")
 
+    def testtransformRepresentations(self):
+        # preferred representation: pose of camera in world <--> transform from camera to world
+        eulerAngles = (0, 45, 90)
+        rotationMatrix = mu.eulerToRotationMatrix(eulerAngles)
+        translationVector = (0.4, 0.1, -0.7)
+        world_M_camera = mu.poseFromRT(rotationMatrix, translationVector)
+
+        pointInWorld = (0, 1.2, -1.0)
+        pointInWorldHomog = mu.homog(pointInWorld)
+        camera_M_world = np.linalg.inv(world_M_camera)
+        pointInCamera1 = (camera_M_world @ pointInWorldHomog.T).T
+
+        # [R t] representation of extrinsics from literature
+        #   essentially the inverse transform and baking in the standard projection matrix
+        RT = np.zeros((3,4))
+        RT[:3,:3] = rotationMatrix.T
+        RT[:3,3] = -rotationMatrix.T @ translationVector
+        pointInCamera2 = (RT @ pointInWorldHomog.T).T
+
+        self.assertTrue(np.allclose(pointInCamera1[0,:3], pointInCamera2[0,:3]))
+        RTHomog = np.eye(4)
+        RTHomog[:3,:] = RT
+        self.assertTrue(np.allclose(camera_M_world, RTHomog))
+
     def teststack(self):
         A = np.array([
             [1, 4, 7],
