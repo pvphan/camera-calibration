@@ -1,8 +1,12 @@
-# Camera Calibration using Zhang Method
+# Camera Calibration using Zhang's Method
 
 Current status: WIP
 
-Usage: `make calibrate <input_file_path>`
+Prerequisites: `make`, `docker`
+
+Usage:
+- Calibrate from text file input: `make calibrate <input_file_path>`
+- Run tests: `make test`
 
 
 ## Goals:
