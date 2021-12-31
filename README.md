@@ -37,14 +37,24 @@ Don't use OpenCV, instead code it by hand.
 
     - In the DLT case, QR-decomposition is used to decouple the intrinsics (K) and the rotation matrix (R) from the full projection matrix P.
         - But in Zhang's method, we cannot use QR-decomposition because the product contains the intrinsic matrix and a matrix which is not orthogonal (r1, r2, t)
-        - x = P * X, P = [H | h], H = K * R
-        - QR-decomposition separates H into its two products: an orthogonal matrix (the rotation matrix, R) and an upper-diagonal matrix (the intrinsic matrix, K)
+            - x = P * X, P = [H | h], H = K * R
+            - QR-decomposition separates H into its two products: an orthogonal matrix (the rotation matrix, R) and an upper-diagonal matrix (the intrinsic matrix, K)
+        - Instead, we will drop the z terms (every 3rd col) of the linear system and solve for the 3x3 homography H
 
     - Still need to estimate K from H: H = K * [r1 r2 t]. So we need a custom solution to exploit properties we know about K, r1, and r2
         1. Exploit constraints on K, r1, r2
         2. Define a matrix B = K^-T * K^-1
         3. Compute B by solving another homogeneous linear system
         4. Decompose matrix B to get K
+
+## TODO:
+
+- [ ] Generate dataset to test on
+- [ ] From 2D / 3D feature correspondences, estimate the homography (DLT-like estimation)
+- [ ] Compute close form solution for K based on homographies (ignore lens distorion)
+- [ ] Compute extrinsics R, t for each view
+- [ ] Compute distortion using linear least squares
+- [ ] Use estimated parameters as initial guess and refine using non-linear optimization over all views
 
 
 ## Notes:
