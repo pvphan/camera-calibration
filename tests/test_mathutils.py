@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-import src.mathutils as mu
+from calibration import mathutils as mu
 
 
 class TestMathUtils(unittest.TestCase):

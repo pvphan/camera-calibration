@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from src import dataset
+from calibration import dataset
 
 
 class TestCheckerboard(unittest.TestCase):

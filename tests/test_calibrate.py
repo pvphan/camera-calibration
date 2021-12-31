@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from src import calibrate
-from src import mathutils as mu
+from calibration import calibrate
+from calibration import mathutils as mu
 
 
 class TestCalibrate(unittest.TestCase):
