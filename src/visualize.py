@@ -1,3 +1,6 @@
+"""
+Convenience functions to visualize a simple scene of points in a virtual camera.
+"""
 import imageio
 import numpy as np
 

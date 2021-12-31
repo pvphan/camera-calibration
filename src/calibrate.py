@@ -1,3 +1,6 @@
+"""
+Core calibration functions.
+"""
 import numpy as np
 
 from __context__ import src
