@@ -1,7 +1,7 @@
 import imageio
 import numpy as np
 
-from context import src
+from __context__ import src
 from src import calibrate
 
 
