@@ -1,4 +1,6 @@
+import shutil
 import unittest
+from glob import glob
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -8,7 +10,8 @@ from src import dataset
 
 
 class TestDataset(unittest.TestCase):
-    def testgetCornerDetectionsInSensorCoordinates(self):
+    @classmethod
+    def setUpClass(cls):
         checkerboard = MagicMock()
         cornerPositions = np.array([
             [0.0, 0.0, 0],
@@ -33,15 +36,25 @@ class TestDataset(unittest.TestCase):
         ])
         virtualCamera.measureDetectedPoints.return_value = (measuredPointsInSensor,
                 measuredPointsInBoard)
-        numViews = 2
-        syntheticDataset = dataset.Dataset(checkerboard, virtualCamera, numViews)
+        cls.numViews = 2
+        cls.syntheticDataset = dataset.Dataset(checkerboard, virtualCamera, cls.numViews)
 
-        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+    def testgetCornerDetectionsInSensorCoordinates(self):
+        allDetections = self.syntheticDataset.getCornerDetectionsInSensorCoordinates()
 
-        self.assertEqual(len(allDetections), numViews)
+        self.assertEqual(len(allDetections), self.numViews)
         self.assertEqual(len(allDetections[0]), 2)
         self.assertEqual(allDetections[0][0].shape[1], 2)
         self.assertEqual(allDetections[0][1].shape[1], 3)
+
+    def testwriteDatasetImages(self):
+        outputFolderPath = "/tmp/output/testwritedata"
+        shutil.rmtree(outputFolderPath, ignore_errors=True)
+
+        self.syntheticDataset.writeDatasetImages(outputFolderPath)
+
+        filePaths = glob(outputFolderPath + "/*")
+        self.assertGreater(len(filePaths), 0)
 
 
 if __name__ == "__main__":

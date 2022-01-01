@@ -1,6 +1,7 @@
 """
 Generates synthetic datasets to test calibration code.
 """
+import os
 
 import numpy as np
 
@@ -8,6 +9,7 @@ from __context__ import src
 from src import checkerboard
 from src import mathutils as mu
 from src import virtualcamera
+from src import visualize
 
 
 class Dataset:
@@ -23,6 +25,14 @@ class Dataset:
 
     def getCornerDetectionsInSensorCoordinates(self):
         return self._allDetections
+
+    def writeDatasetImages(self, outputFolderPath):
+        os.makedirs(outputFolderPath, exist_ok=True)
+        w = self._virtualCamera.getImageWidth()
+        h = self._virtualCamera.getImageHeight()
+        for i, (measuredPointsInSensor, measuredPointsInBoard) in enumerate(self._allDetections):
+            outputPath = os.path.join(outputFolderPath, f"{i:03d}.png")
+            visualize.writeDetectionsImage(measuredPointsInSensor, w, h, outputPath)
 
     def _computeDetections(self, numViews: int):
         boardCornerPositions = self._checkerboard.getCornerPositions()

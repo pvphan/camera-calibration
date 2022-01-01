@@ -4,8 +4,18 @@ Convenience functions to visualize a simple scene of points in a virtual camera.
 import imageio
 import numpy as np
 
-from __context__ import src
-from src import calibrate
+
+def writeDetectionsImage(measuredPointsInSensor, w, h, outputPath):
+    image = createDetectionsImage(measuredPointsInSensor, w, h)
+    imageio.imwrite(outputPath, image)
+
+
+def createDetectionsImage(measuredPointsInSensor, w, h):
+    image = createBlankImage(w, h)
+    length = 9
+    teal = (0, 255, 255)
+    drawCrosses(image, measuredPointsInSensor, length, teal)
+    return image
 
 
 def drawCrosses(image, points, length, color):

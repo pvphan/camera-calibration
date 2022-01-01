@@ -20,6 +20,12 @@ class VirtualCamera:
     def getGroundTruthDistortionVector(self):
         return self._distortionVector
 
+    def getImageWidth(self):
+        return self._imageWidth
+
+    def getImageHeight(self):
+        return self._imageHeight
+
     def measureDetectedPoints(self, checkerboard: checkerboard.Checkerboard,
             boardPoseInCamera: np.ndarray):
         cornerPointsInBoard = checkerboard.getCornerPositions()
