@@ -52,6 +52,7 @@ class TestCalibrate(unittest.TestCase):
     def testcomputeHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
+        X[:,2] = 1
         Hexpected = np.array([
             [400, 10, 320],
             [20, 400, 240],
