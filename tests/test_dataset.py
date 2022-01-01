@@ -3,6 +3,7 @@ import unittest
 from glob import glob
 from unittest.mock import MagicMock
 
+import imageio
 import numpy as np
 
 from __context__ import src
@@ -36,6 +37,10 @@ class TestDataset(unittest.TestCase):
         ])
         virtualCamera.measureDetectedPoints.return_value = (measuredPointsInSensor,
                 measuredPointsInBoard)
+        cls.imageWidth = 640
+        cls.imageHeight = 480
+        virtualCamera.getImageWidth.return_value = cls.imageWidth
+        virtualCamera.getImageHeight.return_value = cls.imageHeight
         cls.numViews = 2
         cls.syntheticDataset = dataset.Dataset(checkerboard, virtualCamera, cls.numViews)
 
@@ -55,6 +60,10 @@ class TestDataset(unittest.TestCase):
 
         filePaths = glob(outputFolderPath + "/*")
         self.assertGreater(len(filePaths), 0)
+        expectedImageShape = (self.imageHeight, self.imageWidth, 3)
+        for filePath in filePaths:
+            image = imageio.imread(filePath)
+            self.assertEqual(image.shape, expectedImageShape)
 
 
 if __name__ == "__main__":
