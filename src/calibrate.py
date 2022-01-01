@@ -44,3 +44,7 @@ def distort(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
 
     normalizedDistortedPointsNx2 = np.hstack((mu.col(xd), mu.col(yd)))
     return normalizedDistortedPointsNx2
+
+
+def computeHomography(x, xp):
+    pass

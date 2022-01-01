@@ -12,11 +12,11 @@ class TestCalibrate(unittest.TestCase):
     def setUpClass(cls):
         cls.pointsInWorld = np.array([
             [1, -1, 0.4, 1],
-            [1, -1, 0.4, 1],
-            [0.3, -0.1, 2.0, 1],
+            [-1, 1, 0.4, 1],
+            [0.3, 0.1, 2.0, 1],
             [0.3, -0.1, 2.0, 1],
             [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.4, 1.2, 1],
+            [-0.8, 0.2, 1.2, 1],
         ])
         cls.world_M_camera = np.eye(4)
 
@@ -48,6 +48,32 @@ class TestCalibrate(unittest.TestCase):
         distortedPoints = calibrate.distort(normalizedPointsNx2, distortionCoeffients)
 
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
+
+    def testcomputeHomography(self):
+        numPoints = 10
+        x = generateRandomNormalizedImagePoints(numPoints)
+        Hexpected = np.array([
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 5],
+        ])
+        xp = (Hexpected @ x.T).T
+
+        Hcomputed = calibrate.computeHomography(x, xp)
+
+        self.assertEqual(Hcomputed.shape, (3,3))
+        self.assertTrue(np.allclose(Hcomputed, Hexpected))
+
+
+def generateRandomNormalizedImagePoints(numPoints):
+    np.random.seed(0)
+    normalizedPointCoordinatesX = np.random.uniform(-1, 1, numPoints)
+    normalizedPointCoordinatesY = np.random.uniform(-1, 1, numPoints)
+    normalizedPointCoordinates = np.zeros((numPoints, 3))
+    normalizedPointCoordinates[:,0] = normalizedPointCoordinatesX
+    normalizedPointCoordinates[:,1] = normalizedPointCoordinatesY
+    normalizedPointCoordinates[:,2] = 1
+    return normalizedPointCoordinates
 
 
 if __name__ == "__main__":

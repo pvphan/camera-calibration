@@ -53,7 +53,7 @@ Don't use OpenCV, instead code it by hand.
 
 ## TODO:
 
-- [x] Generate dataset to test on
+- [x] Generate dataset to test on (dataset.py)
 - [ ] From 2D / 3D feature correspondences, estimate the homography (DLT-like estimation)
 - [ ] Compute close form solution for K based on homographies (ignore lens distorion)
 - [ ] Compute extrinsics R, t for each view
@@ -94,4 +94,4 @@ Don't use OpenCV, instead code it by hand.
 - (paper) [Wilhelm Burger: Zhang's Camera Calibration Algorithm: In-Depth Tutorial and Implementation](https://www.researchgate.net/publication/303233579_Zhang's_Camera_Calibration_Algorithm_In-Depth_Tutorial_and_Implementation).
 - (video) [Cyrill Stachniss: Direct Linear Transform](https://www.youtube.com/watch?v=3NcQbZu6xt8&ab_channel=CyrillStachniss)
 - (video) [Cyrill Stachniss: Camera Calibration using Zhang's Method](https://www.youtube.com/watch?v=-9He7Nu3u8s&ab_channel=CyrillStachniss)
-
+- (webpage) [OpenCV: Basic concepts of the homography explained with code](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html)
