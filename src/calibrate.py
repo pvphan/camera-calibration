@@ -46,5 +46,6 @@ def distort(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     return normalizedDistortedPointsNx2
 
 
-def computeHomography(x, xp):
+def computeHomography(x, X):
+    # Estimate homography using DLT
     pass

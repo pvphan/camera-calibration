@@ -51,29 +51,28 @@ class TestCalibrate(unittest.TestCase):
 
     def testcomputeHomography(self):
         numPoints = 10
-        x = generateRandomNormalizedImagePoints(numPoints)
+        X = generateRandomPointsInFrontOfCamera(numPoints)
         Hexpected = np.array([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 5],
+            [400, 10, 320],
+            [20, 400, 240],
+            [0, 0, 1],
         ])
-        xp = (Hexpected @ x.T).T
+        x = (Hexpected @ X.T).T
+        x = (x / mu.col(x[:,2]))[:,:2]
 
-        Hcomputed = calibrate.computeHomography(x, xp)
+        Hcomputed = calibrate.computeHomography(x, X)
 
         self.assertEqual(Hcomputed.shape, (3,3))
         self.assertTrue(np.allclose(Hcomputed, Hexpected))
 
 
-def generateRandomNormalizedImagePoints(numPoints):
+def generateRandomPointsInFrontOfCamera(numPoints):
     np.random.seed(0)
-    normalizedPointCoordinatesX = np.random.uniform(-1, 1, numPoints)
-    normalizedPointCoordinatesY = np.random.uniform(-1, 1, numPoints)
-    normalizedPointCoordinates = np.zeros((numPoints, 3))
-    normalizedPointCoordinates[:,0] = normalizedPointCoordinatesX
-    normalizedPointCoordinates[:,1] = normalizedPointCoordinatesY
-    normalizedPointCoordinates[:,2] = 1
-    return normalizedPointCoordinates
+    pointsInCamera = np.zeros((numPoints, 3))
+    pointsInCamera[:,0] = np.random.uniform(-1, 1, numPoints)
+    pointsInCamera[:,1] = np.random.uniform(-1, 1, numPoints)
+    pointsInCamera[:,2] = np.random.uniform(0.5, 1.5, numPoints)
+    return pointsInCamera
 
 
 if __name__ == "__main__":
