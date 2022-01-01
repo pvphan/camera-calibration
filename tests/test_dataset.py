@@ -60,13 +60,39 @@ class TestVirtualCamera(unittest.TestCase):
         cameraPoseInBoard = mu.poseFromRT(R, t)
         boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
 
-        measuredPointsSensor, measuredPointsPosition = virtualCamera.measureDetectedPoints(
+        measuredPointsInSensor, measuredPointsInBoard = virtualCamera.measureDetectedPoints(
                 checkerboard, boardPoseInCamera)
 
-        self.assertEqual(measuredPointsSensor.shape[0], measuredPointsPosition.shape[0])
-        self.assertEqual(measuredPointsSensor.shape[1], 2)
-        self.assertEqual(measuredPointsPosition.shape[1], 3)
+        self.assertEqual(measuredPointsInSensor.shape[0], measuredPointsInBoard.shape[0])
+        self.assertEqual(measuredPointsInSensor.shape[1], 2)
+        self.assertEqual(measuredPointsInBoard.shape[1], 3)
 
+
+class TestDataset(unittest.TestCase):
+    def testgetCornerDetectionsInSensorCoordinates(self):
+        checkerboard = MagicMock()
+        cornerPositions = np.array([
+            [0.0, 0.0, 0],
+            [0.1, 0.0, 0],
+            [0.2, 0.0, 0],
+            [0.3, 0.0, 0],
+            [0.0, 0.1, 0],
+            [0.1, 0.1, 0],
+            [0.2, 0.1, 0],
+            [0.3, 0.1, 0],
+        ])
+        checkerboard.getCornerPositions.return_value = cornerPositions
+
+        virtualCamera = MagicMock()
+        measuredPointsInSensor =
+        measuredPointsInBoard =
+        virtualCamera.measureDetectedPoints.return_value = (measuredPointsInSensor,
+                measuredPointsInBoard)
+        syntheticDataset = dataset.Dataset(checkerboard, virtualCamera)
+
+        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+
+        self.assertEqual(len(allDetections[0]), 2)
 
 if __name__ == "__main__":
     unittest.main()

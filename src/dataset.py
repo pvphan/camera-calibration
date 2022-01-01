@@ -68,7 +68,7 @@ class Dataset:
     def getCornerDetectionsInSensorCoordinates(self, numViews: int):
         boardCornerPositions = self._checkerboard.getCornerPositions()
         numBoardCorners = boardCornerPositions.shape[0]
-        allDetectedPoints = []
+        allDetections = []
         for viewIndex in range(numViews):
             np.random.seed(viewIndex)
             cornerIndexToPointAt = np.random.choice(numBoardCorners)
@@ -82,10 +82,11 @@ class Dataset:
             self._computeCameraPoseInBoard(boardPositionToAimAt, rotationEulerAngles,
                     distanceFromBoard)
 
-            detectedPointsForView = self._virtualCamera.measureDetectedPoints(
-                    self._checkerboard, boardPoseInCamera)
-            allDetectedPoints.append(detectedPointsForView)
-        return allDetectedPoints
+            measuredPointsInSensor, measuredPointsInBoard = (
+                    self._virtualCamera.measureDetectedPoints(self._checkerboard,
+                            boardPoseInCamera))
+            allDetections.append((measuredPointsInSensor, measuredPointsInBoard))
+        return allDetections
 
     def _computeCameraPoseInBoard(self, boardPositionToAimAt, rotationEulerAngles,
             distanceFromBoard):
