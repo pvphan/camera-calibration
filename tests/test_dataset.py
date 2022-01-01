@@ -84,15 +84,26 @@ class TestDataset(unittest.TestCase):
         checkerboard.getCornerPositions.return_value = cornerPositions
 
         virtualCamera = MagicMock()
-        measuredPointsInSensor =
-        measuredPointsInBoard =
+        measuredPointsInSensor = np.array([
+            [100.0, 200.0],
+            [300.0, 400.0],
+        ])
+        measuredPointsInBoard = np.array([
+            [0.100, 0.200, 0],
+            [0.300, 0.400, 0],
+        ])
         virtualCamera.measureDetectedPoints.return_value = (measuredPointsInSensor,
                 measuredPointsInBoard)
         syntheticDataset = dataset.Dataset(checkerboard, virtualCamera)
+        numViews = 2
 
-        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates(numViews)
 
+        self.assertEqual(len(allDetections), numViews)
         self.assertEqual(len(allDetections[0]), 2)
+        self.assertEqual(allDetections[0][0].shape[1], 2)
+        self.assertEqual(allDetections[0][1].shape[1], 3)
+
 
 if __name__ == "__main__":
     unittest.main()

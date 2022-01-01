@@ -79,9 +79,10 @@ class Dataset:
                     self._maxDistanceFromBoard)
             rotationEulerAngles = (rx, ry, rz)
             boardPositionToAimAt = boardCornerPositions[cornerIndexToPointAt]
-            self._computeCameraPoseInBoard(boardPositionToAimAt, rotationEulerAngles,
-                    distanceFromBoard)
+            cameraPoseInBoard = self._computeCameraPoseInBoard(
+                    boardPositionToAimAt, rotationEulerAngles, distanceFromBoard)
 
+            boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
             measuredPointsInSensor, measuredPointsInBoard = (
                     self._virtualCamera.measureDetectedPoints(self._checkerboard,
                             boardPoseInCamera))
