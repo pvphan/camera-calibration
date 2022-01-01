@@ -61,11 +61,15 @@ class Dataset:
     _maxDistanceFromBoard = 0.8
     _rollPitchBounds = (-20, +20)
     _yawBounds = (-180, +180)
-    def __init__(self, checkerboard: Checkerboard, virtualCamera: VirtualCamera):
+    def __init__(self, checkerboard: Checkerboard, virtualCamera: VirtualCamera, numViews: int):
         self._checkerboard = checkerboard
         self._virtualCamera = virtualCamera
+        self._allDetections = self._computeDetections(numViews)
 
-    def getCornerDetectionsInSensorCoordinates(self, numViews: int):
+    def getCornerDetectionsInSensorCoordinates(self):
+        return self._allDetections
+
+    def _computeDetections(self, numViews: int):
         boardCornerPositions = self._checkerboard.getCornerPositions()
         numBoardCorners = boardCornerPositions.shape[0]
         allDetections = []

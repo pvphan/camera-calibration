@@ -53,7 +53,7 @@ Don't use OpenCV, instead code it by hand.
 
 ## TODO:
 
-- [ ] Generate dataset to test on
+- [x] Generate dataset to test on
 - [ ] From 2D / 3D feature correspondences, estimate the homography (DLT-like estimation)
 - [ ] Compute close form solution for K based on homographies (ignore lens distorion)
 - [ ] Compute extrinsics R, t for each view

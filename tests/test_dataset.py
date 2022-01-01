@@ -94,10 +94,10 @@ class TestDataset(unittest.TestCase):
         ])
         virtualCamera.measureDetectedPoints.return_value = (measuredPointsInSensor,
                 measuredPointsInBoard)
-        syntheticDataset = dataset.Dataset(checkerboard, virtualCamera)
         numViews = 2
+        syntheticDataset = dataset.Dataset(checkerboard, virtualCamera, numViews)
 
-        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates(numViews)
+        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
 
         self.assertEqual(len(allDetections), numViews)
         self.assertEqual(len(allDetections[0]), 2)
