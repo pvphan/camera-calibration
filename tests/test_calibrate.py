@@ -187,6 +187,8 @@ def createbVectorFromIntrinsicMatrix(A):
 
 
 def createSyntheticDataset(A, width, height, distortionVector):
+    # It's a bit ugly that some tests depend on another component working,
+    # but it's more convenient than hardcoding inputs.
     checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
     virtualCamera = virtualcamera.VirtualCamera(A, distortionVector, width, height)
     numViews = 10

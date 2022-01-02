@@ -237,6 +237,14 @@ def computeIntrinsicMatrixFrombCholesky(b):
 
 
 def computeExtrinsics(Hs: list, A: np.ndarray):
+    """
+    Input:
+        Hs -- list of homographies
+        A -- intrinsic matrix
+
+    Output:
+        transformsWorldToCamera -- list of transform matrices from world to camera
+    """
     Ainv = np.linalg.inv(A)
     transformsWorldToCamera = []
     for H in Hs:
