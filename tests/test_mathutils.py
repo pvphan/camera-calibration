@@ -11,6 +11,47 @@ class TestMathUtils(unittest.TestCase):
         v = mu.col((1,1,1))
         self.assertEqual(v.shape, (3,1))
 
+    def testhom1(self):
+        v = np.array([0, 0, 0])
+        vHomExpected = np.array([0, 0, 0, 1])
+
+        vHomComputed = mu.hom(v)
+
+        self.assertTrue(np.allclose(vHomExpected, vHomComputed))
+
+    def testhom2(self):
+        numPoints = 5
+        v = np.arange(3 * numPoints).reshape(-1, 3)
+        vHomExpected = np.zeros((numPoints,4))
+        vHomExpected[:,:3] = v
+        vHomExpected[:,3] = 1
+
+        vHomComputed = mu.hom(v)
+
+        self.assertEqual(vHomExpected.shape, vHomComputed.shape)
+        self.assertTrue(np.allclose(vHomExpected, vHomComputed))
+
+    def testunhom1(self):
+        vHom = np.array([0, 0, 0, 1])
+        vExpected = np.array([0, 0, 0])
+
+        vComputed = mu.unhom(vHom)
+
+        self.assertEqual(vExpected.shape, vComputed.shape)
+        self.assertTrue(np.allclose(vExpected, vComputed))
+
+    def testunhom2(self):
+        numPoints = 5
+        vExpected = np.arange(3 * numPoints).reshape(-1, 3)
+        vHom = np.zeros((numPoints,4))
+        vHom[:,:3] = vExpected
+        vHom[:,3] = 1
+
+        vComputed = mu.unhom(vHom)
+
+        self.assertEqual(vExpected.shape, vComputed.shape)
+        self.assertTrue(np.allclose(vExpected, vComputed))
+
     def testskew(self):
         v = mu.col((0.5, 1.0, -0.25))
         vHatExpected = np.array([
@@ -107,7 +148,7 @@ class TestMathUtils(unittest.TestCase):
         world_M_camera = mu.poseFromRT(rotationMatrix, translationVector)
 
         pointInWorld = (0, 1.2, -1.0)
-        pointInWorldHomog = mu.homog(pointInWorld)
+        pointInWorldHomog = mu.hom(pointInWorld)
         camera_M_world = np.linalg.inv(world_M_camera)
         pointInCamera1 = (camera_M_world @ pointInWorldHomog.T).T
 

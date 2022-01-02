@@ -39,6 +39,15 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
+    def testgetNormalizationMatrix(self):
+        expectedShape = (3,3)
+        numPoints = 10
+        X = generateRandomPointsInFrontOfCamera(numPoints)
+
+        N_X = calibrate.getNormalizationMatrix(X[:,:2])
+
+        self.assertEqual(N_X.shape, expectedShape)
+
     def testcomputeHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
@@ -51,7 +60,7 @@ class TestCalibrate(unittest.TestCase):
         x = (Hexpected @ X.T).T
         x = (x / mu.col(x[:,2]))[:,:2]
 
-        Hcomputed = calibrate.computeHomography(x, X[:,:2])
+        Hcomputed = calibrate.estimateHomography(x, X[:,:2])
 
         self.assertEqual(Hcomputed.shape, (3,3))
         self.assertTrue(np.allclose(Hcomputed, Hexpected))
@@ -130,7 +139,7 @@ class TestCalibrate(unittest.TestCase):
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Hs = []
         for x, X in allDetections:
-            H = calibrate.computeHomography(x, X)
+            H = calibrate.estimateHomography(x, X[:,:2])
             Hs.append(H)
 
         A = calibrate.computeIntrinsicMatrix(Hs)

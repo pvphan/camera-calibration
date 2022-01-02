@@ -29,7 +29,7 @@ class VirtualCamera:
             boardPoseInCamera: np.ndarray):
         cornerPointsInBoard = checkerboard.getCornerPositions()
         camera_M_board = boardPoseInCamera
-        cornerPointsInCamera = (camera_M_board @ mu.homog(cornerPointsInBoard).T).T
+        cornerPointsInCamera = (camera_M_board @ mu.hom(cornerPointsInBoard).T).T
         projectedPointsInSensor = mu.project(
                 self._intrinsicMatrix, np.eye(4), cornerPointsInCamera)
         measuredPoints = projectedPointsInSensor[:,:2]

@@ -76,12 +76,24 @@ def unstack(As):
     return As.reshape((N, N)).T
 
 
-def homog(v):
+def hom(v):
     # v is Nx2 or Nx3
     if isinstance(v, tuple) or isinstance(v, list):
         v = np.array(v).reshape(-1, len(v))
+    elif len(v.shape) == 1:
+        return np.append(v, 1)
     vh = np.hstack((v, np.ones((v.shape[0], 1))))
     return vh
+
+
+def unhom(vHom):
+    if len(vHom.shape) == 1:
+        v = vHom[:-1]
+    elif len(vHom.shape) == 2:
+        v = vHom[:,:-1]
+    else:
+        raise ValueError(f"Unexpected input shape for unhom: {vHom.shape}\n{vHom}")
+    return v
 
 
 def normalize(A):

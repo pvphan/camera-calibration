@@ -7,16 +7,16 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def computeHomography(x, X):
+def estimateHomography(Xa, Xb):
     """
     Estimate homography using DLT
 
     Inputs:
-        X -- 2D model points (3rd dimension ignored)
-        x -- 2D points in sensor
+        Xa -- 2D points in sensor
+        Xb -- 2D model points
 
     Output:
-        H -- homography matrix which relates x and X
+        H -- homography matrix which relates Xa and Xb
 
     Rearrange into the formulation:
 
@@ -26,17 +26,61 @@ def computeHomography(x, X):
     h is a vector representation of the homography H we are trying to find:
         h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
     """
-    N = x.shape[0]
+    mu.validateShape(Xa.shape, (None, 2))
+    mu.validateShape(Xb.shape, (None, 2))
+    N = Xa.shape[0]
     M = np.zeros((2*N, 9))
     for i in range(N):
-        Xi, Yi = X[i][:2]
-        ui, vi = x[i][:2]
+        ui, vi = Xa[i][:2]
+        Xi, Yi = Xb[i][:2]
         M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
         M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
     U, S, V_T = np.linalg.svd(M)
     h = V_T[-1]
-    H = h.reshape(3,3) / h[-1]
+    Hp = h.reshape(3,3)
+    H = Hp / Hp[2,2]
     return H
+
+
+def estimateHomographyWithNormalization(Xa, Xb):
+    # doesn't pass the unit test, also equation in the summary doesn't match
+    #   the derivation from Burger section 3.2
+    mu.validateShape(Xa.shape, (None, 2))
+    mu.validateShape(Xb.shape, (None, 2))
+    Na = getNormalizationMatrix(Xa)
+    Nb = getNormalizationMatrix(Xb)
+    N = Xa.shape[0]
+    M = np.zeros((2*N, 9))
+    for i in range(N):
+        ui, vi = mu.unhom(Na @ mu.hom(Xa[i][:2]))
+        Xi, Yi = mu.unhom(Nb @ mu.hom(Xb[i][:2]))
+        M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
+        M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
+    U, S, V_T = np.linalg.svd(M)
+    h = V_T[-1]
+    Hp = h.reshape(3,3)
+    H = np.linalg.inv(Nb) @ Hp @ Na
+    H /= H[2,2]
+    return H
+
+
+def getNormalizationMatrix(X):
+    mu.validateShape(X.shape, (None, 2))
+    x = X[:,0]
+    y = X[:,1]
+    xbar = np.mean(x)
+    ybar = np.mean(y)
+    sigmax2 = np.mean((x - xbar)**2)
+    sigmay2 = np.mean((y - ybar)**2)
+
+    sx = np.sqrt(2/sigmax2)
+    sy = np.sqrt(2/sigmay2)
+    N_X = np.array([
+        [sx,  0, -sx*xbar],
+        [ 0, sy, -sy*ybar],
+        [ 0,  0,        1],
+    ])
+    return N_X
 
 
 def computeIntrinsicMatrix(Hs: list):
