@@ -39,31 +39,6 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
-    def testdistort(self):
-        k1 = 0.5
-        k2 = 0.2
-        p1 = 0
-        p2 = 0
-        k3 = 0
-        distortionCoeffients = (k1, k2, p1, p2, k3)
-
-        normalizedPointsNx2 = (self.pointsInWorld / mu.col(self.pointsInWorld[:,2]))[:,:2]
-        distortedPoints = calibrate.distort(normalizedPointsNx2, distortionCoeffients)
-
-        self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
-        self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
-
-    def testdistortSimple(self):
-        k1 = 0.5
-        k2 = 0.2
-        distortionCoeffients = (k1, k2)
-
-        normalizedPointsNx2 = (self.pointsInWorld / mu.col(self.pointsInWorld[:,2]))[:,:2]
-        distortedPoints = calibrate.distortSimple(normalizedPointsNx2, distortionCoeffients)
-
-        self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
-        self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
-
     def testcomputeHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
@@ -76,7 +51,7 @@ class TestCalibrate(unittest.TestCase):
         x = (Hexpected @ X.T).T
         x = (x / mu.col(x[:,2]))[:,:2]
 
-        Hcomputed = calibrate.computeHomography(x, X)
+        Hcomputed = calibrate.computeHomography(x, X[:,:2])
 
         self.assertEqual(Hcomputed.shape, (3,3))
         self.assertTrue(np.allclose(Hcomputed, Hexpected))

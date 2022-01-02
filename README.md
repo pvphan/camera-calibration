@@ -57,6 +57,7 @@ Don't use OpenCV, instead code it by hand.
 - [x] From 2D / 3D feature correspondences, estimate the homography (DLT-like estimation)
 - [x] Compute close form solution for K based on homographies (ignore lens distorion)
 - [x] Compute extrinsics R, t for each view
+- [ ] Use normalization in homography estimation
 - [ ] Compute distortion using linear least squares
 - [ ] Refine homography estimation using non-linear optimization
 - [ ] Use estimated parameters as initial guess and refine using non-linear optimization over all views
