@@ -91,9 +91,9 @@ class TestCalibrate(unittest.TestCase):
             [0, 0, 1],
         ])
 
-        v1 = calibrate.vecHomog(H, 0, 0)
-        v2 = calibrate.vecHomog(H, 0, 1)
-        v3 = calibrate.vecHomog(H, 1, 1)
+        v1 = calibrate.vecHomography(H, 0, 0)
+        v2 = calibrate.vecHomography(H, 0, 1)
+        v3 = calibrate.vecHomography(H, 1, 1)
 
         self.assertEqual(v1.shape, expectedShape)
         self.assertEqual(v2.shape, expectedShape)

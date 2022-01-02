@@ -7,9 +7,9 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def project(K, cameraPose, X_0):
+def project(A, cameraPose, X_0):
     """
-    K             -- the intrinsic parameter matrix
+    A             -- the intrinsic parameter matrix
     cameraPose    -- the camera pose in world
     X_0           -- the 3D points (homogeneous) in the world
     xp            -- x' the projected 2D points in the camera (homogeneous)
@@ -24,7 +24,7 @@ def project(K, cameraPose, X_0):
 
     # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
     g = np.linalg.inv(cameraPose)
-    lambdaxp = (K @ Π_0 @ g @ X_0.T).T
+    lambdaxp = (A @ Π_0 @ g @ X_0.T).T
     xp = lambdaxp / mu.col(lambdaxp[:, -1])
     return xp
 
@@ -82,64 +82,110 @@ def computeHomography(x, X):
 
 def computeIntrinsicMatrix(Hs: list):
     """
-    Compute the intrinsic matrix from a set of homographies using the closed form solution.
+    Compute the intrinsic matrix from a set of homographies
 
     Inputs:
         Hs -- list of homographies
 
     Output:
-        K -- intrinsic camera matrix
+        A -- intrinsic camera matrix
 
-    From the Burger paper, use equations 96 - 105 to solve for vector b = (B0, B1, B2, B3, B4, B5)^T
-    and then compute alpha, beta, gamma, principal_x, principal_y. Store them in a matrix and return.
+    From the Burger paper, use equations 96 - 98 to solve for vector b = (B0, B1, B2, B3, B4, B5)^T
+    and then compute the intrinsic matrix and return.
 
-    H = [h0 h1 h2] = lambda * A * [r0 r1 t]
+    Notes:
+        H = [h0 h1 h2] = lambda * A * [r0 r1 t]
 
-    By leveraging that r0 and r1 are orthonormal, we get:
+        By leveraging that r0 and r1 are orthonormal, we get:
 
-        h0^T * (A^-1)^T * A^-1 * h1 = 0
-        h0^T * (A^-1)^T * A^-1 * h0 = h1^T * (A^-1)^T * A^-1 * h1
+            h0^T * (A^-1)^T * A^-1 * h1 = 0
+            h0^T * (A^-1)^T * A^-1 * h0 = h1^T * (A^-1)^T * A^-1 * h1
 
-    B = (A^-1)^T * A^-1, where B = [B0 B1 B3]
-                                   [B1 B2 B4]
-                                   [B3 B4 B5]
+        B = (A^-1)^T * A^-1, where B = [B0 B1 B3]
+                                       [B1 B2 B4]
+                                       [B3 B4 B5]
 
-    simplifying:
-        h0^T * B * h1 = 0
-        h0^T * B * h0 - h1^T * B * h1 = 0
+        simplifying:
+            h0^T * B * h1 = 0
+            h0^T * B * h0 - h1^T * B * h1 = 0
 
-    letting b = (B0, B1, B2, B3, B4, B5)^T
+        letting b = (B0, B1, B2, B3, B4, B5)^T
 
-    we reformulate the h^T * B * h form:
-        hp^T * B * hq = vecpq(H) * b
+        we reformulate the h^T * B * h form:
+            hp^T * B * hq = vecpq(H) * b
 
-        with vec(H, p, q) = (
-                H0p * H0q,
-                H0p * H1q + H1p * H0q,
-                H1p * H1q,
-                H2p * H0q + H0p * H2q,
-                H2p * H1q + H1p * H2q,
-                H2p * H2q,
-            )
+            with vec(H, p, q) = (
+                    H0p * H0q,
+                    H0p * H1q + H1p * H0q,
+                    H1p * H1q,
+                    H2p * H0q + H0p * H2q,
+                    H2p * H1q + H1p * H2q,
+                    H2p * H2q,
+                )
 
-    so we can rewrite our system of equations for a single homography as:
+        so we can rewrite our system of equations for a single homography as:
 
-        [        vec(H, 0, 1)        ] * b = 0
-        [vec(H, 0, 0) - vec(H, 1, 1) ]
+            [        vec(H, 0, 1)        ] * b = 0
+            [vec(H, 0, 0) - vec(H, 1, 1) ]
 
-    Now we can stack these terms in the left matrix for each homography to create
-    a matrix V of size (2*N, 6) and then solve for b with SVD.
+        Now we can stack these terms in the left matrix for each homography to create
+        a matrix V of size (2*N, 6) and then solve for b with SVD.
 
-        V * b = 0
+            V * b = 0
     """
     N = len(Hs)
     V = np.zeros((2*N, 6))
     for i in range(N):
         H = Hs[i]
-        V[2*i,:]   = vecHomog(H, 0, 1)
-        V[2*i+1,:] = vecHomog(H, 0, 0) - vecHomog(H, 1, 1)
+        V[2*i,:]   = vecHomography(H, 0, 1)
+        V[2*i+1,:] = vecHomography(H, 0, 0) - vecHomography(H, 1, 1)
     U, S, V_T = np.linalg.svd(V)
     b = V_T[-1]
+    A = computeIntrinsicMatrixFrombCholesky(b)
+    return A
+
+
+def vecHomography(H: np.ndarray, p: int, q: int):
+    """
+    Input:
+        H -- 3x3 homography matrix
+        p -- first column index
+        q -- second column index
+
+    Output:
+        v -- 1x6 vector containing components of H based on the
+             indices p and q which represent columns of the homography H
+
+    Notes:
+        This format of v allows the product to be used in homogenous
+        form to solve for the values
+        of a matrix which is a product of the intrinsic parameters (B).
+
+        Implements equation 96 of Burger
+    """
+    values = (
+        H[0,p] * H[0,q],
+        H[0,p] * H[1,q] + H[1,p] * H[0,q],
+        H[1,p] * H[1,q],
+        H[2,p] * H[0,q] + H[0,p] * H[2,q],
+        H[2,p] * H[1,q] + H[1,p] * H[2,q],
+        H[2,p] * H[2,q],
+    )
+    v = np.array(values).reshape(1, 6)
+    return v
+
+
+def computeIntrinsicMatrixFrombClosedForm(b):
+    """
+    Computes the intrinsic matrix from the vector b using the closed
+    form solution given in Burger, equations 99 - 104.
+
+    Input:
+        b -- vector made up of (B0, B1, B2, B3, B4, B5)^T
+
+    Output:
+        A -- intrinsic matrix
+    """
     B0, B1, B2, B3, B4, B5 = b
 
     # eqs 104, 105
@@ -152,51 +198,67 @@ def computeIntrinsicMatrix(Hs: list):
     uc = (B1*B4 - B2*B3) / d                    # eq 102
     vc = (B1*B3 - B0*B4) / d                    # eq 103
 
-    K = np.array([
+    A = np.array([
         [alpha, gamma, uc],
         [    0,  beta, vc],
         [    0,     0,  1],
     ])
-    return K
+    return A
 
 
-def vecHomog(H: np.ndarray, p: int, q: int):
+def computeIntrinsicMatrixFrombCholesky(b):
     """
-    Creates a vector of shape (1, 6) made up of components of H based on the
-    indices p and q which represent columns of the homography H. This format
-    allows the product to be used in homogenous form to solve for the values
-    of a matrix which is a product of the intrinsic parameters (B).
+    Computes the intrinsic matrix from the vector b using
+    Cholesky decomposition.
 
-    Implements equation 96 of Burger
+    Input:
+        b -- vector made up of (B0, B1, B2, B3, B4, B5)^T
+
+    Output:
+        A -- intrinsic matrix
+
+    Notes:
+        Recall,
+
+        B = (A^-1)^T * A^-1, where B = [B0 B1 B3]
+                                       [B1 B2 B4]
+                                       [B3 B4 B5]
+        let L = (A^-1)^T
+        then B = L * L^T
+        L = Chol(B)
+
+        and
+        A = (L^T)^-1
     """
-    values = (
-        H[0,p] * H[0,q],
-        H[0,p] * H[1,q] + H[1,p] * H[0,q],
-        H[1,p] * H[1,q],
-        H[2,p] * H[0,q] + H[0,p] * H[2,q],
-        H[2,p] * H[1,q] + H[1,p] * H[2,q],
-        H[2,p] * H[2,q],
-    )
-    return np.array(values).reshape(1, 6)
+    B0, B1, B2, B3, B4, B5 = b
+    B = np.array([
+        [B0, B1, B3],
+        [B1, B2, B4],
+        [B3, B4, B5],
+    ])
+    L = np.linalg.cholesky(B)
+    A = np.linalg.inv(L.T)
+    A /= A[2,2]
+    return A
 
 
-def computeExtrinsics(Hs: list, K: np.ndarray):
-    Kinv = np.linalg.inv(K)
+def computeExtrinsics(Hs: list, A: np.ndarray):
+    Ainv = np.linalg.inv(A)
     transformsWorldToCamera = []
     for H in Hs:
         h0 = H[:,0]
         h1 = H[:,1]
         h2 = H[:,2]
 
-        lmbda = 1 / np.linalg.norm(Kinv @ h0)
+        lmbda = 1 / np.linalg.norm(Ainv @ h0)
 
-        r0 = lmbda * Kinv @ h0
-        r1 = lmbda * Kinv @ h1
+        r0 = lmbda * Ainv @ h0
+        r1 = lmbda * Ainv @ h1
         r2 = np.cross(r0, r1)
 
-        t = lmbda * Kinv @ h2
+        t = lmbda * Ainv @ h2
 
-        # not a true rotation matrix
+        # Q is not in SO(3)
         Q = np.hstack((mu.col(r0), mu.col(r1), mu.col(r2)))
 
         R = approximateRotationMatrix(Q)
@@ -215,24 +277,24 @@ def approximateRotationMatrix(Q: np.ndarray):
 
     Method from Zhang paper, Appendix C
 
-    minimize R in frobenius_norm(R - Q) subject to R^T * R = I
+    Notes:
+        minimize R in frobenius_norm(R - Q) subject to R^T * R = I
 
-    frobenius_norm(R - Q) = trace((R - Q)^T * (R - Q))
-                          = 3 + trace(Q^T * Q) - 2*trace(R^T * Q)
+        frobenius_norm(R - Q) = trace((R - Q)^T * (R - Q))
+                              = 3 + trace(Q^T * Q) - 2*trace(R^T * Q)
 
-    so equivalently, maximize trace(R^T * Q)
+        so equivalently, maximize trace(R^T * Q)
 
-    let
-        U, S, V^T = svd(Q)
+        let
+            U, S, V^T = svd(Q)
 
-    we define
-        Z = V^T * R^T * U
-    ==>
-        trace(R^T * Q)
-        trace(R^T * U * S * V^T)
-        trace(V^T * R^T * U * S)
-        trace(Z * S)
-        =
+        we define
+            Z = V^T * R^T * U
+        ==>
+            trace(R^T * Q)
+            trace(R^T * U * S * V^T)
+            trace(V^T * R^T * U * S)
+            trace(Z * S)
     """
     U, S, V_T = np.linalg.svd(Q)
     R = U @ V_T
