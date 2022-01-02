@@ -139,10 +139,9 @@ class TestCalibrate(unittest.TestCase):
             [0, 0, 1],
         ])
         width, height = 640, 480
-        dataSet = createSyntheticDataset(Aexpected, width, height)
+        distortionVector = (0, 0, 0, 0, 0)
+        dataSet = createSyntheticDataset(Aexpected, width, height, distortionVector)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        outputFolderPath = "/tmp/output/synthdataintrinsics"
-        dataSet.writeDatasetImages(outputFolderPath)
         Hs = []
         for x, X in allDetections:
             H = calibrate.computeHomography(x, X)
@@ -176,9 +175,8 @@ def createbVectorFromIntrinsicMatrix(A):
     return b
 
 
-def createSyntheticDataset(A, width, height):
+def createSyntheticDataset(A, width, height, distortionVector):
     checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
-    distortionVector = (0, 0, 0, 0, 0)
     virtualCamera = virtualcamera.VirtualCamera(A, distortionVector, width, height)
     numViews = 10
     dataSet = dataset.Dataset(checkerBoard, virtualCamera, numViews)
