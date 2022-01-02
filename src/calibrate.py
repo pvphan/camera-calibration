@@ -26,6 +26,22 @@ def distort(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     return normalizedDistortedPointsNx2
 
 
+def distortSimple(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
+    k1, k2 = distortionCoeffients
+    r = np.linalg.norm(normalizedPointsNx2, axis=1)
+
+    xn = normalizedPointsNx2[:,0]
+    yn = normalizedPointsNx2[:,1]
+
+    radialComponent = (1 + k1 * r**2 + k2 * r**4)
+
+    xd = radialComponent * xn
+    yd = radialComponent * yn
+
+    normalizedDistortedPointsNx2 = np.hstack((mu.col(xd), mu.col(yd)))
+    return normalizedDistortedPointsNx2
+
+
 def computeHomography(x, X):
     """
     Estimate homography using DLT

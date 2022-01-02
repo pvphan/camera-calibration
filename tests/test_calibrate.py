@@ -53,6 +53,17 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
 
+    def testdistortSimple(self):
+        k1 = 0.5
+        k2 = 0.2
+        distortionCoeffients = (k1, k2)
+
+        normalizedPointsNx2 = (self.pointsInWorld / mu.col(self.pointsInWorld[:,2]))[:,:2]
+        distortedPoints = calibrate.distortSimple(normalizedPointsNx2, distortionCoeffients)
+
+        self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
+        self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
+
     def testcomputeHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
