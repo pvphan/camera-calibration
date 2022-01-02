@@ -7,28 +7,6 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def project(A, cameraPose, X_0):
-    """
-    A             -- the intrinsic parameter matrix
-    cameraPose    -- the camera pose in world
-    X_0           -- the 3D points (homogeneous) in the world
-    xp            -- x' the projected 2D points in the camera (homogeneous)
-
-    Π0            -- standard projection matrix
-    """
-    Π_0 = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-    ])
-
-    # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
-    g = np.linalg.inv(cameraPose)
-    lambdaxp = (A @ Π_0 @ g @ X_0.T).T
-    xp = lambdaxp / mu.col(lambdaxp[:, -1])
-    return xp
-
-
 def distort(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     """https://euratom-software.github.io/calcam/html/intro_theory.html#rectilinear-lens-distortion-model"""
     k1, k2, p1, p2, k3 = distortionCoeffients

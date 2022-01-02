@@ -1,7 +1,6 @@
 import numpy as np
 
 from __context__ import src
-from src import calibrate
 from src import checkerboard
 from src import mathutils as mu
 
@@ -31,7 +30,7 @@ class VirtualCamera:
         cornerPointsInBoard = checkerboard.getCornerPositions()
         camera_M_board = boardPoseInCamera
         cornerPointsInCamera = (camera_M_board @ mu.homog(cornerPointsInBoard).T).T
-        projectedPointsInSensor = calibrate.project(
+        projectedPointsInSensor = mu.project(
                 self._intrinsicMatrix, np.eye(4), cornerPointsInCamera)
         measuredPoints = projectedPointsInSensor[:,:2]
         pointInImageSlice = np.s_[

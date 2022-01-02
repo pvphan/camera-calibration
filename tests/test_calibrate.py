@@ -37,22 +37,6 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
-    def testproject(self):
-        K = np.array([
-            [450,   0, 360],
-            [  0, 450, 240],
-            [  0,   0,   1],
-        ], dtype=np.float64)
-        pointsInCamera = (np.linalg.inv(self.world_M_camera) @ self.pointsInWorld.T).T
-        pointsInCameraNormalized = (pointsInCamera / mu.col(pointsInCamera[:,2]))[:,:3]
-        expectedPointsInCamera = (K @ pointsInCameraNormalized.T).T
-
-        computedPointsInCamera = calibrate.project(K, np.eye(4), self.pointsInWorld)
-        # x, y values are the same
-        self.assertTrue(np.allclose(expectedPointsInCamera[:,:2], computedPointsInCamera[:,:2]))
-        # z values are all 1, homogeneous
-        self.assertTrue(np.allclose(computedPointsInCamera[:,2], 1))
-
     def testdistort(self):
         k1 = 0.5
         k2 = 0.2
@@ -65,6 +49,7 @@ class TestCalibrate(unittest.TestCase):
         distortedPoints = calibrate.distort(normalizedPointsNx2, distortionCoeffients)
 
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
+        self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
 
     def testcomputeHomography(self):
         numPoints = 10
@@ -99,15 +84,6 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(v2.shape, expectedShape)
         self.assertEqual(v3.shape, expectedShape)
 
-    def testcomputeIntrinsicMatrix(self):
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', r'invalid value encountered in double_scalars')
-            K = calibrate.computeIntrinsicMatrix(self.Hs)
-
-        self.assertAlmostEqual(K[1,0], 0)
-        self.assertAlmostEqual(K[2,0], 0)
-        self.assertAlmostEqual(K[2,1], 0)
-
     def testapproximateRotationMatrix(self):
         Q = np.array([
             [0.95, 0, 0],
@@ -120,15 +96,53 @@ class TestCalibrate(unittest.TestCase):
         self.assertAlmostEqual(np.linalg.det(R), 1)
 
     def testcomputeExtrinsics(self):
-        K = np.array([
+        A = np.array([
             [400, 0, 320],
             [0, 400, 240],
             [0, 0, 1],
         ])
 
-        transformsWorldToCamera = calibrate.computeExtrinsics(self.Hs, K)
+        transformsWorldToCamera = calibrate.computeExtrinsics(self.Hs, A)
 
         self.assertEqual(len(self.Hs), len(transformsWorldToCamera))
+
+    def testcomputeIntrinsicMatrixFrombClosedForm(self):
+        A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        b = createbVectorFromIntrinsicMatrix(A)
+
+        Acomputed = calibrate.computeIntrinsicMatrixFrombClosedForm(b)
+
+        self.assertTrue(np.allclose(A, Acomputed))
+
+    def testcomputeIntrinsicMatrixFrombCholesky(self):
+        A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        b = createbVectorFromIntrinsicMatrix(A)
+
+        Acomputed = calibrate.computeIntrinsicMatrixFrombCholesky(b)
+
+        self.assertTrue(np.allclose(A, Acomputed))
+
+    def testcomputeIntrinsicMatrix(self):
+        A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', r'invalid value encountered in double_scalars')
+            A = calibrate.computeIntrinsicMatrix(self.Hs)
+
+        self.assertAlmostEqual(A[1,0], 0)
+        self.assertAlmostEqual(A[2,0], 0)
+        self.assertAlmostEqual(A[2,1], 0)
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):
@@ -138,6 +152,20 @@ def generateRandomPointsInFrontOfCamera(numPoints):
     pointsInCamera[:,1] = np.random.uniform(-1, 1, numPoints)
     pointsInCamera[:,2] = np.random.uniform(0.5, 1.5, numPoints)
     return pointsInCamera
+
+
+def createbVectorFromIntrinsicMatrix(A):
+    """
+    From the relation given by Burger eq 88:
+
+        B = (A^-1)^T * A^-1, where B = [B0 B1 B3]
+                                       [B1 B2 B4]
+                                       [B3 B4 B5]
+    """
+    Ainv = np.linalg.inv(A)
+    B = Ainv.T @ Ainv
+    b = (B[0,0], B[0,1], B[1,1], B[0,2], B[1,2], B[2,2])
+    return b
 
 
 if __name__ == "__main__":

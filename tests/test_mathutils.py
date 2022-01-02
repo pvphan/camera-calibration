@@ -168,6 +168,31 @@ class TestMathUtils(unittest.TestCase):
 
         self.assertTrue(np.allclose(world_M_camera_expected, world_M_camera))
 
+    def testproject(self):
+        world_M_camera = np.eye(4)
+        pointsInWorld = np.array([
+            [1, -1, 0.4, 1],
+            [-1, 1, 0.4, 1],
+            [0.3, 0.1, 2.0, 1],
+            [0.3, -0.1, 2.0, 1],
+            [-0.8, 0.4, 1.2, 1],
+            [-0.8, 0.2, 1.2, 1],
+        ])
+        A = np.array([
+            [450,   0, 360],
+            [  0, 450, 240],
+            [  0,   0,   1],
+        ], dtype=np.float64)
+        pointsInCamera = (np.linalg.inv(world_M_camera) @ pointsInWorld.T).T
+        pointsInCameraNormalized = (pointsInCamera / mu.col(pointsInCamera[:,2]))[:,:3]
+        expectedPointsInCamera = (A @ pointsInCameraNormalized.T).T
+
+        computedPointsInCamera = mu.project(A, np.eye(4), pointsInWorld)
+        # x, y values are the same
+        self.assertTrue(np.allclose(expectedPointsInCamera[:,:2], computedPointsInCamera[:,:2]))
+        # z values are all 1, homogeneous
+        self.assertTrue(np.allclose(computedPointsInCamera[:,2], 1))
+
 
 if __name__ == "__main__":
     unittest.main()
