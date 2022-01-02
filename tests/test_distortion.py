@@ -1,5 +1,4 @@
 import unittest
-import warnings
 
 import numpy as np
 
@@ -19,22 +18,6 @@ class TestCalibrate(unittest.TestCase):
             [-0.8, 0.4, 1.2, 1],
             [-0.8, 0.2, 1.2, 1],
         ])
-        H1 = np.array([
-            [400, 10, 320],
-            [20, 400, 240],
-            [0, 0, 1],
-        ])
-        H2 = np.array([
-            [300, 15, 320],
-            [20, 300, 240],
-            [0, 0, 1],
-        ])
-        H3 = np.array([
-            [200, 15, 120],
-            [0, 200, 340],
-            [0, 0, 1],
-        ])
-        cls.Hs = [H1, H2, H3]
 
     def testdistort(self):
         k1 = 0.5
@@ -64,3 +47,4 @@ class TestCalibrate(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
