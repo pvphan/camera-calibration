@@ -66,6 +66,46 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(Hcomputed.shape, (3,3))
         self.assertTrue(np.allclose(Hcomputed, Hexpected))
 
+    def testvecHomog(self):
+        expectedShape = (1, 6)
+        H = np.array([
+            [400, 10, 320],
+            [20, 400, 240],
+            [0, 0, 1],
+        ])
+
+        v1 = calibrate.vecHomog(H, 0, 0)
+        v2 = calibrate.vecHomog(H, 0, 1)
+        v3 = calibrate.vecHomog(H, 1, 1)
+
+        self.assertEqual(v1.shape, expectedShape)
+        self.assertEqual(v2.shape, expectedShape)
+        self.assertEqual(v3.shape, expectedShape)
+
+    def testcomputeIntrinsicMatrix(self):
+        H1 = np.array([
+            [400, 10, 320],
+            [20, 400, 240],
+            [0, 0, 1],
+        ])
+        H2 = np.array([
+            [300, 15, 320],
+            [20, 300, 240],
+            [0, 0, 1],
+        ])
+        H3 = np.array([
+            [100, 15, 120],
+            [0, 200, 340],
+            [0, 0, 1],
+        ])
+        Hs = [H1, H2, H3]
+
+        K = calibrate.computeIntrinsicMatrix(Hs)
+
+        self.assertAlmostEqual(K[1,0], 0)
+        self.assertAlmostEqual(K[2,0], 0)
+        self.assertAlmostEqual(K[2,1], 0)
+
 
 def generateRandomPointsInFrontOfCamera(numPoints):
     np.random.seed(0)

@@ -52,23 +52,110 @@ def computeHomography(x, X):
     """
     Estimate homography using DLT
 
-    Rearrange the model points, X, and the sensor points, x, into the following
-    formulation:
+    Inputs:
+        X -- 2D model points (3rd dimension ignored)
+        x -- 2D points in sensor
+
+    Output:
+        H -- homography matrix which relates x and X
+
+    Rearrange into the formulation:
 
         M * h = 0
 
     M represents the model and sensor point correspondences
     h is a vector representation of the homography H we are trying to find:
-        (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
+        h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
     """
     N = x.shape[0]
     M = np.zeros((2*N, 9))
     for i in range(N):
         Xi, Yi = X[i][:2]
         ui, vi = x[i][:2]
-        M[2*i,:] =   (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
+        M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
         M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
     U, S, V_T = np.linalg.svd(M)
     h = V_T[-1]
     H = h.reshape(3,3) / h[-1]
     return H
+
+
+def computeIntrinsicMatrix(Hs: list):
+    """
+    Compute the intrinsic matrix from a set of homographies using the closed form solution.
+
+    Inputs:
+        Hs -- list of homographies
+
+    Output:
+        K -- intrinsic camera matrix
+
+    From the Burger paper, use equations 96 - 105 to solve for vector b = (B0, B1, B2, B3, B4, B5)^T
+    and then compute alpha, beta, gamma, principal_x, principal_y. Store them in a matrix and return.
+
+    H = [h0 h1 h2] = lambda * A * [r0 r1 t]
+
+    By leveraging that r0 and r1 are orthonormal, we get:
+
+        h0^T * (A^-1)^T * A^-1 * h1 = 0
+        h0^T * (A^-1)^T * A^-1 * h0 = h1^T * (A^-1)^T * A^-1 * h1
+
+    B = (A^-1)^T * A^-1, where B = [B0 B1 B3]
+                                   [B1 B2 B4]
+                                   [B3 B4 B5]
+
+    simplifying:
+        h0^T * B * h1 = 0
+        h0^T * B * h0 - h1^T * B * h1 = 0
+
+    letting b = (B0, B1, B2, B3, B4, B5)^T
+
+    we reformulate the h^T * B * h form:
+        hp^T * B * hq = vecpq(H) * b
+
+        with vec(H, p, q) = (
+                H0p * H0q,
+                H0p * H1q + H1p * H0q,
+                H1p * H1q,
+                H2p * H0q + H0p * H2q,
+                H2p * H1q + H1p * H2q,
+                H2p * H2q,
+            )
+
+    so we can rewrite our system of equations for a single homography as:
+
+        [        vec(H, 0, 1)        ] * b = 0
+        [vec(H, 0, 0) - vec(H, 1, 1) ]
+
+    Now we can stack these terms in the left matrix for each homography to create
+    a matrix V of size (2*N, 6) and then solve for b with SVD.
+
+        V * b = 0
+    """
+    N = len(Hs)
+    V = np.zeros((2*N, 6))
+    for i in range(N):
+        H = Hs[i]
+        V[2*i,:]   = vecHomog(H, 0, 1)
+        V[2*i+1,:] = vecHomog(H, 0, 0) - vecHomog(H, 1, 1)
+    U, S, V_T = np.linalg.svd(V)
+    b = V_T[-1]
+    B0, B1, B2, B3, B4, B5 = b
+
+
+def vecHomog(H: np.ndarray, p: int, q: int):
+    """
+    Creates a vector of shape (1, 6) made up of components of H based on the
+    indices p and q which represent columns of the homography H. This format
+    allows the product to be used in homogenous form to solve for the values
+    of a matrix which is a product of the intrinsic parameters (B).
+    """
+    values = (
+        H[0,p] * H[0,q],
+        H[0,p] * H[1,q] + H[1,p] * H[0,q],
+        H[1,p] * H[1,q],
+        H[2,p] * H[0,q] + H[0,p] * H[2,q],
+        H[2,p] * H[1,q] + H[1,p] * H[2,q],
+        H[2,p] * H[2,q],
+    )
+    return np.array(values).reshape(1, 6)
