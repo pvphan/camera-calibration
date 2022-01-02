@@ -142,6 +142,22 @@ def computeIntrinsicMatrix(Hs: list):
     b = V_T[-1]
     B0, B1, B2, B3, B4, B5 = b
 
+    w = B0*B2*B5 - B1**2*B5 - B0*B4**2 + 2*B1*B3*B4 - B2*B3**2
+    d = B0*B2 - B1**2
+
+    alpha = np.sqrt(w / (d * B0))
+    beta = np.sqrt(w / d**2 * B0)
+    gamma = np.sqrt(w / (d**2 * B0) * B1)
+    uc = (B1*B4 - B2*B3) / d
+    vc = (B1*B3 - B0*B4) / d
+
+    K = np.array([
+        [alpha, gamma, uc],
+        [    0,  beta, vc],
+        [    0,     0,  1],
+    ])
+    return K
+
 
 def vecHomog(H: np.ndarray, p: int, q: int):
     """
