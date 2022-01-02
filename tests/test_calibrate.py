@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 import numpy as np
 
@@ -100,7 +101,9 @@ class TestCalibrate(unittest.TestCase):
         ])
         Hs = [H1, H2, H3]
 
-        K = calibrate.computeIntrinsicMatrix(Hs)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', r'invalid value encountered in double_scalars')
+            K = calibrate.computeIntrinsicMatrix(Hs)
 
         self.assertAlmostEqual(K[1,0], 0)
         self.assertAlmostEqual(K[2,0], 0)

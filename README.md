@@ -55,7 +55,7 @@ Don't use OpenCV, instead code it by hand.
 
 - [x] Generate dataset to test on (dataset.py)
 - [x] From 2D / 3D feature correspondences, estimate the homography (DLT-like estimation)
-- [ ] Compute close form solution for K based on homographies (ignore lens distorion)
+- [x] Compute close form solution for K based on homographies (ignore lens distorion)
 - [ ] Compute extrinsics R, t for each view
 - [ ] Compute distortion using linear least squares
 - [ ] Use estimated parameters as initial guess and refine using non-linear optimization over all views
