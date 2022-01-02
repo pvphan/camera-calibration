@@ -5,7 +5,10 @@ import numpy as np
 
 from __context__ import src
 from src import calibrate
+from src import checkerboard
+from src import dataset
 from src import mathutils as mu
+from src import virtualcamera
 
 
 class TestCalibrate(unittest.TestCase):
@@ -19,7 +22,6 @@ class TestCalibrate(unittest.TestCase):
             [-0.8, 0.4, 1.2, 1],
             [-0.8, 0.2, 1.2, 1],
         ])
-        cls.world_M_camera = np.eye(4)
         H1 = np.array([
             [400, 10, 320],
             [20, 400, 240],
@@ -131,18 +133,24 @@ class TestCalibrate(unittest.TestCase):
         self.assertTrue(np.allclose(A, Acomputed))
 
     def testcomputeIntrinsicMatrix(self):
-        A = np.array([
+        Aexpected = np.array([
             [400, 0, 320],
             [0, 400, 240],
             [0, 0, 1],
         ])
-        with warnings.catch_warnings():
-            warnings.filterwarnings('ignore', r'invalid value encountered in double_scalars')
-            A = calibrate.computeIntrinsicMatrix(self.Hs)
+        width, height = 640, 480
+        dataSet = createSyntheticDataset(Aexpected, width, height)
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        outputFolderPath = "/tmp/output/synthdataintrinsics"
+        dataSet.writeDatasetImages(outputFolderPath)
+        Hs = []
+        for x, X in allDetections:
+            H = calibrate.computeHomography(x, X)
+            Hs.append(H)
 
-        self.assertAlmostEqual(A[1,0], 0)
-        self.assertAlmostEqual(A[2,0], 0)
-        self.assertAlmostEqual(A[2,1], 0)
+        A = calibrate.computeIntrinsicMatrix(Hs)
+
+        self.assertTrue(np.allclose(A, Aexpected))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):
@@ -166,6 +174,15 @@ def createbVectorFromIntrinsicMatrix(A):
     B = Ainv.T @ Ainv
     b = (B[0,0], B[0,1], B[1,1], B[0,2], B[1,2], B[2,2])
     return b
+
+
+def createSyntheticDataset(A, width, height):
+    checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
+    distortionVector = (0, 0, 0, 0, 0)
+    virtualCamera = virtualcamera.VirtualCamera(A, distortionVector, width, height)
+    numViews = 10
+    dataSet = dataset.Dataset(checkerBoard, virtualCamera, numViews)
+    return dataSet
 
 
 if __name__ == "__main__":

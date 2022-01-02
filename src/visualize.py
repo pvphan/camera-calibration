@@ -29,9 +29,9 @@ def drawCross(image, point, length, color):
     if not (0 < u < w and 0 < v < h):
         return
     rowRange = np.arange(v - length//2, v + length//2 + 1)
-    rowRange = np.clip(rowRange, 0, h)
+    rowRange = np.clip(rowRange, 0, h-1)
     colRange = np.arange(u - length//2, u + length//2 + 1)
-    colRange = np.clip(colRange, 0, w)
+    colRange = np.clip(colRange, 0, w-1)
     image[v, colRange] = color
     image[rowRange, u] = color
 
