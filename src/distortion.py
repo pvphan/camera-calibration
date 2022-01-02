@@ -38,3 +38,6 @@ def distortSimple(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     normalizedDistortedPointsNx2 = np.hstack((mu.col(xd), mu.col(yd)))
     return normalizedDistortedPointsNx2
 
+
+def estimateDistortion():
+    return k

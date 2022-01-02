@@ -44,6 +44,9 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
 
+    def testestimateDistortion(self):
+        pass
+
 
 if __name__ == "__main__":
     unittest.main()

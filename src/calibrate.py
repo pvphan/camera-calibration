@@ -234,7 +234,11 @@ def computeIntrinsicMatrixFrombCholesky(b):
         A = (L^T)^-1
     """
     B0, B1, B2, B3, B4, B5 = b
-    B = np.array([
+    # ensure B is positive semi-definite
+    sign = +1
+    if B0 < 0 or B2 < 0 or B5 < 0:
+        sign = -1
+    B = sign * np.array([
         [B0, B1, B3],
         [B1, B2, B4],
         [B3, B4, B5],

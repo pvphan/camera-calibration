@@ -77,11 +77,11 @@ def unstack(As):
 
 
 def hom(v):
-    # v is Nx2 or Nx3
     if isinstance(v, tuple) or isinstance(v, list):
         v = np.array(v).reshape(-1, len(v))
     elif len(v.shape) == 1:
         return np.append(v, 1)
+    # v is Nx2 or Nx3
     vh = np.hstack((v, np.ones((v.shape[0], 1))))
     return vh
 
