@@ -166,6 +166,8 @@ def vecHomog(H: np.ndarray, p: int, q: int):
     indices p and q which represent columns of the homography H. This format
     allows the product to be used in homogenous form to solve for the values
     of a matrix which is a product of the intrinsic parameters (B).
+
+    Implements equation 96 of Burger
     """
     values = (
         H[0,p] * H[0,q],
@@ -176,3 +178,62 @@ def vecHomog(H: np.ndarray, p: int, q: int):
         H[2,p] * H[2,q],
     )
     return np.array(values).reshape(1, 6)
+
+
+def computeExtrinsics(Hs: list, K: np.ndarray):
+    Kinv = np.linalg.inv(K)
+    transformsWorldToCamera = []
+    for H in Hs:
+        h0 = H[:,0]
+        h1 = H[:,1]
+        h2 = H[:,2]
+
+        lmbda = 1 / np.linalg.norm(Kinv @ h0)
+
+        r0 = lmbda * Kinv @ h0
+        r1 = lmbda * Kinv @ h1
+        r2 = np.cross(r0, r1)
+
+        t = lmbda * Kinv @ h2
+
+        # not a true rotation matrix
+        Q = np.hstack((mu.col(r0), mu.col(r1), mu.col(r2)))
+
+        R = approximateRotationMatrix(Q)
+        transformWorldToCamera = mu.poseFromRT(R, t)
+        transformsWorldToCamera.append(transformWorldToCamera)
+    return transformsWorldToCamera
+
+
+def approximateRotationMatrix(Q: np.ndarray):
+    """
+    Input:
+        Q -- a 3x3 matrix which is close to a rotation matrix
+
+    Output:
+        R -- a 3x3 rotation matrix which is in SO(3)
+
+    Method from Zhang paper, Appendix C
+
+    minimize R in frobenius_norm(R - Q) subject to R^T * R = I
+
+    frobenius_norm(R - Q) = trace((R - Q)^T * (R - Q))
+                          = 3 + trace(Q^T * Q) - 2*trace(R^T * Q)
+
+    so equivalently, maximize trace(R^T * Q)
+
+    let
+        U, S, V^T = svd(Q)
+
+    we define
+        Z = V^T * R^T * U
+    ==>
+        trace(R^T * Q)
+        trace(R^T * U * S * V^T)
+        trace(V^T * R^T * U * S)
+        trace(Z * S)
+        =
+    """
+    U, S, V_T = np.linalg.svd(Q)
+    R = U @ V_T
+    return R

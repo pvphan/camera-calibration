@@ -20,6 +20,22 @@ class TestCalibrate(unittest.TestCase):
             [-0.8, 0.2, 1.2, 1],
         ])
         cls.world_M_camera = np.eye(4)
+        H1 = np.array([
+            [400, 10, 320],
+            [20, 400, 240],
+            [0, 0, 1],
+        ])
+        H2 = np.array([
+            [300, 15, 320],
+            [20, 300, 240],
+            [0, 0, 1],
+        ])
+        H3 = np.array([
+            [200, 15, 120],
+            [0, 200, 340],
+            [0, 0, 1],
+        ])
+        cls.Hs = [H1, H2, H3]
 
     def testproject(self):
         K = np.array([
@@ -84,30 +100,36 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(v3.shape, expectedShape)
 
     def testcomputeIntrinsicMatrix(self):
-        H1 = np.array([
-            [400, 10, 320],
-            [20, 400, 240],
-            [0, 0, 1],
-        ])
-        H2 = np.array([
-            [300, 15, 320],
-            [20, 300, 240],
-            [0, 0, 1],
-        ])
-        H3 = np.array([
-            [100, 15, 120],
-            [0, 200, 340],
-            [0, 0, 1],
-        ])
-        Hs = [H1, H2, H3]
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', r'invalid value encountered in double_scalars')
-            K = calibrate.computeIntrinsicMatrix(Hs)
+            K = calibrate.computeIntrinsicMatrix(self.Hs)
 
         self.assertAlmostEqual(K[1,0], 0)
         self.assertAlmostEqual(K[2,0], 0)
         self.assertAlmostEqual(K[2,1], 0)
+
+    def testapproximateRotationMatrix(self):
+        Q = np.array([
+            [0.95, 0, 0],
+            [0, 1, -0.05],
+            [0, 0, 1.05],
+        ])
+
+        R = calibrate.approximateRotationMatrix(Q)
+
+        self.assertAlmostEqual(np.linalg.det(R), 1)
+
+    def testcomputeExtrinsics(self):
+        K = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+
+        transformsWorldToCamera = calibrate.computeExtrinsics(self.Hs, K)
+
+        self.assertEqual(len(self.Hs), len(transformsWorldToCamera))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):
