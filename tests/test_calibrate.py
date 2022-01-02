@@ -100,7 +100,6 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(v3.shape, expectedShape)
 
     def testcomputeIntrinsicMatrix(self):
-
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', r'invalid value encountered in double_scalars')
             K = calibrate.computeIntrinsicMatrix(self.Hs)
