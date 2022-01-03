@@ -12,12 +12,12 @@ class TestCalibrate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.pointsInWorld = np.array([
-            [1, -1, 0.4, 1],
-            [-1, 1, 0.4, 1],
-            [0.3, 0.1, 2.0, 1],
-            [0.3, -0.1, 2.0, 1],
-            [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.2, 1.2, 1],
+            [1, -1, 0.4],
+            [-1, 1, 0.4],
+            [0.3, 0.1, 2.0],
+            [0.3, -0.1, 2.0],
+            [-0.8, 0.4, 1.2],
+            [-0.8, 0.2, 1.2],
         ])
 
     def test_distortPoints(self):
@@ -28,7 +28,7 @@ class TestCalibrate(unittest.TestCase):
         k3 = 0
         distortionCoeffients = (k1, k2, p1, p2, k3)
 
-        normalizedPointsNx2 = mu.unhom(mu.projectStandard(self.pointsInWorld))
+        normalizedPointsNx2 = mu.projectStandard(self.pointsInWorld)
         distortedPoints = distortion.distortPoints(normalizedPointsNx2, distortionCoeffients)
 
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
