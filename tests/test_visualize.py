@@ -7,7 +7,7 @@ from src import visualize
 
 
 class TestVisualize(unittest.TestCase):
-    def testdrawCross(self):
+    def test_drawCross(self):
         maxValue = 255
         w = 100
         h = 100
@@ -19,7 +19,7 @@ class TestVisualize(unittest.TestCase):
         visualize.drawCross(image, point, length, color)
         self.assertEqual(np.sum(image), maxValue * len(color) * (2 * length - 1))
 
-    def testdrawCrossOutOfBounds(self):
+    def test_drawCrossOutOfBounds(self):
         maxValue = 255
         w = 100
         h = 100

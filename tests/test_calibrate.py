@@ -5,10 +5,8 @@ import numpy as np
 
 from __context__ import src
 from src import calibrate
-from src import checkerboard
 from src import dataset
 from src import mathutils as mu
-from src import virtualcamera
 
 
 class TestCalibrate(unittest.TestCase):
@@ -39,7 +37,7 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
-    def testgetNormalizationMatrix(self):
+    def test_getNormalizationMatrix(self):
         expectedShape = (3,3)
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
@@ -48,7 +46,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertEqual(N_X.shape, expectedShape)
 
-    def testcomputeHomography(self):
+    def test_computeHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
         X[:,2] = 1
@@ -65,7 +63,7 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(Hcomputed.shape, (3,3))
         self.assertTrue(np.allclose(Hcomputed, Hexpected))
 
-    def testvecHomog(self):
+    def test_vecHomog(self):
         expectedShape = (1, 6)
         H = np.array([
             [400, 10, 320],
@@ -81,7 +79,7 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(v2.shape, expectedShape)
         self.assertEqual(v3.shape, expectedShape)
 
-    def testapproximateRotationMatrix(self):
+    def test_approximateRotationMatrix(self):
         Q = np.array([
             [0.95, 0, 0],
             [0, 1, -0.05],
@@ -92,7 +90,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertAlmostEqual(np.linalg.det(R), 1)
 
-    def testcomputeExtrinsics(self):
+    def test_computeExtrinsics(self):
         A = np.array([
             [400, 0, 320],
             [0, 400, 240],
@@ -103,7 +101,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertEqual(len(self.Hs), len(transformsWorldToCamera))
 
-    def testcomputeIntrinsicMatrixFrombClosedForm(self):
+    def test_computeIntrinsicMatrixFrombClosedForm(self):
         A = np.array([
             [400, 0, 320],
             [0, 400, 240],
@@ -115,7 +113,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertTrue(np.allclose(A, Acomputed))
 
-    def testcomputeIntrinsicMatrixFrombCholesky(self):
+    def test_computeIntrinsicMatrixFrombCholesky(self):
         A = np.array([
             [400, 0, 320],
             [0, 400, 240],
@@ -127,7 +125,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertTrue(np.allclose(A, Acomputed))
 
-    def testcomputeIntrinsicMatrix(self):
+    def test_computeIntrinsicMatrix(self):
         Aexpected = np.array([
             [400, 0, 320],
             [0, 400, 240],
@@ -135,7 +133,7 @@ class TestCalibrate(unittest.TestCase):
         ])
         width, height = 640, 480
         distortionVector = (0, 0, 0, 0, 0)
-        dataSet = createSyntheticDataset(Aexpected, width, height, distortionVector)
+        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Hs = []
         for x, X in allDetections:
@@ -168,16 +166,6 @@ def createbVectorFromIntrinsicMatrix(A):
     B = Ainv.T @ Ainv
     b = (B[0,0], B[0,1], B[1,1], B[0,2], B[1,2], B[2,2])
     return b
-
-
-def createSyntheticDataset(A, width, height, distortionVector):
-    # It's a bit ugly that some tests depend on another component working,
-    # but it's more convenient than hardcoding inputs.
-    checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
-    virtualCamera = virtualcamera.VirtualCamera(A, distortionVector, width, height)
-    numViews = 10
-    dataSet = dataset.Dataset(checkerBoard, virtualCamera, numViews)
-    return dataSet
 
 
 if __name__ == "__main__":

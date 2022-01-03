@@ -3,6 +3,7 @@ import unittest
 import numpy as np
 
 from __context__ import src
+from src import dataset
 from src import distortion
 from src import mathutils as mu
 
@@ -19,7 +20,7 @@ class TestCalibrate(unittest.TestCase):
             [-0.8, 0.2, 1.2, 1],
         ])
 
-    def testdistort(self):
+    def test_distort(self):
         k1 = 0.5
         k2 = 0.2
         p1 = 0
@@ -33,7 +34,7 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
 
-    def testdistortSimple(self):
+    def test_distortSimple(self):
         k1 = 0.5
         k2 = 0.2
         distortionCoeffients = (k1, k2)
@@ -44,7 +45,17 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
 
-    def testestimateDistortion(self):
+    def test_estimateDistortion(self):
+        Aexpected = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        width, height = 640, 480
+        distortionVector = (0.5, 0.2, 0, 0, 0)
+        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
+        dataSet.writeDatasetImages("/tmp/output/distorteddataset")
+        #distortion.estimateDistortion()
         pass
 
 

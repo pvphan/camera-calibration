@@ -70,3 +70,12 @@ class Dataset:
                 @ cameracoincident_M_cameraperturb
                 @ cameraperturb_M_camera)
         return board_M_camera
+
+
+def createSyntheticDataset(A, width, height, distortionVector):
+    checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
+    virtualCamera = virtualcamera.VirtualCamera(A, distortionVector, width, height)
+    numViews = 10
+    dataSet = Dataset(checkerBoard, virtualCamera, numViews)
+    return dataSet
+

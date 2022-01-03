@@ -2,6 +2,7 @@ import numpy as np
 
 from __context__ import src
 from src import checkerboard
+from src import distortion
 from src import mathutils as mu
 
 
@@ -30,9 +31,10 @@ class VirtualCamera:
         cornerPointsInBoard = checkerboard.getCornerPositions()
         camera_M_board = boardPoseInCamera
         cornerPointsInCamera = (camera_M_board @ mu.hom(cornerPointsInBoard).T).T
-        projectedPointsInSensor = mu.project(
-                self._intrinsicMatrix, np.eye(4), cornerPointsInCamera)
-        measuredPoints = projectedPointsInSensor[:,:2]
+        normalizedPoints = mu.project(np.eye(3), np.eye(4), cornerPointsInCamera)
+        distortedNormalizedPoints = distortion.distort(normalizedPoints,
+                self._distortionVector)
+        measuredPoints = (self._intrinsicMatrix @ mu.hom(distortedNormalizedPoints).T).T[:,:2]
         pointInImageSlice = np.s_[
                 (measuredPoints[:,0] > 0) & (measuredPoints[:,0] < self._imageWidth)
                 & (measuredPoints[:,1] > 0) & (measuredPoints[:,1] < self._imageHeight)

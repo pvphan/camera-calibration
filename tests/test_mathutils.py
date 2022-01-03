@@ -7,11 +7,11 @@ from src import mathutils as mu
 
 
 class TestMathUtils(unittest.TestCase):
-    def testcol(self):
+    def test_col(self):
         v = mu.col((1,1,1))
         self.assertEqual(v.shape, (3,1))
 
-    def testhom1(self):
+    def test_hom1(self):
         v = np.array([0, 0, 0])
         vHomExpected = np.array([0, 0, 0, 1])
 
@@ -19,7 +19,7 @@ class TestMathUtils(unittest.TestCase):
 
         self.assertTrue(np.allclose(vHomExpected, vHomComputed))
 
-    def testhom2(self):
+    def test_hom2(self):
         numPoints = 5
         v = np.arange(3 * numPoints).reshape(-1, 3)
         vHomExpected = np.zeros((numPoints,4))
@@ -31,7 +31,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(vHomExpected.shape, vHomComputed.shape)
         self.assertTrue(np.allclose(vHomExpected, vHomComputed))
 
-    def testunhom1(self):
+    def test_unhom1(self):
         vHom = np.array([0, 0, 0, 1])
         vExpected = np.array([0, 0, 0])
 
@@ -40,7 +40,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(vExpected.shape, vComputed.shape)
         self.assertTrue(np.allclose(vExpected, vComputed))
 
-    def testunhom2(self):
+    def test_unhom2(self):
         numPoints = 5
         vExpected = np.arange(3 * numPoints).reshape(-1, 3)
         vHom = np.zeros((numPoints,4))
@@ -52,7 +52,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(vExpected.shape, vComputed.shape)
         self.assertTrue(np.allclose(vExpected, vComputed))
 
-    def testskew(self):
+    def test_skew(self):
         v = mu.col((0.5, 1.0, -0.25))
         vHatExpected = np.array([
             [0, 0.25, 1.0],
@@ -66,7 +66,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertTrue(np.allclose(vHatExpected, vHat))
         self.assertTrue(np.allclose(vHat, -vHat.T))
 
-    def testunskew(self):
+    def test_unskew(self):
         vHat = np.array([
             [0, 0.25, 1.0],
             [-0.25, 0, -0.5],
@@ -77,7 +77,7 @@ class TestMathUtils(unittest.TestCase):
         v = mu.unskew(vHat)
         self.assertTrue(np.allclose(vExpected, v))
 
-    def testexp(self):
+    def test_exp(self):
         z = mu.col((0, 0, 1))
         theta = 90
         expectedRotation = np.array([
@@ -89,7 +89,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation))
 
-    def testexpZeroRot(self):
+    def test_expZeroRot(self):
         z = mu.col((0, 0, 1))
         theta = 0
         expectedRotation = np.eye(3)
@@ -98,7 +98,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(computedRotation.shape, (3,3))
         self.assertTrue(np.allclose(expectedRotation, computedRotation))
 
-    def testeulerToRotationMatrix1(self):
+    def test_eulerToRotationMatrix1(self):
         expectedRotation = np.array([
             [0, -1, 0],
             [1, 0, 0],
@@ -112,7 +112,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
                 f"\nexpected:\n{expectedRotation}\n\ncomputed:\n{computedRotation}")
 
-    def testeulerToRotationMatrix2(self):
+    def test_eulerToRotationMatrix2(self):
         expectedRotation = np.array([
             [-1, 0, 0],
             [0, 1, 0],
@@ -126,7 +126,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
                 f"\nexpected:\n{expectedRotation}\n\ncomputed:\n{computedRotation}")
 
-    def testeulerToRotationMatrix3(self):
+    def test_eulerToRotationMatrix3(self):
         expectedRotation = np.array([
             [0, -1, 0],
             [0, 0, 1],
@@ -140,7 +140,7 @@ class TestMathUtils(unittest.TestCase):
         self.assertTrue(np.allclose(expectedRotation, computedRotation),
                 f"\nexpected:\n{expectedRotation}\n\ncomputed:\n{computedRotation}")
 
-    def testtransformRepresentations(self):
+    def test_transformRepresentations(self):
         # preferred representation: pose of camera in world <--> transform from camera to world
         eulerAngles = (0, 45, 90)
         rotationMatrix = mu.eulerToRotationMatrix(eulerAngles)
@@ -164,7 +164,7 @@ class TestMathUtils(unittest.TestCase):
         RTHomog[:3,:] = RT
         self.assertTrue(np.allclose(camera_M_world, RTHomog))
 
-    def teststack(self):
+    def test_stack(self):
         A = np.array([
             [1, 4, 7],
             [2, 5, 8],
@@ -176,7 +176,7 @@ class TestMathUtils(unittest.TestCase):
 
         self.assertTrue(np.allclose(expectedAs, As))
 
-    def testunstack(self):
+    def test_unstack(self):
         expectedA = np.array([
             [1, 4, 7],
             [2, 5, 8],
@@ -188,7 +188,7 @@ class TestMathUtils(unittest.TestCase):
 
         self.assertTrue(np.allclose(expectedA, A))
 
-    def testposeFromRT(self):
+    def test_poseFromRT(self):
         R = np.array([
             [0, -1, 0],
             [1, 0, 0],
@@ -209,7 +209,7 @@ class TestMathUtils(unittest.TestCase):
 
         self.assertTrue(np.allclose(world_M_camera_expected, world_M_camera))
 
-    def testproject(self):
+    def test_project(self):
         world_M_camera = np.eye(4)
         pointsInWorld = np.array([
             [1, -1, 0.4, 1],

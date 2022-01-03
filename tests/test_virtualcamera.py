@@ -9,7 +9,7 @@ from src import mathutils as mu
 
 
 class TestVirtualCamera(unittest.TestCase):
-    def testmeasureDetectedPoints(self):
+    def test_measureDetectedPoints(self):
         imageWidth = 720
         imageHeight = 480
         intrinsicMatrix = np.array([

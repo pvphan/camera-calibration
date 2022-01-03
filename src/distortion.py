@@ -39,5 +39,27 @@ def distortSimple(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     return normalizedDistortedPointsNx2
 
 
-def estimateDistortion():
+def estimateDistortion(A: np.ndarray, allDetections: list):
+    """
+    Input:
+        A -- estimated intrinsic matrix
+        allDetections -- a list of tuples, where the tuples are the measurements
+                (measuredPointsInSensor, measuredPointsInBoard)
+
+    Output:
+        k -- the distortion model, made up of (k1, k2)^T
+
+    Notes:
+        We have M views, each with N points
+        Formulate the problem as the linear system:
+
+            D * k = Ddot
+
+        where D and Ddot have 2MN rows
+
+        We'll solve this linear system by taking the pseudo-inverse of D and
+        left-multiplying it with Ddot.
+
+        k = pinv(D) * Ddot
+    """
     return k

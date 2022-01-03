@@ -44,7 +44,7 @@ class TestDataset(unittest.TestCase):
         cls.numViews = 2
         cls.syntheticDataset = dataset.Dataset(checkerboard, virtualCamera, cls.numViews)
 
-    def testgetCornerDetectionsInSensorCoordinates(self):
+    def test_getCornerDetectionsInSensorCoordinates(self):
         allDetections = self.syntheticDataset.getCornerDetectionsInSensorCoordinates()
 
         self.assertEqual(len(allDetections), self.numViews)
@@ -52,7 +52,7 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(allDetections[0][0].shape[1], 2)
         self.assertEqual(allDetections[0][1].shape[1], 3)
 
-    def testwriteDatasetImages(self):
+    def test_writeDatasetImages(self):
         outputFolderPath = "/tmp/output/testwritedata"
         shutil.rmtree(outputFolderPath, ignore_errors=True)
 
