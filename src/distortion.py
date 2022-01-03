@@ -30,11 +30,20 @@ def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     return normalizedDistortedPointsNx2
 
 
-def projectWithDistortion(A, X, distortionVector):
+def projectWithDistortion(A, X, k):
+    """
+    Input:
+        A -- intrinsic matrix
+        X -- Nx3 points in camera coordinates
+        k -- distortion coefficients
+
+    Output:
+        distortedPointsInSensor -- Nx2 matrix
+    """
     normalizedPoints = mu.projectStandard(X)
-    distortedNormalizedPoints = distortPoints(normalizedPoints, distortionVector)
-    distortedPoints = mu.project(A, np.eye(4), mu.hom(distortedNormalizedPoints))
-    return distortedPoints
+    distortedNormalizedPoints = distortPoints(normalizedPoints, k)
+    distortedPointsInSensor = mu.project(A, np.eye(4), mu.hom(distortedNormalizedPoints))
+    return distortedPointsInSensor
 
 
 def estimateDistortion(A: np.ndarray, allDetections: list):
