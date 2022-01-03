@@ -6,6 +6,7 @@ from src import mathutils as mu
 
 def distort(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     """https://euratom-software.github.io/calcam/html/intro_theory.html#rectilinear-lens-distortion-model"""
+    return distortSimple(normalizedPointsNx2, distortionCoeffients[:2])
     k1, k2, p1, p2, k3 = distortionCoeffients
     r = np.linalg.norm(normalizedPointsNx2, axis=1)
 

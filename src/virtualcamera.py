@@ -32,8 +32,10 @@ class VirtualCamera:
         camera_M_board = boardPoseInCamera
         cornerPointsInCamera = (camera_M_board @ mu.hom(cornerPointsInBoard).T).T
         normalizedPoints = mu.project(np.eye(3), np.eye(4), cornerPointsInCamera)
+
         distortedNormalizedPoints = distortion.distort(normalizedPoints,
                 self._distortionVector)
+
         measuredPoints = (self._intrinsicMatrix @ mu.hom(distortedNormalizedPoints).T).T[:,:2]
         pointInImageSlice = np.s_[
                 (measuredPoints[:,0] > 0) & (measuredPoints[:,0] < self._imageWidth)

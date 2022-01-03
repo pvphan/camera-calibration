@@ -52,7 +52,7 @@ class TestCalibrate(unittest.TestCase):
             [0, 0, 1],
         ])
         width, height = 640, 480
-        distortionVector = (0.5, 0.2, 0, 0, 0)
+        distortionVector = (-0.2, -0.0, 0, 0, 0)
         dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
         dataSet.writeDatasetImages("/tmp/output/distorteddataset")
         #distortion.estimateDistortion()
