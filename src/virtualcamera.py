@@ -31,21 +31,12 @@ class VirtualCamera:
         cornerPointsInBoard = checkerboard.getCornerPositions()
         camera_M_board = boardPoseInCamera
         cornerPointsInCamera = mu.transform(camera_M_board, cornerPointsInBoard)
-        normalizedPoints = mu.projectStandard(cornerPointsInCamera)
+        distortedPointsInSensor = distortion.projectWithDistortion(self._intrinsicMatrix,
+                cornerPointsInCamera, self._distortionVector)
 
-        distortedNormalizedPoints = distortion.distortPoints(normalizedPoints,
-                self._distortionVector)
-        #n = 34
-        #if normalizedPoints.shape[0] > 34:
-        #    print(cornerPointsInCamera[34])
-        #    print(normalizedPoints[34])
-        #    print(distortedNormalizedPoints[34])
-
-        I = np.eye(4)
-        measuredPoints = mu.project(self._intrinsicMatrix, I, mu.hom(distortedNormalizedPoints))
         pointInImageSlice = np.s_[
-                (measuredPoints[:,0] > 0) & (measuredPoints[:,0] < self._imageWidth)
-                & (measuredPoints[:,1] > 0) & (measuredPoints[:,1] < self._imageHeight)
+                (distortedPointsInSensor[:,0] > 0) & (distortedPointsInSensor[:,0] < self._imageWidth)
+                & (distortedPointsInSensor[:,1] > 0) & (distortedPointsInSensor[:,1] < self._imageHeight)
         ]
-        return measuredPoints[pointInImageSlice], cornerPointsInBoard[pointInImageSlice]
+        return distortedPointsInSensor[pointInImageSlice], cornerPointsInBoard[pointInImageSlice]
 
