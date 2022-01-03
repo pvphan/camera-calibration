@@ -11,7 +11,8 @@ def writeDetectionsImage(measuredPointsInSensor, w, h, outputPath):
 
 
 def createDetectionsImage(measuredPointsInSensor, w, h):
-    image = createBlankImage(w, h)
+    gray = (64, 64, 64)
+    image = createBlankImage(w, h, color=gray)
     length = 9
     teal = (0, 255, 255)
     drawCrosses(image, measuredPointsInSensor, length, teal)
@@ -36,5 +37,8 @@ def drawCross(image, point, length, color):
     image[rowRange, u] = color
 
 
-def createBlankImage(w, h):
-    return np.zeros((h, w, 3), dtype=np.uint8)
+def createBlankImage(w, h, color=None):
+    image = np.zeros((h, w, 3), dtype=np.uint8)
+    if color is not None:
+        image[:,:] = color
+    return image

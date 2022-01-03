@@ -234,6 +234,20 @@ class TestMathUtils(unittest.TestCase):
         # z values are all 1, homogeneous
         self.assertTrue(np.allclose(computedPointsInCamera[:,2], 1))
 
+    def test_projectStandard(self):
+        pointsInCamera = np.array([
+            [1, -1, 0.4, 1],
+            [-1, 1, 0.4, 1],
+            [0.3, 0.1, 2.0, 1],
+            [0.3, -0.1, 2.0, 1],
+            [-0.8, 0.4, 1.2, 1],
+            [-0.8, 0.2, 1.2, 1],
+        ])
+        normalizedPoints = mu.projectStandard(pointsInCamera)
+
+        self.assertEqual(pointsInCamera.shape[0], normalizedPoints.shape[0])
+        self.assertEqual(normalizedPoints.shape[1], 3)
+
 
 if __name__ == "__main__":
     unittest.main()

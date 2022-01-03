@@ -31,7 +31,7 @@ class VirtualCamera:
         cornerPointsInBoard = checkerboard.getCornerPositions()
         camera_M_board = boardPoseInCamera
         cornerPointsInCamera = (camera_M_board @ mu.hom(cornerPointsInBoard).T).T
-        normalizedPoints = mu.project(np.eye(3), np.eye(4), cornerPointsInCamera)
+        normalizedPoints = mu.unhom(mu.projectStandard(cornerPointsInCamera))
 
         distortedNormalizedPoints = distortion.distort(normalizedPoints,
                 self._distortionVector)
