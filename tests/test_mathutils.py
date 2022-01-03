@@ -212,41 +212,54 @@ class TestMathUtils(unittest.TestCase):
     def test_project(self):
         world_M_camera = np.eye(4)
         pointsInWorld = np.array([
-            [1, -1, 0.4, 1],
-            [-1, 1, 0.4, 1],
-            [0.3, 0.1, 2.0, 1],
-            [0.3, -0.1, 2.0, 1],
-            [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.2, 1.2, 1],
+            [1, -1, 0.4],
+            [-1, 1, 0.4],
+            [0.3, 0.1, 2.0],
+            [0.3, -0.1, 2.0],
+            [-0.8, 0.4, 1.2],
+            [-0.8, 0.2, 1.2],
         ])
         A = np.array([
             [450,   0, 360],
             [  0, 450, 240],
             [  0,   0,   1],
         ], dtype=np.float64)
-        pointsInCamera = (np.linalg.inv(world_M_camera) @ pointsInWorld.T).T
+        pointsInCamera = (np.linalg.inv(world_M_camera) @ mu.hom(pointsInWorld).T).T
         pointsInCameraNormalized = (pointsInCamera / mu.col(pointsInCamera[:,2]))[:,:3]
         expectedPointsInCamera = (A @ pointsInCameraNormalized.T).T
 
         computedPointsInCamera = mu.project(A, np.eye(4), pointsInWorld)
         # x, y values are the same
         self.assertTrue(np.allclose(expectedPointsInCamera[:,:2], computedPointsInCamera[:,:2]))
-        # z values are all 1, homogeneous
-        self.assertTrue(np.allclose(computedPointsInCamera[:,2], 1))
 
     def test_projectStandard(self):
         pointsInCamera = np.array([
-            [1, -1, 0.4, 1],
-            [-1, 1, 0.4, 1],
-            [0.3, 0.1, 2.0, 1],
-            [0.3, -0.1, 2.0, 1],
-            [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.2, 1.2, 1],
+            [1, -1, 0.4],
+            [-1, 1, 0.4],
+            [0.3, 0.1, 2.0],
+            [0.3, -0.1, 2.0],
+            [-0.8, 0.4, 1.2],
+            [-0.8, 0.2, 1.2],
         ])
         normalizedPoints = mu.projectStandard(pointsInCamera)
 
         self.assertEqual(pointsInCamera.shape[0], normalizedPoints.shape[0])
-        self.assertEqual(normalizedPoints.shape[1], 3)
+        self.assertEqual(normalizedPoints.shape[1], 2)
+
+    def test_transform(self):
+        Xa = np.array([
+            [1, -1, 0.4],
+            [-1, 1, 0.4],
+            [0.3, 0.1, 2.0],
+            [0.3, -0.1, 2.0],
+            [-0.8, 0.4, 1.2],
+            [-0.8, 0.2, 1.2],
+        ])
+        b_M_a = np.eye(4)
+        Xb = mu.transform(b_M_a, Xa)
+
+        self.assertEqual(Xb.shape, Xa.shape)
+        self.assertTrue(np.allclose(Xb, Xa))
 
 
 if __name__ == "__main__":

@@ -95,9 +95,9 @@ def hom(v):
 
 def unhom(vHom):
     if len(vHom.shape) == 1:
-        v = vHom[:-1]
+        v = vHom[:-1] / vHom[-1]
     elif len(vHom.shape) == 2:
-        v = vHom[:,:-1]
+        v = vHom[:,:-1] / col(vHom[:,-1])
     else:
         raise ValueError(f"Unexpected input shape for unhom: {vHom.shape}\n{vHom}")
     return v
@@ -128,19 +128,31 @@ def project(A, cameraPose, X0):
 
     # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
     g = np.linalg.inv(cameraPose)
-    lambdaxp = (A @ Π0 @ g @ X0.T).T
-    xp = lambdaxp / col(lambdaxp[:, -1])
+    xp = unhom((A @ Π0 @ g @ hom(X0).T).T)
     return xp
 
 
 def projectStandard(X):
     """
     Inputs:
-        X -- 3D points in camera coordinates
+        X -- Nx3 points in camera coordinates
 
     Outputs:
-        x -- normalized projected 2D points
+        x -- Nx2 normalized projected 2D points
     """
-    lambdaxp = (Π0 @ X.T).T
+    lambdaxp = (Π0 @ hom(X).T).T
     xp = lambdaxp / col(lambdaxp[:, -1])
-    return xp
+    return xp[:,:2]
+
+
+def transform(b_M_a, Xa):
+    """
+    Inputs:
+        b_M_a -- rigid body transform from coordinates of a to b
+        Xa -- matrix of Nx3 points in coordinates of a
+
+    Outputs:
+        Xb -- matrix of Nx3 points in coordinates of b
+    """
+    Xb = unhom((b_M_a @ hom(Xa).T).T)
+    return Xb

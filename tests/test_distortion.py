@@ -20,7 +20,7 @@ class TestCalibrate(unittest.TestCase):
             [-0.8, 0.2, 1.2, 1],
         ])
 
-    def test_distort(self):
+    def test_distortPoints(self):
         k1 = 0.5
         k2 = 0.2
         p1 = 0
@@ -28,11 +28,12 @@ class TestCalibrate(unittest.TestCase):
         k3 = 0
         distortionCoeffients = (k1, k2, p1, p2, k3)
 
-        normalizedPointsNx2 = (self.pointsInWorld / mu.col(self.pointsInWorld[:,2]))[:,:2]
-        distortedPoints = distortion.distort(normalizedPointsNx2, distortionCoeffients)
+        normalizedPointsNx2 = mu.unhom(mu.projectStandard(self.pointsInWorld))
+        distortedPoints = distortion.distortPoints(normalizedPointsNx2, distortionCoeffients)
 
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
+        self.assertFalse(np.allclose(normalizedPointsNx2, distortedPoints))
 
     def test_estimateDistortion(self):
         Aexpected = np.array([
