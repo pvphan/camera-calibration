@@ -56,11 +56,12 @@ def estimateDistortion(A: np.ndarray, allDetections: list):
 
             D * k = Ddot
 
-        where D and Ddot have 2MN rows
+        where D is (2MN, 2) and and Ddot is (2MN, 1)
 
         We'll solve this linear system by taking the pseudo-inverse of D and
         left-multiplying it with Ddot.
 
         k = pinv(D) * Ddot
     """
+    k = None
     return k

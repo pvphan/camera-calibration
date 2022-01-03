@@ -43,6 +43,7 @@ class TestDataset(unittest.TestCase):
         virtualCamera.getImageHeight.return_value = cls.imageHeight
         cls.numViews = 2
         cls.syntheticDataset = dataset.Dataset(checkerboard, virtualCamera, cls.numViews)
+        cls.outputFolderPath = "/tmp/output/testwritedata"
 
     def test_getCornerDetectionsInSensorCoordinates(self):
         allDetections = self.syntheticDataset.getCornerDetectionsInSensorCoordinates()
@@ -53,17 +54,20 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(allDetections[0][1].shape[1], 3)
 
     def test_writeDatasetImages(self):
-        outputFolderPath = "/tmp/output/testwritedata"
-        shutil.rmtree(outputFolderPath, ignore_errors=True)
+        shutil.rmtree(self.outputFolderPath, ignore_errors=True)
 
-        self.syntheticDataset.writeDatasetImages(outputFolderPath)
+        self.syntheticDataset.writeDatasetImages(self.outputFolderPath)
 
-        filePaths = glob(outputFolderPath + "/*")
+        filePaths = glob(self.outputFolderPath + "/*")
         self.assertGreater(len(filePaths), 0)
         expectedImageShape = (self.imageHeight, self.imageWidth, 3)
         for filePath in filePaths:
             image = imageio.imread(filePath)
             self.assertEqual(image.shape, expectedImageShape)
+
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree(self.outputFolderPath, ignore_errors=True)
 
 
 if __name__ == "__main__":
