@@ -52,6 +52,17 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(vExpected.shape, vComputed.shape)
         self.assertTrue(np.allclose(vExpected, vComputed))
 
+    def test_unhom3(self):
+        numPoints = 5
+        v = np.arange(3 * numPoints).reshape(-1, 3)
+        vHom = mu.hom(v)
+        s = 5
+
+        v1 = mu.unhom(vHom)
+        v2 = mu.unhom(s * vHom)
+
+        self.assertTrue(np.allclose(v1, v2))
+
     def test_skew(self):
         v = mu.col((0.5, 1.0, -0.25))
         vHatExpected = np.array([

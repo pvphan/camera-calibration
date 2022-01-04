@@ -4,8 +4,7 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def distortPoints_old(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
-    """https://euratom-software.github.io/calcam/html/intro_theory.html#rectilinear-lens-distortion-model"""
+def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     if len(distortionCoeffients) == 2:
         k1, k2 = distortionCoeffients
         p1 = p2 = k3 = 0
@@ -30,7 +29,7 @@ def distortPoints_old(normalizedPointsNx2: np.ndarray, distortionCoeffients: tup
     return normalizedDistortedPointsNx2
 
 
-def distortPoints(x: np.ndarray, k: tuple):
+def distortPointsSimple(x: np.ndarray, k: tuple):
     """
     Inputs:
         x -- normalized points (undistorted), (N,2)
