@@ -138,11 +138,10 @@ def projectStandard(X):
         X -- Nx3 points in camera coordinates
 
     Outputs:
-        xp -- Nx2 normalized projected 2D points
+        x -- Nx2 normalized projected 2D points
     """
-    lambdaxp = (Π0 @ hom(X).T).T
-    xp = lambdaxp / col(lambdaxp[:, -1])
-    return xp[:,:2]
+    x = unhom((Π0 @ hom(X).T).T)
+    return x
 
 
 def transform(b_M_a, Xa):

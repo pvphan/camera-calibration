@@ -4,7 +4,7 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
+def distortPoints_old(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     """https://euratom-software.github.io/calcam/html/intro_theory.html#rectilinear-lens-distortion-model"""
     if len(distortionCoeffients) == 2:
         k1, k2 = distortionCoeffients
@@ -30,6 +30,30 @@ def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     return normalizedDistortedPointsNx2
 
 
+def distortPoints(x: np.ndarray, k: tuple):
+    """
+    Inputs:
+        x -- normalized points (undistorted), (N,2)
+        k -- distortion coefficients, (5,)
+
+    Outputs:
+        xd -- distorted normalized points (N,2)
+    """
+    if len(k) == 2:
+        k1, k2 = k
+        p1 = p2 = k3 = 0
+    elif len(k) == 5:
+        k1, k2, p1, p2, k3 = k
+    else:
+        raise ValueError(f"Invalid distortion coefficient length {len(k)}: {k}")
+    r = np.linalg.norm(x, axis=1)
+    D = k1 * r**2 + k2 * r**4
+    xd_x = x[:,0] * (1 + D)
+    xd_y = x[:,1] * (1 + D)
+    xd = np.hstack((mu.col(xd_x), mu.col(xd_y)))
+    return xd
+
+
 def projectWithDistortion(A, X, k):
     """
     Input:
@@ -39,10 +63,14 @@ def projectWithDistortion(A, X, k):
 
     Output:
         distortedPointsInSensor -- Nx2 matrix
+
+    x -- normalized points in camera
+    xd -- distorted normalized points in camera
     """
-    normalizedPoints = mu.projectStandard(X)
-    distortedNormalizedPoints = distortPoints(normalizedPoints, k)
-    distortedPointsInSensor = mu.project(A, np.eye(4), mu.hom(distortedNormalizedPoints))
+    Ap = A[:2,:3]
+    x = mu.projectStandard(X)
+    xd = distortPoints(x, k)
+    distortedPointsInSensor = (Ap @ mu.hom(xd).T).T
     return distortedPointsInSensor
 
 

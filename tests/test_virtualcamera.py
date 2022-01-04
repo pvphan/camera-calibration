@@ -10,7 +10,7 @@ from src import mathutils as mu
 
 class TestVirtualCamera(unittest.TestCase):
     def test_measureDetectedPoints(self):
-        imageWidth = 720
+        imageWidth = 640
         imageHeight = 480
         intrinsicMatrix = np.array([
             [450,   0, 360],
@@ -19,10 +19,7 @@ class TestVirtualCamera(unittest.TestCase):
         ], dtype=np.float64)
         k1 = 0.5
         k2 = 0.2
-        p1 = 0
-        p2 = 0
-        k3 = 0
-        distortionCoeffients = (k1, k2, p1, p2, k3)
+        distortionCoeffients = (k1, k2)
         checkerboard = MagicMock()
         cornerPositions = np.array([
             [0.0, 0.0, 0],
