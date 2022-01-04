@@ -96,5 +96,8 @@ def estimateDistortion(A: np.ndarray, allDetections: list):
 
         k = pinv(D) * Ddot
     """
+    for i, (x, X) in enumerate(allDetections):
+        for j, (xj, Xj) in enumerate(zip(x, X)):
+            print(xj, Xj)
     k = None
     return k

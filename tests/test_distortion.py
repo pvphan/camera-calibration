@@ -36,16 +36,19 @@ class TestCalibrate(unittest.TestCase):
         self.assertFalse(np.allclose(normalizedPointsNx2, distortedPoints))
 
     def test_estimateDistortion(self):
-        Aexpected = np.array([
+        A = np.array([
             [400, 0, 320],
             [0, 400, 240],
             [0, 0, 1],
         ])
         width, height = 640, 480
-        distortionVector = (-0.5, 0.2)
-        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
-        #distortion.estimateDistortion()
-        pass
+        kExpected = (-0.5, 0.2)
+        dataSet = dataset.createSyntheticDataset(A, width, height, kExpected)
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+
+        kComputed = distortion.estimateDistortion(A, allDetections)
+
+        self.assertTrue(np.allclose(kExpected, kComputed))
 
 
 if __name__ == "__main__":
