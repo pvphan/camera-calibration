@@ -67,9 +67,9 @@ def projectWithDistortion(A, X, k):
     x -- normalized points in camera
     xd -- distorted normalized points in camera
     """
-    Ap = A[:2,:3]
     x = mu.projectStandard(X)
     xd = distortPoints(x, k)
+    Ap = A[:2,:3]
     distortedPointsInSensor = (Ap @ mu.hom(xd).T).T
     return distortedPointsInSensor
 

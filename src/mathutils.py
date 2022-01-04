@@ -3,13 +3,6 @@ Math utility functions based on lectures from Prof. Daniel Cremers' Multiple Vie
 """
 import numpy as np
 
-# standard projection matrix
-Π0 = np.array([
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 0],
-])
-
 
 def eulerToRotationMatrix(rXrYrZDegrees):
     rx, ry, rz = rXrYrZDegrees
@@ -116,20 +109,21 @@ def poseFromRT(R, T):
     return world_M_camera
 
 
-def project(A, cameraPose, X0):
+def project(A, wMc, wX):
     """
-    A             -- the intrinsic parameter matrix
-    cameraPose    -- the camera pose in world
-    X0            -- the 3D points (homogeneous) in the world
-    xp            -- x' the projected 2D points in the camera (homogeneous)
+    Inputs:
+        A   -- the intrinsic parameter matrix
+        wMc -- the camera pose in world
+        wX  -- the 3D points in the world
 
-    Π0            -- standard projection matrix
+    Outputs:
+        xp  -- x' the projected 2D points in the camera
     """
-
-    # λ*x' = 𝐾 * Π₀ * g * 𝑋₀
-    g = np.linalg.inv(cameraPose)
-    xp = unhom((A @ Π0 @ g @ hom(X0).T).T)
-    return xp
+    cMw = np.linalg.inv(wMc)
+    X = transform(cMw, wX)
+    x = projectStandard(X)
+    u = unhom((A @ hom(x).T).T)
+    return u
 
 
 def projectStandard(X):
@@ -139,19 +133,26 @@ def projectStandard(X):
 
     Outputs:
         x -- Nx2 normalized projected 2D points
+
+    Π0            -- standard projection matrix
     """
+    Π0 = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+    ])
     x = unhom((Π0 @ hom(X).T).T)
     return x
 
 
-def transform(b_M_a, Xa):
+def transform(b_M_a, aX):
     """
     Inputs:
         b_M_a -- rigid body transform from coordinates of a to b
-        Xa -- matrix of Nx3 points in coordinates of a
+        aX -- matrix of Nx3 points in coordinates of a
 
     Outputs:
-        Xb -- matrix of Nx3 points in coordinates of b
+        bX -- matrix of Nx3 points in coordinates of b
     """
-    Xb = unhom((b_M_a @ hom(Xa).T).T)
-    return Xb
+    bX = unhom((b_M_a @ hom(aX).T).T)
+    return bX
