@@ -5,6 +5,14 @@ from src import mathutils as mu
 
 
 def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
+    """
+    Inputs:
+        x -- normalized points (undistorted), (N,2)
+        k -- distortion coefficients, (5,) or (2,)
+
+    Outputs:
+        xd -- distorted normalized points (N,2)
+    """
     if len(distortionCoeffients) == 2:
         k1, k2 = distortionCoeffients
         p1 = p2 = k3 = 0
@@ -33,16 +41,13 @@ def distortPointsSimple(x: np.ndarray, k: tuple):
     """
     Inputs:
         x -- normalized points (undistorted), (N,2)
-        k -- distortion coefficients, (5,)
+        k -- distortion coefficients, (2,)
 
     Outputs:
         xd -- distorted normalized points (N,2)
     """
     if len(k) == 2:
         k1, k2 = k
-        p1 = p2 = k3 = 0
-    elif len(k) == 5:
-        k1, k2, p1, p2, k3 = k
     else:
         raise ValueError(f"Invalid distortion coefficient length {len(k)}: {k}")
     r = np.linalg.norm(x, axis=1)
@@ -50,6 +55,7 @@ def distortPointsSimple(x: np.ndarray, k: tuple):
     xd_x = x[:,0] * (1 + D)
     xd_y = x[:,1] * (1 + D)
     xd = np.hstack((mu.col(xd_x), mu.col(xd_y)))
+    #xd = x * mu.col((1 + D))
     return xd
 
 
