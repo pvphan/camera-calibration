@@ -21,10 +21,13 @@ class Dataset:
             virtualCamera: virtualcamera.VirtualCamera, numViews: int):
         self._checkerboard = checkerboard
         self._virtualCamera = virtualCamera
-        self._allDetections = self._computeDetections(numViews)
+        self._allDetections, self._allBoardPosesInCamera = self._computeDetections(numViews)
 
     def getCornerDetectionsInSensorCoordinates(self):
         return self._allDetections
+
+    def getAllBoardPosesInCamera(self):
+        return self._allBoardPosesInCamera
 
     def writeDatasetImages(self, outputFolderPath):
         os.makedirs(outputFolderPath, exist_ok=True)
@@ -38,6 +41,7 @@ class Dataset:
         boardCornerPositions = self._checkerboard.getCornerPositions()
         numBoardCorners = boardCornerPositions.shape[0]
         allDetections = []
+        allBoardPosesInCamera = []
         for viewIndex in range(numViews):
             np.random.seed(viewIndex)
             cornerIndexToPointAt = np.random.choice(numBoardCorners)
@@ -52,11 +56,12 @@ class Dataset:
                     boardPositionToAimAt, rotationEulerAngles, distanceFromBoard)
 
             boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
+            allBoardPosesInCamera.append(boardPoseInCamera)
             measuredPointsInSensor, measuredPointsInBoard = (
                     self._virtualCamera.measureDetectedPoints(self._checkerboard,
                             boardPoseInCamera))
             allDetections.append((measuredPointsInSensor, measuredPointsInBoard))
-        return allDetections
+        return allDetections, allBoardPosesInCamera
 
     def _computeCameraPoseInBoard(self, boardPositionToAimAt, rotationEulerAngles,
             distanceFromBoard):

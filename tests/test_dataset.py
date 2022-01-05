@@ -53,6 +53,12 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(allDetections[0][0].shape[1], 2)
         self.assertEqual(allDetections[0][1].shape[1], 3)
 
+    def test_getAllBoardPosesInCamera(self):
+        allBoardPosesInCamera = self.syntheticDataset.getAllBoardPosesInCamera()
+
+        self.assertEqual(len(allBoardPosesInCamera), self.numViews)
+        self.assertEqual(allBoardPosesInCamera[0].shape, (4,4))
+
     def test_writeDatasetImages(self):
         shutil.rmtree(self.outputFolderPath, ignore_errors=True)
 

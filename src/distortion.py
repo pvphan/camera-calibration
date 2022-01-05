@@ -79,7 +79,7 @@ def projectWithDistortion(A, X, k):
     return distortedPointsInSensor
 
 
-def estimateDistortion(A: np.ndarray, allDetections: list):
+def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera: list):
     """
     Input:
         A -- estimated intrinsic matrix
@@ -101,9 +101,43 @@ def estimateDistortion(A: np.ndarray, allDetections: list):
         left-multiplying it with Ddot.
 
         k = pinv(D) * Ddot
+
+        for each 2 rows in D:
+            (udotij - uc) * rij**2      (udotij - uc) * rij**4
+            (vdotij - vc) * rij**2      (vdotij - vc) * rij**4
+
+        for each 2 rows in Ddot:
+            (uij - udotij)
+            (vij - vdotij)
+
     """
-    for i, (x, X) in enumerate(allDetections):
-        for j, (xj, Xj) in enumerate(zip(x, X)):
-            print(xj, Xj)
-    k = None
+    uc = A[0,2]
+    vc = A[1,2]
+    D = np.empty((0,2))
+    Ddot = np.empty((0,1))
+    for i, ((U, X), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
+        for j, (u, bXij) in enumerate(zip(U, X)):
+            # rij is computed from the normalized image coordinate, which is computed by
+            #   projecting the 3D model point to camera coordinates using the standard
+            #   projection (f=1)
+            cXij = mu.transform(cMb, bXij)
+            xij = mu.projectStandard(cXij)
+            rij = np.linalg.norm(xij)
+
+            # udotij, vdotij are the measured image points
+            udotij, vdotij = u
+
+            Dij = np.array([
+                [(udotij - uc) * rij**2, (udotij - uc) * rij**4],
+                [(vdotij - vc) * rij**2, (vdotij - vc) * rij**4],
+            ])
+            D = np.vstack((D, Dij))
+
+            u, v = mu.project(A, np.eye(4), cXij)
+            Ddotij = np.array([
+                [(u - udotij)],
+                [(v - vdotij)],
+            ])
+            Ddot = np.vstack((Ddot, Ddotij))
+    k = np.linalg.pinv(D) @ Ddot
     return k
