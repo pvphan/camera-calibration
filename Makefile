@@ -1,6 +1,6 @@
 WORKDIR_PATH=/camera-calibration
-REPO_PATH=$(HOME)/git/camera-calibration
-OUTPUT_PATH=$(HOME)/Documents/camera-calibration-output
+REPO_PATH:=$(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+OUTPUT_PATH=${REPO_PATH}/output
 IMAGE_TAG=pvphan/camera-calibration:0.1
 RUN_FLAGS = \
 	--rm -it \

@@ -1,3 +1,5 @@
+[![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
+
 # Camera Calibration using Zhang's Method
 
 Current status: WIP
