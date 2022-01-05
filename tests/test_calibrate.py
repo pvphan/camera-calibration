@@ -97,9 +97,9 @@ class TestCalibrate(unittest.TestCase):
             [0, 0, 1],
         ])
 
-        transformsWorldToCamera = calibrate.computeExtrinsics(self.Hs, A)
+        worldToCameraTransforms = calibrate.computeExtrinsics(self.Hs, A)
 
-        self.assertEqual(len(self.Hs), len(transformsWorldToCamera))
+        self.assertEqual(len(self.Hs), len(worldToCameraTransforms))
 
     def test_computeIntrinsicMatrixFrombClosedForm(self):
         A = np.array([

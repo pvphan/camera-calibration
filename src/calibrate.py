@@ -85,7 +85,7 @@ def getNormalizationMatrix(X):
 
 def computeIntrinsicMatrix(Hs: list):
     """
-    Compute the intrinsic matrix from a set of homographies
+    Compute the intrinsic matrix from a list of homographies
 
     Inputs:
         Hs -- list of homographies
@@ -256,10 +256,10 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
         A -- intrinsic matrix
 
     Output:
-        transformsWorldToCamera -- list of transform matrices from world to camera
+        worldToCameraTransforms -- list of transform matrices from world to camera
     """
     Ainv = np.linalg.inv(A)
-    transformsWorldToCamera = []
+    worldToCameraTransforms = []
     for H in Hs:
         h0 = H[:,0]
         h1 = H[:,1]
@@ -278,8 +278,8 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
 
         R = approximateRotationMatrix(Q)
         transformWorldToCamera = mu.poseFromRT(R, t)
-        transformsWorldToCamera.append(transformWorldToCamera)
-    return transformsWorldToCamera
+        worldToCameraTransforms.append(transformWorldToCamera)
+    return worldToCameraTransforms
 
 
 def approximateRotationMatrix(Q: np.ndarray):
@@ -315,6 +315,3 @@ def approximateRotationMatrix(Q: np.ndarray):
     R = U @ V_T
     return R
 
-
-def estimateDistortion():
-    return k
