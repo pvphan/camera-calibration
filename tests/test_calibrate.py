@@ -144,6 +144,22 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertTrue(np.allclose(A, Aexpected))
 
+    def test_estimateDistortion(self):
+        A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        width, height = 640, 480
+        kExpected = (-0.5, 0.2)
+        dataSet = dataset.createSyntheticDataset(A, width, height, kExpected)
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
+
+        kComputed = calibrate.estimateDistortion(A, allDetections, allBoardPosesInCamera)
+
+        self.assertTrue(np.allclose(kExpected, kComputed))
+
 
 def generateRandomPointsInFrontOfCamera(numPoints):
     np.random.seed(0)

@@ -3,7 +3,6 @@ import unittest
 import numpy as np
 
 from __context__ import src
-from src import dataset
 from src import distortion
 from src import mathutils as mu
 
@@ -45,22 +44,6 @@ class TestCalibrate(unittest.TestCase):
         projectedPoints = distortion.projectWithDistortion(A, self.pointsInWorld, k)
 
         self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))
-
-    def test_estimateDistortion(self):
-        A = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-        width, height = 640, 480
-        kExpected = (-0.5, 0.2)
-        dataSet = dataset.createSyntheticDataset(A, width, height, kExpected)
-        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
-
-        kComputed = distortion.estimateDistortion(A, allDetections, allBoardPosesInCamera)
-
-        self.assertTrue(np.allclose(kExpected, kComputed))
 
 
 if __name__ == "__main__":
