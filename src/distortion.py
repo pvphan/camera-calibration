@@ -85,9 +85,11 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
         A -- estimated intrinsic matrix
         allDetections -- a list of tuples, where the tuples are the measurements
                 (measuredPointsInSensor, measuredPointsInBoard)
+        allBoardPosesInCamera -- a list of all board poses in camera, corresponding
+                to each view
 
     Output:
-        k -- the distortion model, made up of (k1, k2)^T
+        k -- the distortion model, made up of (k1, k2)
 
     Notes:
         We have M views, each with N points
@@ -140,17 +142,17 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
         # keeping the unvectorized version for posterity. it's also easier to read
         for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
             for j, (udot, bXij) in enumerate(zip(U, bX)):
-                # rij is computed from the normalized image coordinate, which is computed by
+                # rij is computed from the normalized sensor coordinate, which is computed by
                 #   projecting the 3D model point to camera coordinates using the standard
-                #   projection (f=1)
+                #   projection matrix (f=1)
                 cXij = mu.transform(cMb, bXij)
                 xij = mu.projectStandard(cXij)
                 rij = np.linalg.norm(xij)
 
-                # the measured image points with distortion
+                # the measured sensor points with distortion
                 udotij, vdotij = udot
 
-                # the projected image points without distortion
+                # the projected sensor points without distortion
                 u, v = mu.project(A, np.eye(4), cXij)
 
                 Dij = np.array([
