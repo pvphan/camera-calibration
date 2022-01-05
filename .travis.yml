@@ -1,0 +1,23 @@
+language: python
+python: 3.9.9
+os: linux
+dist: buster
+
+version: ~> 1.0
+
+env:
+  global:
+    - IMAGE_NAME=pvphan/ci
+    - IMAGE_TAG=latest
+
+jobs:
+  include:
+    - stage: "Build and test"
+      name: "Build docker image and run tests"
+      script:
+        - make test
+      after_script: make removeContainers
+
+branches:
+  only:
+    - main
