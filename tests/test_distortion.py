@@ -21,7 +21,7 @@ class TestCalibrate(unittest.TestCase):
         ])
 
     def test_distortPoints(self):
-        k1 = 0.5
+        k1 = -0.5
         k2 = 0.2
         p1 = 0
         p2 = 0
@@ -34,6 +34,17 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
         self.assertFalse(np.allclose(normalizedPointsNx2, distortedPoints))
+
+    def test_projectWithDistortion(self):
+        A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        k = (-0.5, 0.2)
+        projectedPoints = distortion.projectWithDistortion(A, self.pointsInWorld, k)
+
+        self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))
 
     def test_estimateDistortion(self):
         A = np.array([
