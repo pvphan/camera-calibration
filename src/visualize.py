@@ -27,7 +27,7 @@ def drawCrosses(image, points, length, color):
 def drawCross(image, point, length, color):
     h, w = image.shape[:2]
     u, v = np.rint(point).astype(int)
-    if not (0 < u < w and 0 < v < h):
+    if not (0 <= u < w and 0 <= v < h):
         return
     rowRange = np.arange(v - length//2, v + length//2 + 1)
     rowRange = np.clip(rowRange, 0, h-1)
