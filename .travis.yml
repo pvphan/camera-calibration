@@ -16,7 +16,6 @@ jobs:
       name: "Build docker image and run tests"
       script:
         - make test
-      after_script: make removeContainers
 
 branches:
   only:
