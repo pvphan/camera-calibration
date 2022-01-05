@@ -144,6 +144,9 @@ def computeIntrinsicMatrix(Hs: list):
         V[2*i+1,:] = vecHomography(H, 0, 0) - vecHomography(H, 1, 1)
     U, S, V_T = np.linalg.svd(V)
     b = V_T[-1]
+
+    # could use the 'closed form' solution here instead (also implemented),
+    #   but using Cholesky decomposition was more interesting
     A = computeIntrinsicMatrixFrombCholesky(b)
     return A
 
