@@ -103,20 +103,19 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
         k = pinv(D) * Ddot
 
         for each 2 rows in D:
-            (udotij - uc) * rij**2      (udotij - uc) * rij**4
-            (vdotij - vc) * rij**2      (vdotij - vc) * rij**4
+            [(udotij - uc) * rij**2, (udotij - uc) * rij**4]
+            [(vdotij - vc) * rij**2, (vdotij - vc) * rij**4]
 
         for each 2 rows in Ddot:
             (uij - udotij)
             (vij - vdotij)
-
     """
     uc = A[0,2]
     vc = A[1,2]
     D = np.empty((0,2))
     Ddot = np.empty((0,1))
-    for i, ((U, X), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
-        for j, (u, bXij) in enumerate(zip(U, X)):
+    for i, ((U, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
+        for j, (udot, bXij) in enumerate(zip(U, bX)):
             # rij is computed from the normalized image coordinate, which is computed by
             #   projecting the 3D model point to camera coordinates using the standard
             #   projection (f=1)
@@ -124,8 +123,8 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
             xij = mu.projectStandard(cXij)
             rij = np.linalg.norm(xij)
 
-            # udotij, vdotij are the measured image points
-            udotij, vdotij = u
+            # the measured image points (with distortion)
+            udotij, vdotij = udot
 
             Dij = np.array([
                 [(udotij - uc) * rij**2, (udotij - uc) * rij**4],
@@ -133,6 +132,7 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
             ])
             D = np.vstack((D, Dij))
 
+            # the measured image points (with distortion)
             u, v = mu.project(A, np.eye(4), cXij)
             Ddotij = np.array([
                 [(u - udotij)],
@@ -140,4 +140,4 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
             ])
             Ddot = np.vstack((Ddot, Ddotij))
     k = np.linalg.pinv(D) @ Ddot
-    return k
+    return tuple(k.ravel())

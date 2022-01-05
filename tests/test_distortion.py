@@ -48,6 +48,8 @@ class TestCalibrate(unittest.TestCase):
         allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
 
         kComputed = distortion.estimateDistortion(A, allDetections, allBoardPosesInCamera)
+        print(kExpected)
+        print(kComputed)
 
         self.assertTrue(np.allclose(kExpected, kComputed))
 
