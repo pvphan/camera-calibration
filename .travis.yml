@@ -1,7 +1,7 @@
 language: python
 python: 3.9.9
 os: linux
-dist: buster
+dist: focal
 
 version: ~> 1.0
 
