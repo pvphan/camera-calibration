@@ -1,25 +1,21 @@
-[![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
-
 # Camera Calibration using Zhang's Method
+
+[![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
 
 Current status: WIP
 
 Prerequisites: `make`, `docker`
 
-Usage:
-- Calibrate from text file input: `make calibrate <input_file_path>`
-- Run tests: `make test`
+Usage: `make calibrate <input_file_path>`
 
 
-## Goals:
-
-### Write Zhang calibration by hand
+## Goal: write Zhang calibration by hand
 
 Create a simple interface for calibrating camera intrinsics from a text file of 2D to 3D point correspondences.
 Don't use OpenCV, instead code it by hand.
 
 
-### Answer the following questions
+### QA for my own learning:
 
 - What were the innovations of Zhang calibration over the prior state of the art?
 
@@ -61,10 +57,6 @@ Don't use OpenCV, instead code it by hand.
 - [x] Compute extrinsics R, t for each view
 - [x] Compute distortion using linear least squares
 - [ ] Use estimated parameters as initial guess and refine using non-linear optimization over all views
-
-Maybe:
-- [-] Use normalization in homography estimation
-- [ ] Refine homography estimation using non-linear optimization
 
 
 ## Notes:
