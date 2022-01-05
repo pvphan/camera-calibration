@@ -123,20 +123,21 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
             xij = mu.projectStandard(cXij)
             rij = np.linalg.norm(xij)
 
-            # the measured image points (with distortion)
+            # the measured image points with distortion
             udotij, vdotij = udot
 
+            # the projected image points without distortion
+            u, v = mu.project(A, np.eye(4), cXij)
+
             Dij = np.array([
-                [(udotij - uc) * rij**2, (udotij - uc) * rij**4],
-                [(vdotij - vc) * rij**2, (vdotij - vc) * rij**4],
+                [(u - uc) * rij**2, (u - uc) * rij**4],
+                [(v - vc) * rij**2, (v - vc) * rij**4],
             ])
             D = np.vstack((D, Dij))
 
-            # the measured image points (with distortion)
-            u, v = mu.project(A, np.eye(4), cXij)
             Ddotij = np.array([
-                [(u - udotij)],
-                [(v - vdotij)],
+                [udotij - u],
+                [vdotij - v],
             ])
             Ddot = np.vstack((Ddot, Ddotij))
     k = np.linalg.pinv(D) @ Ddot
