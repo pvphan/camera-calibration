@@ -409,3 +409,6 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
     k = np.linalg.pinv(D) @ Ddot
     return tuple(k.ravel())
 
+
+def refineCalibrationParameters():
+    raise NotImplementedError()

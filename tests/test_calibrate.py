@@ -165,6 +165,20 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertTrue(np.allclose(kExpected, kComputed))
 
+    def test_refineCalibrationParameters(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        Aexpected = dataSet.getIntrinsicMatrix()
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
+        kExpected = dataSet.getDistortionVector()
+        Wexpected = dataSet.getAllBoardPosesInCamera()
+
+        Acomputed, kComputed, Wcomputed = calibrate.refineCalibrationParameters()
+
+        self.assertTrue(np.allclose(Aexpected, Acomputed))
+        self.assertTrue(np.allclose(kExpected, kComputed))
+        self.assertTrue(np.allclose(Wexpected, Wcomputed))
+
 
 def generateRandomPointsInFrontOfCamera(numPoints):
     np.random.seed(0)
