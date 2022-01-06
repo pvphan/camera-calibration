@@ -37,6 +37,16 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
+        A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+
+        width, height = 640, 480
+        kExpected = (-0.5, 0.2)
+        cls.syntheticDatasetWithoutDistortion = dataset.createSyntheticDataset(A, width, height, kExpected)
+
     def test_getNormalizationMatrix(self):
         expectedShape = (3,3)
         numPoints = 10
@@ -145,16 +155,11 @@ class TestCalibrate(unittest.TestCase):
         self.assertTrue(np.allclose(A, Aexpected))
 
     def test_estimateDistortion(self):
-        A = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-        width, height = 640, 480
-        kExpected = (-0.5, 0.2)
-        dataSet = dataset.createSyntheticDataset(A, width, height, kExpected)
+        dataSet = self.syntheticDatasetWithoutDistortion
+        A = dataSet.getIntrinsicMatrix()
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
+        kExpected = dataSet.getDistortionVector()
 
         kComputed = calibrate.estimateDistortion(A, allDetections, allBoardPosesInCamera)
 

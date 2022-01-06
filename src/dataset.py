@@ -29,6 +29,12 @@ class Dataset:
     def getAllBoardPosesInCamera(self):
         return self._allBoardPosesInCamera
 
+    def getIntrinsicMatrix(self):
+        return self._virtualCamera.getIntrinsicMatrix()
+
+    def getDistortionVector(self):
+        return self._virtualCamera.getDistortionVector()
+
     def writeDatasetImages(self, outputFolderPath):
         os.makedirs(outputFolderPath, exist_ok=True)
         w = self._virtualCamera.getImageWidth()
