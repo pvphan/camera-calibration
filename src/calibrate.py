@@ -447,4 +447,15 @@ def estimateCalibrationParameters(allDetections):
 
 
 def refineCalibrationParameters(Ainitial, Winitial, kInitial):
+    """
+    Input:
+        Ainitial -- initial estimate of intrinsic matrix
+        Winitial -- initial estimate of world-to-camera transforms
+        kInitial -- initial estimate of distortion coefficients
+
+    Output:
+        Arefined -- refined estimate of intrinsic matrix
+        Wrefined -- refined estimate of world-to-camera transforms
+        kRefined -- refined estimate of distortion coefficients
+    """
     return Ainitial, Winitial, kInitial
