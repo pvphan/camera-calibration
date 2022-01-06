@@ -56,7 +56,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertEqual(N_X.shape, expectedShape)
 
-    def test_computeHomography(self):
+    def test_estimateHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
         X[:,2] = 1
@@ -72,6 +72,22 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertEqual(Hcomputed.shape, (3,3))
         self.assertTrue(np.allclose(Hcomputed, Hexpected))
+
+    def test_estimateHomographies(self):
+        Aexpected = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        width, height = 640, 480
+        distortionVector = (0, 0, 0, 0, 0)
+        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+
+        Hs = calibrate.estimateHomographies(allDetections)
+
+        self.assertEqual(len(Hs), len(allDetections))
+        self.assertEqual(Hs[0].shape, (3,3))
 
     def test_vecHomog(self):
         expectedShape = (1, 6)
@@ -145,10 +161,7 @@ class TestCalibrate(unittest.TestCase):
         distortionVector = (0, 0, 0, 0, 0)
         dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        Hs = []
-        for x, X in allDetections:
-            H = calibrate.estimateHomography(x, X[:,:2])
-            Hs.append(H)
+        Hs = calibrate.estimateHomographies(allDetections)
 
         A = calibrate.computeIntrinsicMatrix(Hs)
 
@@ -165,19 +178,32 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertTrue(np.allclose(kExpected, kComputed))
 
+
+    def test_estimateCalibrationParameters(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+
+        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+
+        self.assertEqual(Ainitial.shape, (3,3))
+        self.assertEqual(len(Winitial), len(allDetections))
+        self.assertEqual(len(kInitial), 2)
+
     def test_refineCalibrationParameters(self):
         dataSet = self.syntheticDatasetWithoutDistortion
-        Aexpected = dataSet.getIntrinsicMatrix()
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
+        Aexpected = dataSet.getIntrinsicMatrix()
         kExpected = dataSet.getDistortionVector()
         Wexpected = dataSet.getAllBoardPosesInCamera()
 
-        #Acomputed, kComputed, Wcomputed = calibrate.refineCalibrationParameters()
+        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
 
-        #self.assertTrue(np.allclose(Aexpected, Acomputed))
-        #self.assertTrue(np.allclose(kExpected, kComputed))
-        #self.assertTrue(np.allclose(Wexpected, Wcomputed))
+        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+                Ainitial, Winitial, kInitial)
+
+        self.assertTrue(np.allclose(Aexpected, Arefined))
+        self.assertTrue(np.allclose(Wexpected, Wrefined))
+        self.assertTrue(np.allclose(kExpected, kRefined))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):

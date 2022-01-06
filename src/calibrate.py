@@ -7,7 +7,24 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def estimateHomography(Xa, Xb):
+def estimateHomographies(allDetections: list):
+    """
+    Input:
+        allDetections -- list of tuples (one for each view).
+                Each tuple is (Xa, Xb), a set of sensor points
+                and model points respectively
+
+    Output:
+        Hs -- list of homographies, one for each view
+    """
+    Hs = []
+    for Xa, Xb in allDetections:
+        H = estimateHomography(Xa[:,:2], Xb[:,:2])
+        Hs.append(H)
+    return Hs
+
+
+def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
     """
     Estimate homography using DLT
 
@@ -410,5 +427,24 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
     return tuple(k.ravel())
 
 
-def refineCalibrationParameters():
-    raise NotImplementedError()
+def estimateCalibrationParameters(allDetections):
+    """
+    Input:
+        allDetections -- list of tuples (one for each view).
+                Each tuple is (Xa, Xb), a set of sensor points
+                and model points respectively
+
+    Output:
+        Ainitial -- initial estimate of intrinsic matrix
+        Winitial -- initial estimate of world-to-camera transforms
+        kInitial -- initial estimate of distortion coefficients
+    """
+    Hs = estimateHomographies(allDetections)
+    Ainitial = computeIntrinsicMatrix(Hs)
+    Winitial = computeExtrinsics(Hs, Ainitial)
+    kInitial = estimateDistortion(Ainitial, allDetections, Winitial)
+    return Ainitial, Winitial, kInitial
+
+
+def refineCalibrationParameters(Ainitial, Winitial, kInitial):
+    return Ainitial, Winitial, kInitial
