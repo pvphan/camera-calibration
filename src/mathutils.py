@@ -119,6 +119,10 @@ def project(A, wMc, wX):
     Outputs:
         xp  -- x' the projected 2D points in the camera
     """
+    validateShape(A.shape, (3,3))
+    validateShape(wMc.shape, (4,4))
+    validateShape(wX.shape, (None,3))
+
     cMw = np.linalg.inv(wMc)
     X = transform(cMw, wX)
     x = projectStandard(X)
@@ -136,6 +140,8 @@ def projectStandard(X):
 
     Π0            -- standard projection matrix
     """
+    validateShape(X.shape, (None,3))
+
     Π0 = np.array([
         [1, 0, 0, 0],
         [0, 1, 0, 0],
@@ -154,5 +160,8 @@ def transform(b_M_a, aX):
     Outputs:
         bX -- matrix of Nx3 points in coordinates of b
     """
+    validateShape(b_M_a.shape, (4,4))
+    validateShape(aX.shape, (None,3))
+
     bX = unhom((b_M_a @ hom(aX).T).T)
     return bX
