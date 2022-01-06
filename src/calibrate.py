@@ -215,16 +215,16 @@ def computeIntrinsicMatrixFrombClosedForm(b):
     w = B0*B2*B5 - B1**2*B5 - B0*B4**2 + 2*B1*B3*B4 - B2*B3**2
     d = B0*B2 - B1**2
 
-    alpha = np.sqrt(w / (d * B0))               # eq 99
-    beta = np.sqrt(w / d**2 * B0)               # eq 100
-    gamma = np.sqrt(w / (d**2 * B0) * B1)       # eq 101
-    uc = (B1*B4 - B2*B3) / d                    # eq 102
-    vc = (B1*B3 - B0*B4) / d                    # eq 103
+    α = np.sqrt(w / (d * B0))          # eq 99
+    β = np.sqrt(w / d**2 * B0)         # eq 100
+    γ = np.sqrt(w / (d**2 * B0) * B1)  # eq 101
+    uc = (B1*B4 - B2*B3) / d           # eq 102
+    vc = (B1*B3 - B0*B4) / d           # eq 103
 
     A = np.array([
-        [alpha, gamma, uc],
-        [    0,  beta, vc],
-        [    0,     0,  1],
+        [α, γ, uc],
+        [0, β, vc],
+        [0, 0,  1],
     ])
     return A
 
@@ -285,13 +285,13 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
         h1 = H[:,1]
         h2 = H[:,2]
 
-        lmbda = 1 / np.linalg.norm(Ainv @ h0)
+        λ = 1 / np.linalg.norm(Ainv @ h0)
 
-        r0 = lmbda * Ainv @ h0
-        r1 = lmbda * Ainv @ h1
+        r0 = λ * Ainv @ h0
+        r1 = λ * Ainv @ h1
         r2 = np.cross(r0, r1)
 
-        t = lmbda * Ainv @ h2
+        t = λ * Ainv @ h2
 
         # Q is not in SO(3)
         Q = np.hstack((mu.col(r0), mu.col(r1), mu.col(r2)))
@@ -446,7 +446,7 @@ def estimateCalibrationParameters(allDetections):
     return Ainitial, Winitial, kInitial
 
 
-def refineCalibrationParameters(Ainitial, Winitial, kInitial):
+def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     """
     Input:
         Ainitial -- initial estimate of intrinsic matrix
@@ -458,4 +458,91 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial):
         Wrefined -- refined estimate of world-to-camera transforms
         kRefined -- refined estimate of distortion coefficients
     """
-    return Ainitial, Winitial, kInitial
+
+    # stack all measurements into a vector y
+
+    # define a function which maps inputs to an output vector matching y
+
+    # call optimization
+    return Ainitial, Winitial, kInitial #TODO: return actual solution
+
+
+# from my coursera MVG assignment as a basis for nonlinear optimization with Levenberg-Marquardt
+def nonlinearTriangulation(K, C1, R1, C2, R2, C3, R3, x1p, x2p, x3p, X0):
+    """
+    Refining the poses of the cameras to get a better estimate of the points
+    3D position
+    Inputs:
+        K - size (3 x 3) camera calibration (intrinsics) matrix
+        x
+    Outputs:
+        X - size (N x 3) matrix of refined point 3D locations
+    """
+    w_M_c1 = mu.poseFromRT(R1, C1)
+    w_M_c2 = mu.poseFromRT(R2, C2)
+    w_M_c3 = mu.poseFromRT(R3, C3)
+    Rs = [R1, R2, R3]
+    N = X0.shape[0]
+    maxIters = 500
+
+    f = K[0,0]
+    px = K[0,2]
+    py = K[1,2]
+
+    x_t = X0
+    λ = 1e-3
+    allCameraPoses = [w_M_c1, w_M_c2, w_M_c3]
+    allMeasuredPoints = [x1p, x2p, x3p]
+    for k in range(maxIters):
+        # project current points
+        xs = projectAllPoints(K, allCameraPoses, x_t)
+        x1, x2, x3 = xs
+        delta = np.zeros_like(x_t)
+        for j in range(N):
+            b = mu.col([x1p[j,0], x1p[j,1], x2p[j,0], x2p[j,1], x3p[j,0], x3p[j,1]])
+            fX = mu.col([x1[j,0], x1[j,1], x2[j,0], x2[j,1], x3[j,0], x3[j,1]])
+            J = np.zeros((6,3))
+            for i in range(3):
+                ui, vi, wi = xs[i][j]
+                R = Rs[i]
+                r11, r12, r13 = R[0,0], R[0,1], R[0,2]
+                r21, r22, r23 = R[1,0], R[1,1], R[1,2]
+                r31, r32, r33 = R[2,0], R[2,1], R[2,2]
+                duidX = np.array([f*r11 + px*r31, f*r12 + px*r32, f*r13 + px*r33]).reshape(1,3)
+                dvidX = np.array([f*r21 + py*r31, f*r22 + py*r32, f*r23 + py*r33]).reshape(1,3)
+                dwidX = np.array([r31, r32, r33]).reshape(1,3)
+                J[2*i,:] = (wi * duidX - ui * dwidX) / wi**2
+                J[2*i+1,:] = (wi * dvidX - vi * dwidX) / wi**2
+            JTJ = J.T @ J
+            diagJTJ = np.diag(np.diagonal(JTJ))
+            delta_j = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ (b - fX)
+            delta[j] = delta_j.ravel()
+        x_t_error = computeReprojectionError(K, allCameraPoses, allMeasuredPoints, x_t)
+        x_tp1_error = computeReprojectionError(K, allCameraPoses, allMeasuredPoints, x_t + delta)
+        if x_tp1_error < x_t_error:
+            x_t += delta
+            λ /= 10
+        else:
+            λ *= 10
+        if λ < 1e-150:
+            break
+
+    return x_t
+
+
+def computeReprojectionError(K, allCameraPoses, allMeasuredPoints, x_t):
+    xs = projectAllPoints(K, allCameraPoses, x_t)
+    totalError = 0
+    for i in range(len(xs)):
+        xi = xs[i][:,:2]
+        xip = allMeasuredPoints[i]
+        totalError += np.sum(np.linalg.norm(xi - xip, axis=1)**2)
+    return totalError
+
+
+def projectAllPoints(K, allCameraPoses, x_t):
+    xs = []
+    for cameraPose in allCameraPoses:
+        xi = mu.project(K, cameraPose, mu.homog(x_t))
+        xs.append(xi)
+    return xs

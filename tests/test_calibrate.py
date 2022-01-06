@@ -198,7 +198,7 @@ class TestCalibrate(unittest.TestCase):
         Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
 
         Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
-                Ainitial, Winitial, kInitial)
+                Ainitial, Winitial, kInitial, allDetections)
 
         #self.assertTrue(np.allclose(Aexpected, Arefined))
         #self.assertTrue(np.allclose(Wexpected, Wrefined))
