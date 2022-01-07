@@ -2,7 +2,7 @@
 Core calibration functions.
 """
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import curve_fit
 
 from __context__ import src
 from src import mathutils as mu
@@ -453,6 +453,9 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
         Ainitial -- initial estimate of intrinsic matrix
         Winitial -- initial estimate of world-to-camera transforms
         kInitial -- initial estimate of distortion coefficients
+        allDetections -- list of tuples (one for each view).
+                Each tuple is (Xa, Xb), a set of sensor points
+                and model points respectively
 
     Output:
         Arefined -- refined estimate of intrinsic matrix
@@ -462,13 +465,29 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
     Uses SciPy non-linear optimization to solve.
     """
 
-    # stack all measurements into a vector y
+    # stack sensor measurements into a vector y
+    y = None
+    # stack model points into a vector x
 
-    # define a function which maps inputs to an output vector matching y
-
-    # call optimization
-    minimize(f, xdata, ydata, p0, method='lm')
+    p0 = composeParameterVector(Ainitial, Winitial, kInitial)
+    P = curve_fit(f, x, y, p0, method='lm')
+    Ainitial, Winitial, kInitial = decomposeParameterVector(P)
     return Ainitial, Winitial, kInitial #TODO: return actual solution
+
+
+def f(x, P):
+    """
+    The function to minimize to refine all calibration parameters.
+
+    Input:
+        x -- vector of model points (2MN, 2)
+        P -- vector of parameters made up of A, W, k (2MN,1)
+
+    Output:
+        u -- the expected measurements given the input x and the
+                calibration parameters P
+    """
+    raise NotImplementedError()
 
 
 def computeCalibrationError(A, W, k, allDetections):
@@ -504,24 +523,45 @@ def composeParameterVector(A, W, k):
     for cMw in W:
         R = cMw[:3,:3]
         t = cMw[:3,3]
-        ρix, ρiy, ρiz = R
+        ρix, ρiy, ρiz = mu.rotationMatrixToEuler(R)
         tix, tiy, tiz = t
         P = np.vstack((P, mu.col([ρix, ρiy, ρiz, tix, tiy, tiz])))
-
     return P
 
 
-def f(P, allDetections):
+def decomposeParameterVector(P):
     """
-    The function to minimize to refine all calibration parameters.
-
     Input:
-        P -- vector of parameters made up of A, W, k (2MN,1)
+        P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
+            P = (α, β, γ, uc, uv, k1, k2,
+                    ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
+                    ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
+                    ...,
+                    ρM-1x, ρM-1y, ρM-1z, tM-1x, tM-1y, tM-1z,
+                    ...)^T
 
     Output:
-        sse -- the sum squared error of the predicted vs measured points
+        A -- intrinsic matrix
+        W -- world-to-camera transforms
+        k -- distortion coefficients
     """
-    raise NotImplementedError()
+    poseStartIndex = 7
+    numPoseParams = 6
+    α, β, γ, uc, vc, k1, k2 = P[:poseStartIndex,0]
+    A = np.array([
+        [α, γ, uc],
+        [0, β, vc],
+        [0, 0,  1],
+    ])
+    W = []
+    for i in range(poseStartIndex, P.shape[0], numPoseParams):
+        ρix, ρiy, ρiz, tix, tiy, tiz = P[i:i+numPoseParams,0]
+        R = mu.eulerToRotationMatrix((ρix, ρiy, ρiz))
+        t = (tix, tiy, tiz)
+        W.append(mu.poseFromRT(R, t))
+
+    k = (k1, k2)
+    return A, W, k
 
 
 # from my coursera MVG assignment as a basis for nonlinear optimization with Levenberg-Marquardt

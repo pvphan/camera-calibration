@@ -279,7 +279,8 @@ class TestMathUtils(unittest.TestCase):
         ρComputed1 = mu.rotationMatrixToEuler(R1)
 
         self.assertEqual(len(ρExpected1), len(ρComputed1))
-        self.assertTrue(np.allclose(ρExpected1, ρComputed1))
+        self.assertTrue(np.allclose(ρExpected1, ρComputed1),
+                f"{ρExpected1} != {ρComputed1}")
 
         R2 = np.array([
             [0, -1, 0],
@@ -292,6 +293,30 @@ class TestMathUtils(unittest.TestCase):
 
         self.assertEqual(len(ρExpected2), len(ρComputed2))
         self.assertTrue(np.allclose(ρExpected2, ρComputed2))
+
+        R3 = np.array([
+            [1, 0, 0],
+            [0, 0, 1],
+            [0, -1, 0],
+        ])
+        ρExpected3 = (-90, 0, 0)
+
+        ρComputed3 = mu.rotationMatrixToEuler(R3)
+
+        self.assertEqual(len(ρExpected3), len(ρComputed3))
+        self.assertTrue(np.allclose(ρExpected3, ρComputed3))
+
+        R4 = np.array([
+            [0, 0, -1],
+            [1, 0, 0],
+            [0, -1, 0],
+        ])
+        ρExpected4 = (-90, 0, +90)
+
+        ρComputed4 = mu.rotationMatrixToEuler(R4)
+
+        self.assertEqual(len(ρExpected4), len(ρComputed4))
+        self.assertTrue(np.allclose(ρExpected4, ρComputed4))
 
 
 if __name__ == "__main__":

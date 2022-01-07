@@ -210,8 +210,13 @@ class TestCalibrate(unittest.TestCase):
         A, W, k = calibrate.estimateCalibrationParameters(allDetections)
 
         P = calibrate.composeParameterVector(A, W, k)
+        Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
 
         self.assertEqual(P.shape, (len(W) * 6 + 7, 1))
+        self.assertTrue(np.allclose(A, Acomputed))
+        self.assertTrue(len(W), len(Wcomputed))
+        self.assertTrue(np.allclose(W, Wcomputed))
+        self.assertTrue(np.allclose(k, kComputed))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):
