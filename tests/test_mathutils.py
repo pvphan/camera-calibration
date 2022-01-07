@@ -272,6 +272,27 @@ class TestMathUtils(unittest.TestCase):
         self.assertEqual(Xb.shape, Xa.shape)
         self.assertTrue(np.allclose(Xb, Xa))
 
+    def test_rotationMatrixToEuler(self):
+        R1 = np.eye(3)
+        ρExpected1 = (0, 0, 0)
+
+        ρComputed1 = mu.rotationMatrixToEuler(R1)
+
+        self.assertEqual(len(ρExpected1), len(ρComputed1))
+        self.assertTrue(np.allclose(ρExpected1, ρComputed1))
+
+        R2 = np.array([
+            [0, -1, 0],
+            [1, 0, 0],
+            [0, 0, 1],
+        ])
+        ρExpected2 = (0, 0, +90)
+
+        ρComputed2 = mu.rotationMatrixToEuler(R2)
+
+        self.assertEqual(len(ρExpected2), len(ρComputed2))
+        self.assertTrue(np.allclose(ρExpected2, ρComputed2))
+
 
 if __name__ == "__main__":
     unittest.main()

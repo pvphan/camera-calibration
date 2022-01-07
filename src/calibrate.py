@@ -2,6 +2,7 @@
 Core calibration functions.
 """
 import numpy as np
+import scipy as sp
 
 from __context__ import src
 from src import mathutils as mu
@@ -446,7 +447,7 @@ def estimateCalibrationParameters(allDetections):
     return Ainitial, Winitial, kInitial
 
 
-def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
+def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections):
     """
     Input:
         Ainitial -- initial estimate of intrinsic matrix
@@ -457,6 +458,8 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
         Arefined -- refined estimate of intrinsic matrix
         Wrefined -- refined estimate of world-to-camera transforms
         kRefined -- refined estimate of distortion coefficients
+
+    Uses SciPy non-linear optimization to solve.
     """
 
     # stack all measurements into a vector y
@@ -464,7 +467,58 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     # define a function which maps inputs to an output vector matching y
 
     # call optimization
+    sp.optimize.minimize(f, xdata, ydata, p0, method='lm')
     return Ainitial, Winitial, kInitial #TODO: return actual solution
+
+
+def computeCalibrationError(A, W, k, allDetections):
+    for u, X in allDetections:
+        pass
+
+
+def composeParameterVector(A, W, k):
+    """
+    Input:
+        A -- intrinsic matrix
+        W -- world-to-camera transforms
+        k -- distortion coefficients
+
+    Output:
+        P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
+            P = (α, β, γ, uc, uv, k1, k2,
+                    ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
+                    ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
+                    ...,
+                    ρM-1x, ρM-1y, ρM-1z, tM-1x, tM-1y, tM-1z,
+                    ...)^T
+    """
+    α = A[0,0]
+    β = A[1,1]
+    γ = A[0,1]
+    uc = A[0,2]
+    vc = A[1,2]
+    k1, k2 = k
+
+    P = mu.col([α, β, γ, uc, uv, k1, k2])
+
+    for cMw in W:
+        ρix, ρiy, ρiz, tix, tiy, tiz =
+        P = P.vstack((P, mu.col(ρix, ρiy, ρiz, tix, tiy, tiz)))
+
+    return P
+
+
+def f(P, allDetections):
+    """
+    The function to minimize to refine all calibration parameters.
+
+    Input:
+        P -- vector of parameters made up of A, W, k (2MN,1)
+
+    Output:
+        sse -- the sum squared error of the predicted vs measured points
+    """
+    raise NotImplementedError()
 
 
 # from my coursera MVG assignment as a basis for nonlinear optimization with Levenberg-Marquardt

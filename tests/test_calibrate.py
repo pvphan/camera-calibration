@@ -189,7 +189,7 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(len(Winitial), len(allDetections))
         self.assertEqual(len(kInitial), 2)
 
-    def test_refineCalibrationParameters(self):
+    def test_refineCalibrationParametersSciPy(self):
         dataSet = self.syntheticDatasetWithoutDistortion
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Aexpected = dataSet.getIntrinsicMatrix()
@@ -197,12 +197,21 @@ class TestCalibrate(unittest.TestCase):
         Wexpected = dataSet.getAllBoardPosesInCamera()
         Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
 
-        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParametersSciPy(
                 Ainitial, Winitial, kInitial, allDetections)
 
-        #self.assertTrue(np.allclose(Aexpected, Arefined))
-        #self.assertTrue(np.allclose(Wexpected, Wrefined))
-        #self.assertTrue(np.allclose(kExpected, kRefined))
+        self.assertTrue(np.allclose(Aexpected, Arefined))
+        self.assertTrue(np.allclose(Wexpected, Wrefined))
+        self.assertTrue(np.allclose(kExpected, kRefined))
+
+    def test_composeParameterVector(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
+
+        P = calibrate.composeParameterVector(A, W, k)
+
+        self.assertEqual(P.shape, (W.shape[0] * 6 + 7, 1))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):

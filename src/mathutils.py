@@ -4,6 +4,34 @@ Math utility functions based on lectures from Prof. Daniel Cremers' Multiple Vie
 import numpy as np
 
 
+def rotationMatrixToEuler(R):
+    p = 0.5 * np.array([[R[2,1] - R[1,2]],
+                        [R[0,2] - R[2,0]],
+                        [R[1,0] - R[0,1]]])
+    c = 0.5 * (np.trace(R) - 1)
+    pNorm = np.linalg.norm(p)
+    if np.isclose(pNorm, 0):
+        if np.isclose(c, 1):
+            p = (0, 0, 0)
+        elif np.isclose(c, -1):
+            Rplus = R + I
+            colMaxNorm = np.argmax(np.linalg.norm(Rplus, axis=0))
+            v = Rplus[:, colMaxNorm]
+            u = 1 / np.linalg.norm(v) * v
+            if (u[0] < 0 or (np.isclose(u0, 0) and u[1] < 0)
+                    or (np.isclose(u, 0) and u[2] < 0)):
+                u *= -1
+                ρ = np.pi * u
+            else:
+                raise ValueError("Shouldn't have occurred")
+    else:
+        u = 1/pNorm * p
+        θ = np.arctan2(pNorm, c)
+        p = θ * u
+
+    return tuple(np.degrees(p).ravel())
+
+
 def eulerToRotationMatrix(rXrYrZDegrees):
     rx, ry, rz = rXrYrZDegrees
     wx = col((1, 0, 0))
