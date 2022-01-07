@@ -5,6 +5,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 
 from __context__ import src
+from src import distortion
 from src import mathutils as mu
 
 
@@ -465,36 +466,48 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
     Uses SciPy non-linear optimization to solve.
     """
 
-    x = np.empty((0,1))
-    y = np.empty((0,1))
-    # stack sensor measurements into a vector y and model points into a vector x
-    #   each of size 2*M*N
-    for sensorPoints, modelPoints in allDetections:
-        x = np.vstack((x, modelPoints[:,:2].reshape(-1, 1)))
-        y = np.vstack((y, sensorPoints.reshape(-1, 1)))
+    ydata = np.empty((0,2))
+    xdataIndex = np.empty((0,4))
+    for i, (sensorPoints, modelPoints) in enumerate(allDetections):
+        ydata = np.vstack((ydata, sensorPoints))
+        indexCol = np.tile(i, (modelPoints.shape[0], 1))
+        modelPointsWithIndex = np.hstack((modelPoints.reshape(-1, 3), indexCol))
+        xdataIndex = np.vstack((xdataIndex, modelPointsWithIndex))
 
+    print(ydata.shape, xdataIndex.shape)
     p0 = composeParameterVector(Ainitial, Winitial, kInitial)
-    P = curve_fit(f, x, y, p0, method='lm')
+    P, Pcovariance = curve_fit(f, xdataIndex, ydata, p0, method='lm')
     Arefined, Wrefined, kRefined = decomposeParameterVector(P)
     return Arefined, Wrefined, kRefined
 
 
-def f(x, *P):
+def f(xdataIndex, *P):
     """
     The function to minimize to refine all calibration parameters.
 
     Input:
-        x -- vector of model points (2MN, 1)
+        xdataIndex -- vector of model points with the view index
+                appended to the end, (M*N, 4)
         P -- vector of parameters made up of A, W, k
 
     Output:
         u -- the expected measurements given the input x and the
                 calibration parameters P
     """
-    # TODO: figure out how to correlate views to point projections
-    # for each view, reconstruct the matrices
-    # project poitns, append to final output vector
-    raise NotImplementedError()
+    A, W, k = decomposeParameterVector(P)
+    dataIndices = xdataIndex[:,3].astype(int)
+    maxIndex = np.max(dataIndices)
+    xdata = []
+    for i in range(maxIndex+1):
+        slicei = np.s_[dataIndices == i]
+        xdatai = xdataIndex[slicei,:3]
+        xdata.append(xdatai)
+
+    ydot = np.empty((0, 2))
+    for cMw, wP in zip(W, xdata):
+        udot = distortion.projectWithDistortion(A, wP, k)
+        ydot = np.vstack((ydot, udot))
+    raise ydot
 
 
 def composeParameterVector(A, W, k):
@@ -547,6 +560,8 @@ def decomposeParameterVector(P):
         W -- world-to-camera transforms
         k -- distortion coefficients
     """
+    if isinstance(P, tuple) or isinstance(P, list):
+        P = mu.col(P)
     poseStartIndex = 7
     numPoseParams = 6
     α, β, γ, uc, vc, k1, k2 = P[:poseStartIndex,0]
