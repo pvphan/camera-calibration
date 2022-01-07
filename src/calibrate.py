@@ -465,28 +465,35 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
     Uses SciPy non-linear optimization to solve.
     """
 
-    # stack sensor measurements into a vector y
-    y = None
-    # stack model points into a vector x
+    x = np.empty((0,1))
+    y = np.empty((0,1))
+    # stack sensor measurements into a vector y and model points into a vector x
+    #   each of size 2*M*N
+    for sensorPoints, modelPoints in allDetections:
+        x = np.vstack((x, modelPoints[:,:2].reshape(-1, 1)))
+        y = np.vstack((y, sensorPoints.reshape(-1, 1)))
 
     p0 = composeParameterVector(Ainitial, Winitial, kInitial)
     P = curve_fit(f, x, y, p0, method='lm')
-    Ainitial, Winitial, kInitial = decomposeParameterVector(P)
-    return Ainitial, Winitial, kInitial #TODO: return actual solution
+    Arefined, Wrefined, kRefined = decomposeParameterVector(P)
+    return Arefined, Wrefined, kRefined
 
 
-def f(x, P):
+def f(x, *P):
     """
     The function to minimize to refine all calibration parameters.
 
     Input:
-        x -- vector of model points (2MN, 2)
-        P -- vector of parameters made up of A, W, k (2MN,1)
+        x -- vector of model points (2MN, 1)
+        P -- vector of parameters made up of A, W, k
 
     Output:
         u -- the expected measurements given the input x and the
                 calibration parameters P
     """
+    # TODO: figure out how to correlate views to point projections
+    # for each view, reconstruct the matrices
+    # project poitns, append to final output vector
     raise NotImplementedError()
 
 

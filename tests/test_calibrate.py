@@ -178,7 +178,6 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertTrue(np.allclose(kExpected, kComputed))
 
-
     def test_estimateCalibrationParameters(self):
         dataSet = self.syntheticDatasetWithoutDistortion
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
@@ -188,6 +187,20 @@ class TestCalibrate(unittest.TestCase):
         self.assertEqual(Ainitial.shape, (3,3))
         self.assertEqual(len(Winitial), len(allDetections))
         self.assertEqual(len(kInitial), 2)
+
+    def test_composeParameterVector(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
+
+        P = calibrate.composeParameterVector(A, W, k)
+        Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
+
+        self.assertEqual(P.shape, (len(W) * 6 + 7, 1))
+        self.assertTrue(np.allclose(A, Acomputed))
+        self.assertTrue(len(W), len(Wcomputed))
+        self.assertTrue(np.allclose(W, Wcomputed))
+        self.assertTrue(np.allclose(k, kComputed))
 
     def test_refineCalibrationParametersSciPy(self):
         dataSet = self.syntheticDatasetWithoutDistortion
@@ -203,20 +216,6 @@ class TestCalibrate(unittest.TestCase):
         self.assertTrue(np.allclose(Aexpected, Arefined))
         self.assertTrue(np.allclose(Wexpected, Wrefined))
         self.assertTrue(np.allclose(kExpected, kRefined))
-
-    def test_composeParameterVector(self):
-        dataSet = self.syntheticDatasetWithoutDistortion
-        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
-
-        P = calibrate.composeParameterVector(A, W, k)
-        Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
-
-        self.assertEqual(P.shape, (len(W) * 6 + 7, 1))
-        self.assertTrue(np.allclose(A, Acomputed))
-        self.assertTrue(len(W), len(Wcomputed))
-        self.assertTrue(np.allclose(W, Wcomputed))
-        self.assertTrue(np.allclose(k, kComputed))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):
