@@ -497,11 +497,6 @@ def f(x, *P):
     raise NotImplementedError()
 
 
-def computeCalibrationError(A, W, k, allDetections):
-    for u, X in allDetections:
-        pass
-
-
 def composeParameterVector(A, W, k):
     """
     Input:
