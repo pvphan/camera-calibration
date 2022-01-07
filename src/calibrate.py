@@ -2,7 +2,7 @@
 Core calibration functions.
 """
 import numpy as np
-import scipy as sp
+from scipy.optimize import minimize
 
 from __context__ import src
 from src import mathutils as mu
@@ -467,7 +467,7 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
     # define a function which maps inputs to an output vector matching y
 
     # call optimization
-    sp.optimize.minimize(f, xdata, ydata, p0, method='lm')
+    minimize(f, xdata, ydata, p0, method='lm')
     return Ainitial, Winitial, kInitial #TODO: return actual solution
 
 
@@ -499,11 +499,14 @@ def composeParameterVector(A, W, k):
     vc = A[1,2]
     k1, k2 = k
 
-    P = mu.col([α, β, γ, uc, uv, k1, k2])
+    P = mu.col([α, β, γ, uc, vc, k1, k2])
 
     for cMw in W:
-        ρix, ρiy, ρiz, tix, tiy, tiz =
-        P = P.vstack((P, mu.col(ρix, ρiy, ρiz, tix, tiy, tiz)))
+        R = cMw[:3,:3]
+        t = cMw[:3,3]
+        ρix, ρiy, ρiz = R
+        tix, tiy, tiz = t
+        P = np.vstack((P, mu.col([ρix, ρiy, ρiz, tix, tiy, tiz])))
 
     return P
 

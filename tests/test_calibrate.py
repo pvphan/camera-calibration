@@ -211,7 +211,7 @@ class TestCalibrate(unittest.TestCase):
 
         P = calibrate.composeParameterVector(A, W, k)
 
-        self.assertEqual(P.shape, (W.shape[0] * 6 + 7, 1))
+        self.assertEqual(P.shape, (len(W) * 6 + 7, 1))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):
