@@ -213,9 +213,11 @@ class TestCalibrate(unittest.TestCase):
         Arefined, Wrefined, kRefined = calibrate.refineCalibrationParametersSciPy(
                 Ainitial, Winitial, kInitial, allDetections)
 
-        #self.assertTrue(np.allclose(Aexpected, Arefined))
-        #self.assertTrue(np.allclose(Wexpected, Wrefined))
-        #self.assertTrue(np.allclose(kExpected, kRefined))
+        self.assertTrue(np.allclose(Aexpected, Arefined),
+                f"\n{Aexpected} \n != \n {Arefined}")
+        self.assertTrue(np.allclose(kExpected, kRefined),
+                f"\n{kExpected} \n != \n {kRefined}")
+        self.assertTrue(np.allclose(Wexpected, Wrefined))
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):

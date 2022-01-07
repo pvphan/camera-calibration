@@ -466,17 +466,17 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
     Uses SciPy non-linear optimization to solve.
     """
 
-    ydata = np.empty((0,2))
+    ydata = np.empty((0,1))
     xdataIndex = np.empty((0,4))
     for i, (sensorPoints, modelPoints) in enumerate(allDetections):
-        ydata = np.vstack((ydata, sensorPoints))
+        ydata = np.vstack((ydata, sensorPoints.reshape(-1, 1)))
         indexCol = np.tile(i, (modelPoints.shape[0], 1))
         modelPointsWithIndex = np.hstack((modelPoints.reshape(-1, 3), indexCol))
         xdataIndex = np.vstack((xdataIndex, modelPointsWithIndex))
 
     print(ydata.shape, xdataIndex.shape)
     p0 = composeParameterVector(Ainitial, Winitial, kInitial)
-    P, Pcovariance = curve_fit(f, xdataIndex, ydata, p0, method='lm')
+    P, Pcovariance = curve_fit(f, xdataIndex, ydata.ravel(), p0, method='lm')
     Arefined, Wrefined, kRefined = decomposeParameterVector(P)
     return Arefined, Wrefined, kRefined
 
@@ -503,11 +503,11 @@ def f(xdataIndex, *P):
         xdatai = xdataIndex[slicei,:3]
         xdata.append(xdatai)
 
-    ydot = np.empty((0, 2))
+    ydot = np.empty((0, 1))
     for cMw, wP in zip(W, xdata):
         udot = distortion.projectWithDistortion(A, wP, k)
-        ydot = np.vstack((ydot, udot))
-    raise ydot
+        ydot = np.vstack((ydot, udot.reshape(-1, 1)))
+    return ydot.ravel()
 
 
 def composeParameterVector(A, W, k):
@@ -560,19 +560,19 @@ def decomposeParameterVector(P):
         W -- world-to-camera transforms
         k -- distortion coefficients
     """
-    if isinstance(P, tuple) or isinstance(P, list):
-        P = mu.col(P)
+    if isinstance(P, np.ndarray):
+        P = P.ravel()
     poseStartIndex = 7
     numPoseParams = 6
-    α, β, γ, uc, vc, k1, k2 = P[:poseStartIndex,0]
+    α, β, γ, uc, vc, k1, k2 = P[:poseStartIndex]
     A = np.array([
         [α, γ, uc],
         [0, β, vc],
         [0, 0,  1],
     ])
     W = []
-    for i in range(poseStartIndex, P.shape[0], numPoseParams):
-        ρix, ρiy, ρiz, tix, tiy, tiz = P[i:i+numPoseParams,0]
+    for i in range(poseStartIndex, len(P), numPoseParams):
+        ρix, ρiy, ρiz, tix, tiy, tiz = P[i:i+numPoseParams]
         R = mu.eulerToRotationMatrix((ρix, ρiy, ρiz))
         t = (tix, tiy, tiz)
         W.append(mu.poseFromRT(R, t))
