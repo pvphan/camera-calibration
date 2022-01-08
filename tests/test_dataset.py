@@ -1,3 +1,4 @@
+import os
 import shutil
 import unittest
 from glob import glob
@@ -61,7 +62,6 @@ class TestDataset(unittest.TestCase):
 
     def test_writeDatasetImages(self):
         shutil.rmtree(self.outputFolderPath, ignore_errors=True)
-
         self.syntheticDataset.writeDatasetImages(self.outputFolderPath)
 
         filePaths = glob(self.outputFolderPath + "/*")
@@ -70,6 +70,23 @@ class TestDataset(unittest.TestCase):
         for filePath in filePaths:
             image = imageio.imread(filePath)
             self.assertEqual(image.shape, expectedImageShape)
+
+    def test_exportDetections(self):
+        shutil.rmtree(self.outputFolderPath, ignore_errors=True)
+        os.makedirs(self.outputFolderPath, exist_ok=True)
+        outputFilePath = os.path.join(self.outputFolderPath, "detections.json")
+        allDetectionsExpected = self.syntheticDataset.getCornerDetectionsInSensorCoordinates()
+
+        self.syntheticDataset.exportDetections(outputFilePath)
+
+        self.assertTrue(os.path.exists(outputFilePath))
+
+        allDetections = dataset.createDetectionsFromPath(outputFilePath)
+
+        self.assertEqual(len(allDetections), self.numViews)
+        self.assertEqual(len(allDetections[0]), 2)
+        self.assertEqual(allDetections[0][0].shape[1], 2)
+        self.assertEqual(allDetections[0][1].shape[1], 3)
 
     @classmethod
     def tearDownClass(self):

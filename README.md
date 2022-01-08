@@ -2,15 +2,46 @@
 
 [![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
 
-Current status: WIP
+A simple library for calibrating camera intrinsics from a text file of sensor and model point correspondences.
+Written primarily as an exercise with few external dependencies for a deeper understanding.
+Also generates synthetic datasets for testing and rudimentary visualization.
 
 Prerequisites: `make`, `docker`
 
-Usage: `make calibrate <input_file_path>`
+Usage: `make calibrate <input_json_path>`
 
-A simple library for calibrating camera intrinsics from a text file of sensor and model point correspondences.
-Written primarily as an exercise with few external dependencies for a deeper understanding.
-Generates synthetic datasets for testing and rudimentary visualization.
+Where the json file has the structure:
+```
+{
+    "views": [
+        {
+            "sensorPoints": [
+                [200, 300],
+                [200, 400],
+                ...
+            ],
+            "modelPoints": [
+                [0.2, 0.3, 0],
+                [0.2, 0.4, 0],
+                ...
+            ]
+        },
+        {
+            "sensorPoints": [
+                [500, 600],
+                [500, 700],
+                ...
+            ],
+            "modelPoints": [
+                [0.5, 0.6, 0],
+                [0.5, 0.7, 0],
+                ...
+            ]
+        },
+        ...
+    ]
+}
+```
 
 
 ## TODO:
@@ -20,7 +51,11 @@ Generates synthetic datasets for testing and rudimentary visualization.
 - [x] Compute close form solution for K based on homographies (ignore lens distorion)
 - [x] Compute extrinsics R, t for each view
 - [x] Compute distortion using linear least squares
-- [ ] Use estimated parameters as initial guess and refine using non-linear optimization over all views
+- [x] Use estimated parameters as initial guess and refine using non-linear optimization over all views
+- [x] Write main method interface for calibrating from text files
+- [ ] Support full radial-tangential distortion model
+- [ ] Support full fisheye distortion model
+- [ ] Write nonlinear optimization by hand instead of using SciPy
 
 
 ## Notes:

@@ -465,7 +465,6 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
 
     Uses SciPy non-linear optimization to solve.
     """
-
     ydata = np.empty((0,1))
     xdataIndex = np.empty((0,4))
     for i, (sensorPoints, modelPoints) in enumerate(allDetections):
@@ -660,3 +659,4 @@ def projectAllPoints(K, allCameraPoses, x_t):
         xi = mu.project(K, cameraPose, mu.homog(x_t))
         xs.append(xi)
     return xs
+

@@ -1,6 +1,7 @@
 """
 Generates synthetic datasets to test calibration code.
 """
+import json
 import os
 
 import numpy as np
@@ -82,6 +83,20 @@ class Dataset:
                 @ cameraperturb_M_camera)
         return board_M_camera
 
+    def exportDetections(self, filePath):
+        allDetections = self.getCornerDetectionsInSensorCoordinates()
+        detectionsDict = {"views": []}
+
+        for sensorPoints, modelPoints in allDetections:
+            view = {
+                "sensorPoints": sensorPoints.tolist(),
+                "modelPoints": modelPoints.tolist(),
+            }
+            detectionsDict["views"].append(view)
+
+        with open(filePath, "w") as f:
+            f.write(json.dumps(detectionsDict))
+
 
 def createSyntheticDataset(A, width, height, distortionVector):
     checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
@@ -89,4 +104,15 @@ def createSyntheticDataset(A, width, height, distortionVector):
     numViews = 10
     dataSet = Dataset(checkerBoard, virtualCamera, numViews)
     return dataSet
+
+
+def createDetectionsFromPath(filePath):
+    with open(filePath, "r") as f:
+        detectionsDict = json.load(f)
+    allDetections = []
+    for view in detectionsDict["views"]:
+        sensorPoints = np.array(view["sensorPoints"]).reshape(-1, 2)
+        modelPoints = np.array(view["modelPoints"]).reshape(-1, 3)
+        allDetections.append((sensorPoints, modelPoints))
+    return allDetections
 
