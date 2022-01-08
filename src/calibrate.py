@@ -474,7 +474,6 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
         modelPointsWithIndex = np.hstack((modelPoints.reshape(-1, 3), indexCol))
         xdataIndex = np.vstack((xdataIndex, modelPointsWithIndex))
 
-    print(ydata.shape, xdataIndex.shape)
     p0 = composeParameterVector(Ainitial, Winitial, kInitial)
     P, Pcovariance = curve_fit(f, xdataIndex, ydata.ravel(), p0, method='lm')
     Arefined, Wrefined, kRefined = decomposeParameterVector(P)
@@ -505,7 +504,8 @@ def f(xdataIndex, *P):
 
     ydot = np.empty((0, 1))
     for cMw, wP in zip(W, xdata):
-        udot = distortion.projectWithDistortion(A, wP, k)
+        cP = mu.transform(cMw, wP)
+        udot = distortion.projectWithDistortion(A, cP, k)
         ydot = np.vstack((ydot, udot.reshape(-1, 1)))
     return ydot.ravel()
 

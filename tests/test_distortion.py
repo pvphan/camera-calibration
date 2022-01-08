@@ -44,6 +44,7 @@ class TestCalibrate(unittest.TestCase):
         projectedPoints = distortion.projectWithDistortion(A, self.pointsInWorld, k)
 
         self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))
+        self.assertFalse(np.isnan(np.sum(projectedPoints)))
 
 
 if __name__ == "__main__":
