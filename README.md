@@ -8,7 +8,7 @@ Also generates synthetic datasets for testing and rudimentary visualization.
 
 Prerequisites: `make`, `docker`
 
-Usage: `make calibrate <input_json_path>`
+TODO: Usage: `make calibrate <input_json_path>`
 
 Where the json file has the structure:
 ```
@@ -53,6 +53,7 @@ Where the json file has the structure:
 - [x] Compute distortion using linear least squares
 - [x] Use estimated parameters as initial guess and refine using non-linear optimization over all views
 - [x] Write main method interface for calibrating from text files
+- [ ] Write make rule to easily pass in a file from the host
 - [ ] Support full radial-tangential distortion model
 - [ ] Support full fisheye distortion model
 - [ ] Write nonlinear optimization by hand instead of using SciPy

@@ -8,10 +8,6 @@ RUN_FLAGS = \
 	--volume=${OUTPUT_PATH}:/tmp/output \
 	${IMAGE_TAG}
 
-calibrate: image
-	docker run ${RUN_FLAGS} \
-		python3 src/runcalibration.py ${1}
-
 test: image
 	docker run ${RUN_FLAGS} \
 		python3 -m unittest discover -s tests/
