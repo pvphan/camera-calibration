@@ -2,8 +2,8 @@
 
 [![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
 
-A simple library for calibrating camera intrinsics from a text file of sensor and model point correspondences.
-Written primarily as an exercise with few external dependencies for a deeper understanding.
+A simple library for calibrating camera intrinsics from a json file of sensor (2D) and model point (3D) correspondences.
+Written primarily as an exercise with few external dependencies (numpy, scipy, imageio) for a deeper understanding.
 Also generates synthetic datasets for testing and rudimentary visualization.
 
 Prerequisites: `make`, `docker`
@@ -52,11 +52,11 @@ Where the json file has the structure:
 - [x] Compute extrinsics R, t for each view
 - [x] Compute distortion using linear least squares
 - [x] Use estimated parameters as initial guess and refine using non-linear optimization over all views
-- [x] Write main method interface for calibrating from text files
-- [ ] Write make rule to easily pass in a file from the host
+- [x] Write main method interface for calibrating from json files
 - [ ] Support full radial-tangential distortion model
 - [ ] Support full fisheye distortion model
 - [ ] Write nonlinear optimization by hand instead of using SciPy
+- [ ] Write make rule to easily pass in a file from the host
 
 
 ## Notes:

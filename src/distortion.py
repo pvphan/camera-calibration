@@ -4,7 +4,11 @@ from __context__ import src
 from src import mathutils as mu
 
 
-def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
+def distortPointsFisheye(x: np.ndarray, distortionCoeffients: tuple):
+    raise NotImplementedError()
+
+
+def distortPoints(x: np.ndarray, distortionCoeffients: tuple):
     """
     Inputs:
         x -- normalized points (undistorted), (N,2)
@@ -21,10 +25,10 @@ def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
     else:
         raise ValueError(f"Invalid distortion coefficient length {len(distortionCoeffients)}: "
                 f"{distortionCoeffients}")
-    r = np.linalg.norm(normalizedPointsNx2, axis=1)
+    r = np.linalg.norm(x, axis=1)
 
-    xn = normalizedPointsNx2[:,0]
-    yn = normalizedPointsNx2[:,1]
+    xn = x[:,0]
+    yn = x[:,1]
 
     radialComponent = (1 + k1 * r**2 + k2 * r**4 + k3 * r**6)
     tangentialComponentX = (2 * p1 * xn * yn + p2 * (r**2 + 2 * xn**2))
@@ -35,28 +39,6 @@ def distortPoints(normalizedPointsNx2: np.ndarray, distortionCoeffients: tuple):
 
     normalizedDistortedPointsNx2 = np.hstack((mu.col(xd), mu.col(yd)))
     return normalizedDistortedPointsNx2
-
-
-def distortPointsSimple(x: np.ndarray, k: tuple):
-    """
-    Inputs:
-        x -- normalized points (undistorted), (N,2)
-        k -- distortion coefficients, (2,)
-
-    Outputs:
-        xd -- distorted normalized points (N,2)
-    """
-    if len(k) == 2:
-        k1, k2 = k
-    else:
-        raise ValueError(f"Invalid distortion coefficient length {len(k)}: {k}")
-    r = np.linalg.norm(x, axis=1)
-    D = k1 * r**2 + k2 * r**4
-    xd_x = x[:,0] * (1 + D)
-    xd_y = x[:,1] * (1 + D)
-    xd = np.hstack((mu.col(xd_x), mu.col(xd_y)))
-    #xd = x * mu.col((1 + D))
-    return xd
 
 
 def projectWithDistortion(A, X, k):
