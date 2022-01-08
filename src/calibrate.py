@@ -298,6 +298,7 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
         # Q is not in SO(3)
         Q = np.hstack((mu.col(r0), mu.col(r1), mu.col(r2)))
 
+        # R is in SO(3)
         R = approximateRotationMatrix(Q)
         transformWorldToCamera = mu.poseFromRT(R, t)
         worldToCameraTransforms.append(transformWorldToCamera)
