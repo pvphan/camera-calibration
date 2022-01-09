@@ -220,6 +220,57 @@ class TestCalibrate(unittest.TestCase):
                 f"\n{Aexpected} \n != \n {Arefined}")
         self.assertTrue(np.allclose(Wexpected, Wrefined, atol=atol))
 
+    def test_refineCalibrationParameters(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        Aexpected = dataSet.getIntrinsicMatrix()
+        kExpected = dataSet.getDistortionVector()
+        Wexpected = dataSet.getAllBoardPosesInCamera()
+        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+
+        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+                Ainitial, Winitial, kInitial, allDetections)
+
+        atol = 1e-5
+        self.assertTrue(np.allclose(kExpected, kRefined, atol=atol),
+                f"\n{kExpected} \n != \n {kRefined}")
+        self.assertTrue(np.allclose(Aexpected, Arefined, atol=atol),
+                f"\n{Aexpected} \n != \n {Arefined}")
+        self.assertTrue(np.allclose(Wexpected, Wrefined, atol=atol))
+
+    def test_projectAllPoints(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
+        P = calibrate.composeParameterVector(A, W, k)
+        allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
+
+        ydot = calibrate.projectAllPoints(P, allModelPoints)
+
+        self.assertGreater(ydot.shape[0], 0)
+        self.assertEqual(ydot.shape[1], 2)
+
+    def test_getSensorPoints(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+
+        y = calibrate.getSensorPoints(allDetections)
+
+        self.assertGreater(y.shape[0], 0)
+        self.assertEqual(y.shape[1], 2)
+
+    def test_computeReprojectionError(self):
+        dataSet = self.syntheticDatasetWithoutDistortion
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        Aexpected = dataSet.getIntrinsicMatrix()
+        Wexpected = dataSet.getAllBoardPosesInCamera()
+        kExpected = dataSet.getDistortionVector()
+        Pexpected = calibrate.composeParameterVector(Aexpected, Wexpected, kExpected)
+
+        totalError = calibrate.computeReprojectionError(Pexpected, allDetections)
+
+        self.assertAlmostEqual(totalError, 0)
+
 
 def generateRandomPointsInFrontOfCamera(numPoints):
     np.random.seed(0)

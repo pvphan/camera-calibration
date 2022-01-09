@@ -510,6 +510,99 @@ def f(xdataIndex, *P):
     return ydot.ravel()
 
 
+def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
+    """
+    Input:
+        Ainitial -- initial estimate of intrinsic matrix
+        Winitial -- initial estimate of world-to-camera transforms
+        kInitial -- initial estimate of distortion coefficients
+        allDetections -- list of tuples (one for each view).
+                Each tuple is (Xa, Xb), a set of sensor points
+                and model points respectively
+
+    Output:
+        Arefined -- refined estimate of intrinsic matrix
+        Wrefined -- refined estimate of world-to-camera transforms
+        kRefined -- refined estimate of distortion coefficients
+
+    Uses Levenberg-Marquardt to solve non-linear optimization.
+    """
+    maxIters = 500
+    Pt = composeParameterVector(Ainitial, Winitial, kInitial)
+    λ = 1e-3
+    allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
+
+    allCameraPoses = [w_M_c1, w_M_c2, w_M_c3]
+    allMeasuredPoints = [x1p, x2p, x3p]
+    for k in range(maxIters):
+        # project current points
+        xs = projectAllPoints(Pt, allModelPoints)
+        x1, x2, x3 = xs
+
+        # compute a change in the P vector, Δ, to reduce the error
+        #   must compute the jacobian J in order to do this
+        Δ = np.zeros_like(Pt)
+        for j in range(N):
+            b = mu.col([x1p[j,0], x1p[j,1], x2p[j,0], x2p[j,1], x3p[j,0], x3p[j,1]])
+            fX = mu.col([x1[j,0], x1[j,1], x2[j,0], x2[j,1], x3[j,0], x3[j,1]])
+            J = np.zeros((6,3))
+            for i in range(3):
+                ui, vi, wi = xs[i][j]
+                R = Rs[i]
+                r11, r12, r13 = R[0,0], R[0,1], R[0,2]
+                r21, r22, r23 = R[1,0], R[1,1], R[1,2]
+                r31, r32, r33 = R[2,0], R[2,1], R[2,2]
+                duidX = np.array([f*r11 + px*r31, f*r12 + px*r32, f*r13 + px*r33]).reshape(1,3)
+                dvidX = np.array([f*r21 + py*r31, f*r22 + py*r32, f*r23 + py*r33]).reshape(1,3)
+                dwidX = np.array([r31, r32, r33]).reshape(1,3)
+                J[2*i,:] = (wi * duidX - ui * dwidX) / wi**2
+                J[2*i+1,:] = (wi * dvidX - vi * dwidX) / wi**2
+            JTJ = J.T @ J
+            diagJTJ = np.diag(np.diagonal(JTJ))
+            Δj = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ (b - fX)
+            Δ[j] = Δj.ravel()
+
+        # evaluate if Pt + Δ reduces the error or not
+        Pt_error = computeReprojectionError(Pt, allDetections)
+        Pt1_error = computeReprojectionError(Pt + Δ, allDetections)
+        if Pt1_error < Pt_error:
+            Pt += Δ
+            λ /= 10
+        else:
+            λ *= 10
+        if λ < 1e-150:
+            break
+
+    Arefined, Wrefined, kRefined = decomposeParameterVector(Pt)
+    return Arefined, Wrefined, kRefined
+
+
+def computeReprojectionError(P, allDetections):
+    allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
+    ydot = projectAllPoints(P, allModelPoints)
+    y = getSensorPoints(allDetections)
+    totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
+    return totalError
+
+
+def getSensorPoints(allDetections):
+    allSensorPoints = [sensorPoints for sensorPoints, modelPoints in allDetections]
+    y = np.empty((0, 2))
+    for sensorPoints in allSensorPoints:
+        y = np.vstack((y, sensorPoints))
+    return y
+
+
+def projectAllPoints(P, allModelPoints):
+    A, W, k = decomposeParameterVector(P)
+    ydot = np.empty((0, 2))
+    for wP, cMw in zip(allModelPoints, W):
+        cP = mu.transform(cMw, wP)
+        yidot = distortion.projectWithDistortion(A, cP, k)
+        ydot = np.vstack((ydot, yidot))
+    return ydot
+
+
 def composeParameterVector(A, W, k):
     """
     Input:
@@ -579,85 +672,3 @@ def decomposeParameterVector(P):
 
     k = (k1, k2)
     return A, W, k
-
-
-# from my coursera MVG assignment as a basis for nonlinear optimization with Levenberg-Marquardt
-def nonlinearTriangulation(K, C1, R1, C2, R2, C3, R3, x1p, x2p, x3p, X0):
-    """
-    Refining the poses of the cameras to get a better estimate of the points
-    3D position
-    Inputs:
-        K - size (3 x 3) camera calibration (intrinsics) matrix
-        x
-    Outputs:
-        X - size (N x 3) matrix of refined point 3D locations
-    """
-    w_M_c1 = mu.poseFromRT(R1, C1)
-    w_M_c2 = mu.poseFromRT(R2, C2)
-    w_M_c3 = mu.poseFromRT(R3, C3)
-    Rs = [R1, R2, R3]
-    N = X0.shape[0]
-    maxIters = 500
-
-    f = K[0,0]
-    px = K[0,2]
-    py = K[1,2]
-
-    x_t = X0
-    λ = 1e-3
-    allCameraPoses = [w_M_c1, w_M_c2, w_M_c3]
-    allMeasuredPoints = [x1p, x2p, x3p]
-    for k in range(maxIters):
-        # project current points
-        xs = projectAllPoints(K, allCameraPoses, x_t)
-        x1, x2, x3 = xs
-        delta = np.zeros_like(x_t)
-        for j in range(N):
-            b = mu.col([x1p[j,0], x1p[j,1], x2p[j,0], x2p[j,1], x3p[j,0], x3p[j,1]])
-            fX = mu.col([x1[j,0], x1[j,1], x2[j,0], x2[j,1], x3[j,0], x3[j,1]])
-            J = np.zeros((6,3))
-            for i in range(3):
-                ui, vi, wi = xs[i][j]
-                R = Rs[i]
-                r11, r12, r13 = R[0,0], R[0,1], R[0,2]
-                r21, r22, r23 = R[1,0], R[1,1], R[1,2]
-                r31, r32, r33 = R[2,0], R[2,1], R[2,2]
-                duidX = np.array([f*r11 + px*r31, f*r12 + px*r32, f*r13 + px*r33]).reshape(1,3)
-                dvidX = np.array([f*r21 + py*r31, f*r22 + py*r32, f*r23 + py*r33]).reshape(1,3)
-                dwidX = np.array([r31, r32, r33]).reshape(1,3)
-                J[2*i,:] = (wi * duidX - ui * dwidX) / wi**2
-                J[2*i+1,:] = (wi * dvidX - vi * dwidX) / wi**2
-            JTJ = J.T @ J
-            diagJTJ = np.diag(np.diagonal(JTJ))
-            delta_j = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ (b - fX)
-            delta[j] = delta_j.ravel()
-        x_t_error = computeReprojectionError(K, allCameraPoses, allMeasuredPoints, x_t)
-        x_tp1_error = computeReprojectionError(K, allCameraPoses, allMeasuredPoints, x_t + delta)
-        if x_tp1_error < x_t_error:
-            x_t += delta
-            λ /= 10
-        else:
-            λ *= 10
-        if λ < 1e-150:
-            break
-
-    return x_t
-
-
-def computeReprojectionError(K, allCameraPoses, allMeasuredPoints, x_t):
-    xs = projectAllPoints(K, allCameraPoses, x_t)
-    totalError = 0
-    for i in range(len(xs)):
-        xi = xs[i][:,:2]
-        xip = allMeasuredPoints[i]
-        totalError += np.sum(np.linalg.norm(xi - xip, axis=1)**2)
-    return totalError
-
-
-def projectAllPoints(K, allCameraPoses, x_t):
-    xs = []
-    for cameraPose in allCameraPoses:
-        xi = mu.project(K, cameraPose, mu.homog(x_t))
-        xs.append(xi)
-    return xs
-
