@@ -23,7 +23,6 @@ class ProjectionJacobian:
         else:
             raise NotImplementedError("Only radial-tangential distortion supported currently")
 
-
     def _createJacobianBlockFunctions(self, jacobianBlockExpr):
         inputSymbols = []
         jacobianBlockFunctions = []
@@ -50,7 +49,7 @@ class ProjectionJacobian:
         return intrinsicBlock
 
     def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
-        valuesDict = self._createValuesDict(extrinsicValues, extrinsicValues, modelPoint)
+        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
         extrinsicBlock = np.zeros(shape=self._extrinsicJacobianBlockFunctions.shape)
         for i in range(self._extrinsicJacobianBlockFunctions.shape[0]):
             for j in range(self._extrinsicJacobianBlockFunctions.shape[1]):
@@ -152,22 +151,15 @@ def createExpressionIntrinsicProjectionRadTan():
 
 
 def getIntrinsicRadTanSymbols():
-    return sympy.symbols("α β γ uc vc k1 k2 p1 p2 k3")
+    return tuple(sympy.symbols("α β γ uc vc k1 k2 p1 p2 k3"))
 
 
 def getExtrinsicSymbols():
-    return sympy.symbols("ρx ρy ρz tx ty tz")
+    return tuple(sympy.symbols("ρx ρy ρz tx ty tz"))
 
 
 def getModelPointSymbols():
-    return sympy.symbols("X0 Y0 Z0")
-
-
-def getAllSymbolsOrdered():
-    intrinsicSymbols = getIntrinsicRadTanSymbols()
-    extrinsicSymbols = getExtrinsicSymbols()
-    modelPointSymbols = getModelPointSymbols()
-    return intrinsicSymbols + extrinsicSymbols + modelPointSymbols
+    return tuple(sympy.symbols("X0 Y0 Z0"))
 
 
 def createLambdaFunction(expression):

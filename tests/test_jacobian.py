@@ -51,11 +51,6 @@ class TestProjectionJacobian(unittest.TestCase):
         #self.jac.compute(P,
         pass
 
-    def test_getAllSymbols(self):
-        allSymbols = jacobian.getAllSymbolsOrdered()
-        self.assertIsInstance(allSymbols, tuple)
-        self.assertEqual(len(allSymbols), 19)
-
     def assertNoNans(self, Q):
         self.assertEqual(np.sum(np.isnan(Q)), 0)
 
