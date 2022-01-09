@@ -381,69 +381,45 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
     D = np.empty((0,5))
     Ddot = np.empty((0,1))
 
-    shouldRunVectorized = False
-    if shouldRunVectorized:
-        raise NotImplementedError("Haven't vectorized 5 parameter distortion yet")
-        # ~15x speedup over the unvectorized loop version below
-        for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
-            cXi = mu.transform(cMb, bX)
-            xi = mu.projectStandard(cXi)
-            ri = np.linalg.norm(xi, axis=1)
-            r = np.hstack((mu.col(ri)**2, mu.col(ri)**4))
+    for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
+        for j, (udot, bXij) in enumerate(zip(Udot, bX)):
+            # rij is computed from the normalized sensor coordinate, which is computed by
+            #   projecting the 3D model point to camera coordinates using the standard
+            #   projection matrix (f=1)
+            cXij = mu.transform(cMb, bXij)
+            xij = mu.projectStandard(cXij)
+            rij = np.linalg.norm(xij)
 
-            # U is the projected sensor points without distortion
-            U = mu.project(A, np.eye(4), cXi)
-            Di1 = (U - (uc, vc)).reshape(-1, 1)
-            Di = np.tile(Di1, (1,2))
-            Di[::2,:] = Di1[::2,:] * r
-            Di[1::2,:] = Di1[1::2,:] * r
-            D = np.vstack((D, Di))
+            # the measured sensor points with distortion
+            udotij, vdotij = udot
 
-            # Udot is the measured sensor points with distortion
-            Ddoti = (Udot - U).reshape(-1, 1)
-            Ddot = np.vstack((Ddot, Ddoti))
+            # the projected sensor points without distortion
+            u, v = mu.project(A, np.eye(4), cXij)
 
-    else:
-        # keeping the unvectorized version for posterity. it's also easier to read
-        for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
-            for j, (udot, bXij) in enumerate(zip(Udot, bX)):
-                # rij is computed from the normalized sensor coordinate, which is computed by
-                #   projecting the 3D model point to camera coordinates using the standard
-                #   projection matrix (f=1)
-                cXij = mu.transform(cMb, bXij)
-                xij = mu.projectStandard(cXij)
-                rij = np.linalg.norm(xij)
+            xn, yn = xij.ravel()
+            Dij = np.array([
+                [
+                    (u - uc) * rij**2,
+                    (u - uc) * rij**4,
+                    fx * (2 * xn * yn),
+                    fy * (rij**2 + 2 * xn**2),
+                    (u - uc) * rij**6,
+                ],
+                [
+                    (v - vc) * rij**2,
+                    (v - vc) * rij**4,
+                    fx * (rij**2 + 2 * yn**2),
+                    fy * (2 * xn * yn),
+                    (v - vc) * rij**6,
+                ],
+            ])
+            D = np.vstack((D, Dij))
 
-                # the measured sensor points with distortion
-                udotij, vdotij = udot
-
-                # the projected sensor points without distortion
-                u, v = mu.project(A, np.eye(4), cXij)
-
-                xn, yn = xij.ravel()
-                Dij = np.array([
-                    [
-                        (u - uc) * rij**2,
-                        (u - uc) * rij**4,
-                        fx * (2 * xn * yn),
-                        fy * (rij**2 + 2 * xn**2),
-                        (u - uc) * rij**6,
-                    ],
-                    [
-                        (v - vc) * rij**2,
-                        (v - vc) * rij**4,
-                        fx * (rij**2 + 2 * yn**2),
-                        fy * (2 * xn * yn),
-                        (v - vc) * rij**6,
-                    ],
-                ])
-                D = np.vstack((D, Dij))
-
-                Ddotij = np.array([
-                    [udotij - u],
-                    [vdotij - v],
-                ])
-                Ddot = np.vstack((Ddot, Ddotij))
+            Ddotij = np.array([
+                [udotij - u],
+                [vdotij - v],
+            ])
+            Ddot = np.vstack((Ddot, Ddotij))
     k = np.linalg.pinv(D) @ Ddot
     return tuple(k.ravel())
 
