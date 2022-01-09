@@ -4,13 +4,13 @@ import numpy as np
 import sympy
 
 from __context__ import src
+from src import calibrate
+from src import dataset
 from src import distortion
 from src import jacobian
 from src import mathutils as mu
 
 
-# all tests take 11 sec with evalf(subs=...)
-# takes ~7 sec with lambdify
 class TestProjectionJacobian(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -19,6 +19,18 @@ class TestProjectionJacobian(unittest.TestCase):
         cls.intrinsicValues = [400, 400, 0, 320, 240, -0.5, 0.2, 0, 0, 0]
         cls.extrinsicValues = [180, 0, 0, 0.1, 0.2, 1.0]
         cls.modelPoint = [0.1, 0.1, 0]
+
+        width, height = 640, 480
+        α, β, γ, uc, vc, k1, k2, p1, p2, k3 = cls.intrinsicValues
+        A = np.array([
+            [α, γ, uc],
+            [0, β, vc],
+            [0, 0,  1],
+        ])
+        k = (k1, k2, p1, p2, k3)
+        cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
+        W = cls.syntheticDataset.getAllBoardPosesInCamera()
+        cls.P = calibrate.composeParameterVector(A, W, k)
 
     def test_init(self):
         self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))
@@ -48,8 +60,21 @@ class TestProjectionJacobian(unittest.TestCase):
         self.assertNonZero(extrinsicBlock)
 
     def test_compute(self):
-        #self.jac.compute(P,
-        pass
+        dataSet = self.syntheticDataset
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
+        MN = sum([modelPoints.shape[0] for modelPoints in allModelPoints])
+        M = len(allModelPoints)
+        L = 10
+        K = 6 * M + L
+
+        # takes ~14 sec for one iteration
+        J = self.jac.compute(self.P, allModelPoints)
+
+        self.assertEqual(J.shape, (2*MN, K))
+        self.assertNonZero(J[0, 0])
+        self.assertNonZero(J[-1, -1])
+        self.assertEqual(J[0, 16], 0)
 
     def assertNoNans(self, Q):
         self.assertEqual(np.sum(np.isnan(Q)), 0)

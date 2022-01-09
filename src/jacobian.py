@@ -12,16 +12,19 @@ class ProjectionJacobian:
         if distortionModel == distortion.DistortionModel.RadialTangential:
             self._uvExpr = createExpressionIntrinsicProjectionRadTan()
             self._intrinsicSymbols = getIntrinsicRadTanSymbols()
-            self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
-            self._intrinsicJacobianBlockFunctions, self._intrinsicJacobianBlockInputSymbols = \
-                    self._createJacobianBlockFunctions(self._intrinsicJacobianBlockExpr)
-
-            self._extrinsicSymbols = getExtrinsicSymbols()
-            self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
-            self._extrinsicJacobianBlockFunctions, self._extrinsicJacobianBlockInputSymbols = \
-                    self._createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
+        elif distortionModel == distortion.DistortionModel.FishEye:
+            raise NotImplementedError("Fish eye distortion model not yet supported")
         else:
-            raise NotImplementedError("Only radial-tangential distortion supported currently")
+            raise NotImplementedError("Unknown distortion model: {distortionModel}")
+
+        self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
+        self._intrinsicJacobianBlockFunctions, self._intrinsicJacobianBlockInputSymbols = \
+                self._createJacobianBlockFunctions(self._intrinsicJacobianBlockExpr)
+
+        self._extrinsicSymbols = getExtrinsicSymbols()
+        self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
+        self._extrinsicJacobianBlockFunctions, self._extrinsicJacobianBlockInputSymbols = \
+                self._createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
 
     def _createJacobianBlockFunctions(self, jacobianBlockExpr):
         inputSymbols = []
@@ -37,7 +40,8 @@ class ProjectionJacobian:
 
             jacobianBlockFunctions.append(rowJacobianBlockFunctions)
             inputSymbols.append(rowInputSymbols)
-        return np.array(jacobianBlockFunctions), np.array(inputSymbols)
+        return (np.array(jacobianBlockFunctions, dtype=object),
+                np.array(inputSymbols, dtype=object))
 
     def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
@@ -98,22 +102,33 @@ class ProjectionJacobian:
         return jacobianBlockExpr
 
     def compute(self, P, allModelPoints):
+        if isinstance(P, np.ndarray):
+            P = P.ravel()
         M = len(allModelPoints)
-        a = P[:-M * self._numExtrinsicParamsPerView]
+        intrinsicValues = P[:-M * self._numExtrinsicParamsPerView]
         MN = sum([modelPoints.shape[0] for modelPoints in allModelPoints])
         L = len(self._intrinsicSymbols)
         K = L + self._numExtrinsicParamsPerView * M
         J = np.zeros((2*MN, K))
 
-        indexJ = 0
+        rowIndexJ = 0
         for i in range(M):
-            wX = allModelPoints[i]
-            N = len(wX)
-            # populate intrinsic columns
-            J[indexJ:indexJ + 2*N, :L] = None
+            modelPoints = allModelPoints[i]
+            intrinsicStartCol = L+i*self._numExtrinsicParamsPerView
+            intrinsicEndCol = intrinsicStartCol + self._numExtrinsicParamsPerView
+            extrinsicValues = P[intrinsicStartCol:intrinsicEndCol]
+            N = len(modelPoints)
+            colIndexJ = L+i*self._numExtrinsicParamsPerView
+            for j, modelPoint in enumerate(modelPoints):
+                intrinsicBlock = self._createIntrinsicsJacobianBlock(
+                        intrinsicValues, extrinsicValues, modelPoint)
+                extrinsicBlock = self._createExtrinsicsJacobianBlock(
+                        intrinsicValues, extrinsicValues, modelPoint)
 
-            # populate extrinsic blocks
-
+                J[rowIndexJ:rowIndexJ + 2, :L] = intrinsicBlock
+                J[rowIndexJ:rowIndexJ + 2, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
+                        extrinsicBlock
+                rowIndexJ += 2
         return J
 
 
