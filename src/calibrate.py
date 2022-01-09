@@ -6,6 +6,7 @@ from scipy.optimize import curve_fit
 
 from __context__ import src
 from src import distortion
+from src import jacobian
 from src import mathutils as mu
 
 
@@ -531,36 +532,19 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     Pt = composeParameterVector(Ainitial, Winitial, kInitial)
     λ = 1e-3
     allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
+    ydot = getSensorPoints(allDetections)
 
-    allCameraPoses = [w_M_c1, w_M_c2, w_M_c3]
-    allMeasuredPoints = [x1p, x2p, x3p]
+    jac = jacobian.ProjectionJacobian()
+
     for k in range(maxIters):
-        # project current points
-        xs = projectAllPoints(Pt, allModelPoints)
-        x1, x2, x3 = xs
+        # TODO: compute J
+        J = jac.compute(Pt, allModelPoints)
 
-        # compute a change in the P vector, Δ, to reduce the error
-        #   must compute the jacobian J in order to do this
-        Δ = np.zeros_like(Pt)
-        for j in range(N):
-            b = mu.col([x1p[j,0], x1p[j,1], x2p[j,0], x2p[j,1], x3p[j,0], x3p[j,1]])
-            fX = mu.col([x1[j,0], x1[j,1], x2[j,0], x2[j,1], x3[j,0], x3[j,1]])
-            J = np.zeros((6,3))
-            for i in range(3):
-                ui, vi, wi = xs[i][j]
-                R = Rs[i]
-                r11, r12, r13 = R[0,0], R[0,1], R[0,2]
-                r21, r22, r23 = R[1,0], R[1,1], R[1,2]
-                r31, r32, r33 = R[2,0], R[2,1], R[2,2]
-                duidX = np.array([f*r11 + px*r31, f*r12 + px*r32, f*r13 + px*r33]).reshape(1,3)
-                dvidX = np.array([f*r21 + py*r31, f*r22 + py*r32, f*r23 + py*r33]).reshape(1,3)
-                dwidX = np.array([r31, r32, r33]).reshape(1,3)
-                J[2*i,:] = (wi * duidX - ui * dwidX) / wi**2
-                J[2*i+1,:] = (wi * dvidX - vi * dwidX) / wi**2
-            JTJ = J.T @ J
-            diagJTJ = np.diag(np.diagonal(JTJ))
-            Δj = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ (b - fX)
-            Δ[j] = Δj.ravel()
+        # compute Δ, a change in the P vector using Levenberg-Marquardt
+        JTJ = J.T @ J
+        diagJTJ = np.diag(np.diagonal(JTJ))
+        y = projectAllPoints(Pt, allModelPoints)
+        Δ = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ (ydot - y)
 
         # evaluate if Pt + Δ reduces the error or not
         Pt_error = computeReprojectionError(Pt, allDetections)
