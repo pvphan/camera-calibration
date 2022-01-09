@@ -3,6 +3,7 @@ import sympy
 
 from __context__ import src
 from src import distortion
+from src import mathutils as mu
 
 
 class ProjectionJacobian:
@@ -17,27 +18,23 @@ class ProjectionJacobian:
         else:
             raise NotImplementedError("Only radial-tangential distortion supported currently")
 
-    def _createIntrinsicsJacobianBlock(self, intrinsicValues, modelPoint):
+    def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         intrinsicBlock = np.zeros(shape=self._intrinsicJacobianBlockExpr.shape)
         valuesDict = dict(zip(self._intrinsicSymbols, intrinsicValues))
-        X, Y, Z = sympy.symbols("X Y Z")
-        valuesDict[X] = modelPoint[0]
-        valuesDict[Y] = modelPoint[1]
-        valuesDict[Z] = modelPoint[2]
+        #valuesDict.update(dict(zip(self._extrinsicSymbols, extrinsicValues)))
+        insertModelPoints(valuesDict, modelPoint)
         for i, symbol in enumerate(self._intrinsicSymbols):
             du = self._intrinsicJacobianBlockExpr[0,i].evalf(subs=valuesDict)
+            print(du)
             dv = self._intrinsicJacobianBlockExpr[1,i].evalf(subs=valuesDict)
             intrinsicBlock[0,i] = du
             intrinsicBlock[1,i] = dv
         return intrinsicBlock
 
-    def _createExtrinsicsJacobianBlock(self, extrinsicValues, modelPoint):
+    def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         extrinsicBlock = np.zeros(shape=self._extrinsicJacobianBlockExpr.shape)
         valuesDict = dict(zip(self._extrinsicSymbols, extrinsicValues))
-        X, Y, Z = sympy.symbols("X Y Z")
-        valuesDict[X] = modelPoint[0]
-        valuesDict[Y] = modelPoint[1]
-        valuesDict[Z] = modelPoint[2]
+        insertModelPoints(valuesDict, modelPoint)
         for i, symbol in enumerate(self._extrinsicSymbols):
             du = self._extrinsicJacobianBlockExpr[0,i].evalf(subs=valuesDict)
             dv = self._extrinsicJacobianBlockExpr[1,i].evalf(subs=valuesDict)
@@ -76,6 +73,13 @@ class ProjectionJacobian:
         return J
 
 
+def insertModelPoints(valuesDict, modelPoint):
+    X0, Y0, Z0 = sympy.symbols("X0 Y0 Z0")
+    valuesDict[X0] = modelPoint[0]
+    valuesDict[Y0] = modelPoint[1]
+    valuesDict[Z0] = modelPoint[2]
+
+
 def createExpressionIntrinsicProjectionRadTan():
     α, β, γ, uc, vc, k1, k2, p1, p2, k3 = getRadTanSymbols()
     A = np.array([
@@ -83,8 +87,18 @@ def createExpressionIntrinsicProjectionRadTan():
         [0, β, vc],
         [0, 0,  1],
     ])
-    X, Y, Z = sympy.symbols("X Y Z")
-    X0 = np.array([[X, Y, Z]])
+    ρx, ρy, ρz, tx, ty, tz = getExtrinsicSymbols()
+    R = mu.eulerToRotationMatrix((ρx, ρy, ρz), isSymbolic=True)
+    cMw = np.array([
+        [R[0,0], R[0,1], R[0,2], tx],
+        [R[1,0], R[1,1], R[1,2], ty],
+        [R[2,0], R[2,1], R[2,2], tz],
+        [     0,      0,      0,  1],
+    ])
+    X0, Y0, Z0 = sympy.symbols("X0 Y0 Z0")
+    wP = mu.col((X0, Y0, Z0, 1))
+    cPHom = (cMw @ wP).T
+    X0 = mu.unhom(cPHom)
     k = (k1, k2, p1, p2, k3)
     uvExpr = distortion.projectWithDistortion(A, X0, k, isSymbolic=True)
     return uvExpr

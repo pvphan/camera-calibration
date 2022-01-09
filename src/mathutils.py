@@ -1,7 +1,13 @@
 """
 Math utility functions based on lectures from Prof. Daniel Cremers' Multiple View Geometry course.
 """
+import math
 import numpy as np
+import sympy
+
+
+def radians(angleDegrees):
+    return angleDegrees / 180.0 * np.pi
 
 
 def rotationMatrixToEuler(R):
@@ -27,15 +33,20 @@ def rotationMatrixToEuler(R):
     return tuple(np.degrees((ψ, θ, ϕ)))
 
 
-def eulerToRotationMatrix(rXrYrZDegrees):
+def eulerToRotationMatrix(rXrYrZDegrees, isSymbolic=False):
     rx, ry, rz = rXrYrZDegrees
     wx = col((1, 0, 0))
     wy = col((0, 1, 0))
     wz = col((0, 0, 1))
 
-    Rx = exp(np.radians(rx) * skew(wx))
-    Ry = exp(np.radians(ry) * skew(wy))
-    Rz = exp(np.radians(rz) * skew(wz))
+    if isSymbolic:
+        Rx = exp(radians(rx) * skew(wx), isSymbolic=isSymbolic)
+        Ry = exp(radians(ry) * skew(wy), isSymbolic=isSymbolic)
+        Rz = exp(radians(rz) * skew(wz), isSymbolic=isSymbolic)
+    else:
+        Rx = exp(np.radians(rx) * skew(wx))
+        Ry = exp(np.radians(ry) * skew(wy))
+        Rz = exp(np.radians(rz) * skew(wz))
     R = Rz @ Ry @ Rx
     return R
 
@@ -45,20 +56,27 @@ def col(v):
     return np.array(v).reshape(-1, 1)
 
 
-def exp(wHat: np.ndarray):
+def exp(wHat: np.ndarray, isSymbolic=False):
     # exponential mapping of a skew symmetric matrix so(3) onto
     #   the rotation matrix group SO(3), uses Rodrigues' formula
     w = unskew(wHat)
-    wNorm = np.linalg.norm(w)
-    I = np.eye(3)
-    if np.isclose(wNorm, 0):
-        term1 = 0
+    if isSymbolic:
+        wNorm = sympy.sqrt(w[0]**2 + w[1]**2 + w[2]**2)
+        I = np.eye(3)
+        term1 = (wHat / wNorm) * sympy.sin(wNorm)
+        term2 = ((wHat @ wHat) / (wNorm**2)) * (1 - sympy.cos(wNorm))
     else:
-        term1 = (wHat / wNorm) * np.sin(wNorm)
-    if np.isclose(wNorm, 0):
-        term2 = 0
-    else:
-        term2 = ((wHat @ wHat) / (wNorm**2)) * (1 - np.cos(wNorm))
+        wNorm = np.linalg.norm(w)
+
+        I = np.eye(3)
+        if np.isclose(wNorm, 0):
+            term1 = 0
+        else:
+            term1 = (wHat / wNorm) * np.sin(wNorm)
+        if np.isclose(wNorm, 0):
+            term2 = 0
+        else:
+            term2 = ((wHat @ wHat) / (wNorm**2)) * (1 - np.cos(wNorm))
     R = I + term1 + term2
     return R
 
