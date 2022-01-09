@@ -44,7 +44,7 @@ class TestCalibrate(unittest.TestCase):
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2, 0.05, -0.01, 0.05)
+        kExpected = (-0.5, 0.2, 0, 0, 0.05)
         cls.syntheticDatasetWithoutDistortion = dataset.createSyntheticDataset(A, width, height, kExpected)
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
@@ -82,8 +82,8 @@ class TestCalibrate(unittest.TestCase):
             [0, 0, 1],
         ])
         width, height = 640, 480
-        distortionVector = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
+        k = (0, 0, 0, 0, 0)
+        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, k)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
 
         Hs = calibrate.estimateHomographies(allDetections)
@@ -160,8 +160,8 @@ class TestCalibrate(unittest.TestCase):
             [0, 0, 1],
         ])
         width, height = 640, 480
-        distortionVector = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, distortionVector)
+        k = (0, 0, 0, 0, 0)
+        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, k)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Hs = calibrate.estimateHomographies(allDetections)
 

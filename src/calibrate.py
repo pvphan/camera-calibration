@@ -419,10 +419,20 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
 
                 xn, yn = xij.ravel()
                 Dij = np.array([
-                    [(u - uc) * rij**2, (u - uc) * rij**4,
-                            2 * xn * yn, rij**2 + 2 * xn**2, (u - uc) * rij**6],
-                    [(v - vc) * rij**2, (v - vc) * rij**4,
-                            rij**2 + 2 * yn**2, 2 * xn * yn, (v - vc) * rij**6],
+                    [
+                        (u - uc) * rij**2,
+                        (u - uc) * rij**4,
+                        (u - uc) * (2 * xn * yn),
+                        (u - uc) * (rij**2 + 2 * xn**2),
+                        (u - uc) * rij**6,
+                    ],
+                    [
+                        (v - vc) * rij**2,
+                        (v - vc) * rij**4,
+                        (v - vc) * (rij**2 + 2 * yn**2),
+                        (v - vc) * (2 * xn * yn),
+                        (v - vc) * rij**6,
+                    ],
                 ])
                 D = np.vstack((D, Dij))
 
