@@ -44,7 +44,7 @@ class TestCalibrate(unittest.TestCase):
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2, 0, 0, 0)
+        kExpected = (-0.5, 0.2, 0.05, -0.01, 0.05)
         cls.syntheticDatasetWithoutDistortion = dataset.createSyntheticDataset(A, width, height, kExpected)
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
@@ -178,7 +178,7 @@ class TestCalibrate(unittest.TestCase):
 
         kComputed = calibrate.estimateDistortion(A, allDetections, allBoardPosesInCamera)
 
-        self.assertTrue(np.allclose(kExpected, kComputed))
+        self.assertAllClose(kExpected, kComputed)
 
     def test_estimateCalibrationParameters(self):
         dataSet = self.syntheticDatasetWithoutDistortion
@@ -200,10 +200,10 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertEqual(P.shape, (len(W) * self.numExtrinsicParamsPerView
                 + self.numIntrinsicParams, 1))
-        self.assertTrue(np.allclose(A, Acomputed))
+        self.assertAllClose(A, Acomputed)
         self.assertTrue(len(W), len(Wcomputed))
-        self.assertTrue(np.allclose(W, Wcomputed))
-        self.assertTrue(np.allclose(k, kComputed))
+        self.assertAllClose(W, Wcomputed)
+        self.assertAllClose(k, kComputed)
 
     def test_refineCalibrationParametersSciPy(self):
         dataSet = self.syntheticDatasetWithoutDistortion
@@ -217,11 +217,9 @@ class TestCalibrate(unittest.TestCase):
                 Ainitial, Winitial, kInitial, allDetections)
 
         atol = 1e-5
-        self.assertTrue(np.allclose(kExpected, kRefined, atol=atol),
-                f"\n{kExpected} \n != \n {kRefined}")
-        self.assertTrue(np.allclose(Aexpected, Arefined, atol=atol),
-                f"\n{Aexpected} \n != \n {Arefined}")
-        self.assertTrue(np.allclose(Wexpected, Wrefined, atol=atol))
+        self.assertAllClose(kExpected, kRefined, atol)
+        self.assertAllClose(Aexpected, Arefined, atol)
+        self.assertAllClose(Wexpected, Wrefined, atol)
 
     def test_refineCalibrationParameters(self):
         dataSet = self.syntheticDatasetWithoutDistortion
@@ -235,11 +233,9 @@ class TestCalibrate(unittest.TestCase):
                 Ainitial, Winitial, kInitial, allDetections)
 
         atol = 1e-5
-        self.assertTrue(np.allclose(kExpected, kRefined, atol=atol),
-                f"\n{kExpected} \n != \n {kRefined}")
-        self.assertTrue(np.allclose(Aexpected, Arefined, atol=atol),
-                f"\n{Aexpected} \n != \n {Arefined}")
-        self.assertTrue(np.allclose(Wexpected, Wrefined, atol=atol))
+        self.assertAllClose(kExpected, kRefined, atol)
+        self.assertAllClose(Aexpected, Arefined, atol)
+        self.assertAllClose(Wexpected, Wrefined, atol)
 
     def test_projectAllPoints(self):
         dataSet = self.syntheticDatasetWithoutDistortion
@@ -273,6 +269,10 @@ class TestCalibrate(unittest.TestCase):
         totalError = calibrate.computeReprojectionError(Pexpected, allDetections)
 
         self.assertAlmostEqual(totalError, 0)
+
+    def assertAllClose(self, A, B, atol=1e-9):
+        self.assertTrue(np.allclose(A, B, atol=atol),
+                f"\n{A} \n != \n {B}")
 
 
 def generateRandomPointsInFrontOfCamera(numPoints):

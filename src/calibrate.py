@@ -380,6 +380,7 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
 
     shouldRunVectorized = False
     if shouldRunVectorized:
+        raise NotImplementedError("Haven't vectorized 5 parameter distortion yet")
         # ~15x speedup over the unvectorized loop version below
         for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
             cXi = mu.transform(cMb, bX)
@@ -537,10 +538,9 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
     ydot = getSensorPoints(allDetections)
 
-    jac = jacobian.ProjectionJacobian()
+    jac = jacobian.ProjectionJacobian(distortion.DistortionModel.RadialTangential)
 
     for k in range(maxIters):
-        # TODO: compute J
         J = jac.compute(Pt, allModelPoints)
 
         # compute Δ, a change in the P vector using Levenberg-Marquardt

@@ -3,27 +3,45 @@ import sympy
 
 from __context__ import src
 from src import distortion
-from src import mathutils as mu
 
 
 class ProjectionJacobian:
+    _numExtrinsicParamsPerView = 6
     def __init__(self, distortionModel: distortion.DistortionModel):
-        # TODO: write expressions for projection
-        #       set these up to be evaluated
-        pass
+        if distortionModel == distortion.DistortionModel.RadialTangential:
+            self._uvExpr = createExpressionIntrinsicProjectionRadTan()
+            intrinsicSymbols = getRadTanSymbols()
+            self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(intrinsicSymbols)
+            extrinsicSymbols = getExtrinsicSymbols()
+            self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(extrinsicSymbols)
+        else:
+            raise NotImplementedError("Only radial-tangential distortion supported currently")
 
-    def createIntrinsicsJacobianBlock():
-        pass
+    def createIntrinsicsJacobianBlock(self):
+        self._intrinsicJacobianBlockExpr
 
-    def createExtrinsicsJacobianBlock():
-        pass
+    def createExtrinsicsJacobianBlock(self):
+        self._extrinsicJacobianBlockExpr
 
-    def compute(P, allModelPoints):
-        pass
+    def _createJacobianBlockExpression(self, derivativeSymbols):
+        uExpr, vExpr = self._uvExpr.ravel()
+        uExprs = []
+        vExprs = []
+        for i, paramSymbol in enumerate(derivativeSymbols):
+            uExprs.append(sympy.diff(uExpr, paramSymbol))
+            vExprs.append(sympy.diff(vExpr, paramSymbol))
+
+        jacobianBlockExpr = np.array([uExprs, vExprs])
+        return jacobianBlockExpr
+
+    def compute(self, P, allModelPoints):
+        N = len(allModelPoints)
+        a = P[:-N * self._numExtrinsicParamsPerView]
+        print(a)
 
 
-def createExpressionIntrinsicProjection():
-    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = sympy.symbols("α β γ uc vc k1 k2, p1, p2, k3")
+def createExpressionIntrinsicProjectionRadTan():
+    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = getRadTanSymbols()
     A = np.array([
         [α, γ, uc],
         [0, β, vc],
@@ -32,6 +50,13 @@ def createExpressionIntrinsicProjection():
     X, Y, Z = sympy.symbols("X Y Z")
     X0 = np.array([[X, Y, Z]])
     k = (k1, k2, p1, p2, k3)
-    expr = distortion.projectWithDistortion(A, X0, k, isSymbolic=True)
-    return expr
+    uvExpr = distortion.projectWithDistortion(A, X0, k, isSymbolic=True)
+    return uvExpr
 
+
+def getRadTanSymbols():
+    return sympy.symbols("α β γ uc vc k1 k2, p1, p2, k3")
+
+
+def getExtrinsicSymbols():
+    return sympy.symbols("ρx ρy ρz tx ty tz")
