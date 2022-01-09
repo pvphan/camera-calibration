@@ -5,5 +5,4 @@ WORKDIR /camera-calibration
 RUN pip install --no-cache-dir \
     imageio==2.13.5 \
     numpy==1.21.5 \
-    scipy==1.7.3 \
     sympy==1.9 \

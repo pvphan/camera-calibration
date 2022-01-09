@@ -3,45 +3,10 @@
 [![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
 
 A simple library for calibrating camera intrinsics from a json file of sensor (2D) and model point (3D) correspondences.
-Written primarily as an exercise with few external dependencies (numpy, scipy, imageio) for a deeper understanding.
+Written primarily as an exercise with few external dependencies (numpy, sympy, imageio) for a deeper understanding.
 Also generates synthetic datasets for testing and rudimentary visualization.
 
 Prerequisites: `make`, `docker`
-
-TODO: Usage: `make calibrate <input_json_path>`
-
-Where the json file has the structure:
-```
-{
-    "views": [
-        {
-            "sensorPoints": [
-                [200, 300],
-                [200, 400],
-                ...
-            ],
-            "modelPoints": [
-                [0.2, 0.3, 0],
-                [0.2, 0.4, 0],
-                ...
-            ]
-        },
-        {
-            "sensorPoints": [
-                [500, 600],
-                [500, 700],
-                ...
-            ],
-            "modelPoints": [
-                [0.5, 0.6, 0],
-                [0.5, 0.7, 0],
-                ...
-            ]
-        },
-        ...
-    ]
-}
-```
 
 
 ## TODO:
@@ -54,7 +19,8 @@ Where the json file has the structure:
 - [x] Use estimated parameters as initial guess and refine using non-linear optimization over all views
 - [x] Write main method interface for calibrating from json files
 - [x] Support full radial-tangential distortion model
-- [ ] Write nonlinear optimization by hand instead of using SciPy
+- [x] Write nonlinear optimization by hand instead of using SciPy
+- [ ] Button up as python package
 - [ ] Support fisheye distortion model
 
 
@@ -117,8 +83,7 @@ Where the json file has the structure:
 
 
 ## References:
-- (paper) [Zhengyou Zhang: A Flexible New Technique for Camera Calibration](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr98-71.pdf)
 - (paper) [Wilhelm Burger: Zhang's Camera Calibration Algorithm: In-Depth Tutorial and Implementation](https://www.researchgate.net/publication/303233579_Zhang's_Camera_Calibration_Algorithm_In-Depth_Tutorial_and_Implementation).
+- (paper) [Zhengyou Zhang: A Flexible New Technique for Camera Calibration](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr98-71.pdf)
 - (video) [Cyrill Stachniss: Direct Linear Transform](https://www.youtube.com/watch?v=3NcQbZu6xt8&ab_channel=CyrillStachniss)
 - (video) [Cyrill Stachniss: Camera Calibration using Zhang's Method](https://www.youtube.com/watch?v=-9He7Nu3u8s&ab_channel=CyrillStachniss)
-- (webpage) [OpenCV: Basic concepts of the homography explained with code](https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html)

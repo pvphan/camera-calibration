@@ -7,6 +7,11 @@ from src import mathutils as mu
 
 
 class ProjectionJacobian:
+    """
+    Uses sympy to compute expressions and evaluate the partial derivatives
+    of the projection function with respect to the variables in the
+    parameter vector P (intrinsics, distortion, extrinsics).
+    """
     _numExtrinsicParamsPerView = 6
     def __init__(self, distortionModel: distortion.DistortionModel):
         if distortionModel == distortion.DistortionModel.RadialTangential:
@@ -102,6 +107,15 @@ class ProjectionJacobian:
         return jacobianBlockExpr
 
     def compute(self, P, allModelPoints):
+        """
+        Input:
+            P -- parameter value vector (intrinsics, distortion, extrinsics)
+            allModelPoints -- model points which are projected into the camera
+
+        Output:
+            J -- Jacobian matrix made up of the partial derivatives of the
+                    projection function wrt each of the input parameters in P
+        """
         if isinstance(P, np.ndarray):
             P = P.ravel()
         M = len(allModelPoints)
@@ -119,6 +133,8 @@ class ProjectionJacobian:
             extrinsicValues = P[intrinsicStartCol:intrinsicEndCol]
             N = len(modelPoints)
             colIndexJ = L+i*self._numExtrinsicParamsPerView
+
+            # TODO: try to broadcast this
             for j, modelPoint in enumerate(modelPoints):
                 intrinsicBlock = self._createIntrinsicsJacobianBlock(
                         intrinsicValues, extrinsicValues, modelPoint)

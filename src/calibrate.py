@@ -1,8 +1,9 @@
 """
 Core calibration functions.
 """
+import time
+
 import numpy as np
-from scipy.optimize import curve_fit
 
 from __context__ import src
 from src import distortion
@@ -466,67 +467,6 @@ def estimateCalibrationParameters(allDetections):
     return Ainitial, Winitial, kInitial
 
 
-def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections):
-    """
-    Input:
-        Ainitial -- initial estimate of intrinsic matrix
-        Winitial -- initial estimate of world-to-camera transforms
-        kInitial -- initial estimate of distortion coefficients
-        allDetections -- list of tuples (one for each view).
-                Each tuple is (Xa, Xb), a set of sensor points
-                and model points respectively
-
-    Output:
-        Arefined -- refined estimate of intrinsic matrix
-        Wrefined -- refined estimate of world-to-camera transforms
-        kRefined -- refined estimate of distortion coefficients
-
-    Uses SciPy non-linear optimization to solve.
-    """
-    ydata = np.empty((0,1))
-    xdataIndex = np.empty((0,4))
-    for i, (sensorPoints, modelPoints) in enumerate(allDetections):
-        ydata = np.vstack((ydata, sensorPoints.reshape(-1, 1)))
-        indexCol = np.tile(i, (modelPoints.shape[0], 1))
-        modelPointsWithIndex = np.hstack((modelPoints.reshape(-1, 3), indexCol))
-        xdataIndex = np.vstack((xdataIndex, modelPointsWithIndex))
-
-    p0 = composeParameterVector(Ainitial, Winitial, kInitial)
-    P, Pcovariance = curve_fit(valueFunctionSciPy, xdataIndex, ydata.ravel(), p0, method='lm')
-    Arefined, Wrefined, kRefined = decomposeParameterVector(P)
-    return Arefined, Wrefined, kRefined
-
-
-def valueFunctionSciPy(xdataIndex, *P):
-    """
-    The function to minimize to refine all calibration parameters.
-
-    Input:
-        xdataIndex -- vector of model points with the view index
-                appended to the end, (M*N, 4)
-        P -- vector of parameters made up of A, W, k
-
-    Output:
-        u -- the expected measurements given the input x and the
-                calibration parameters P
-    """
-    A, W, k = decomposeParameterVector(P)
-    dataIndices = xdataIndex[:,3].astype(int)
-    maxIndex = np.max(dataIndices)
-    xdata = []
-    for i in range(maxIndex+1):
-        slicei = np.s_[dataIndices == i]
-        xdatai = xdataIndex[slicei,:3]
-        xdata.append(xdatai)
-
-    ydot = np.empty((0, 1))
-    for cMw, wP in zip(W, xdata):
-        cP = mu.transform(cMw, wP)
-        udot = distortion.projectWithDistortion(A, cP, k)
-        ydot = np.vstack((ydot, udot.reshape(-1, 1)))
-    return ydot.ravel()
-
-
 def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     """
     Input:
@@ -544,7 +484,8 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
 
     Uses Levenberg-Marquardt to solve non-linear optimization.
     """
-    maxIters = 500
+    shouldPrint = True
+    maxIters = 50
     Pt = composeParameterVector(Ainitial, Winitial, kInitial)
     λ = 1e-3
     allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
@@ -552,28 +493,44 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
 
     jac = jacobian.ProjectionJacobian(distortion.DistortionModel.RadialTangential)
 
-    for k in range(maxIters):
+    ts = time.time()
+    # Levenberg-Marquardt
+    for iter in range(maxIters):
         J = jac.compute(Pt, allModelPoints)
 
-        # compute Δ, a change in the P vector using Levenberg-Marquardt
         JTJ = J.T @ J
         diagJTJ = np.diag(np.diagonal(JTJ))
         y = projectAllPoints(Pt, allModelPoints)
-        Δ = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ (ydot - y)
+
+        # compute residuum
+        r = ydot.reshape(-1, 1) - y.reshape(-1, 1)
+        Δ = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ r
 
         # evaluate if Pt + Δ reduces the error or not
         Pt_error = computeReprojectionError(Pt, allDetections)
         Pt1_error = computeReprojectionError(Pt + Δ, allDetections)
+
         if Pt1_error < Pt_error:
             Pt += Δ
             λ /= 10
         else:
             λ *= 10
-        if λ < 1e-150:
+
+        if shouldPrint:
+            printIterationStats(iter, ts, Pt, Pt_error)
+
+        if λ < 1e-150 or Pt_error < 1e-12:
             break
 
     Arefined, Wrefined, kRefined = decomposeParameterVector(Pt)
     return Arefined, Wrefined, kRefined
+
+
+def printIterationStats(iter, ts, Pt, Pt_error):
+    At, Wt, kt = decomposeParameterVector(Pt)
+    print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error = {Pt_error:0.3f}")
+    print(f"A:\n{At}")
+    print(f"k:\n{kt}")
 
 
 def computeReprojectionError(P, allDetections):
