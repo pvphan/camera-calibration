@@ -11,6 +11,7 @@ Generates synthetic datasets for testing and rudimentary visualization.
 Limitations:
 
 - Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
+- Runs pretty slowly -- about 5 mins for the unit tested synthetic case (`tests/test_calibrate.py:test_refineCalibrationParameters`)
 - Currently only handles the radial-tangential distortion model (k1, k2, p1, p2, k3).
 
 
