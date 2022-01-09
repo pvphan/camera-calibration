@@ -11,7 +11,7 @@ class ProjectionJacobian:
     def __init__(self, distortionModel: distortion.DistortionModel):
         if distortionModel == distortion.DistortionModel.RadialTangential:
             self._uvExpr = createExpressionIntrinsicProjectionRadTan()
-            self._intrinsicSymbols = getRadTanSymbols()
+            self._intrinsicSymbols = getIntrinsicRadTanSymbols()
             self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
             self._extrinsicSymbols = getExtrinsicSymbols()
             self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
@@ -20,12 +20,9 @@ class ProjectionJacobian:
 
     def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         intrinsicBlock = np.zeros(shape=self._intrinsicJacobianBlockExpr.shape)
-        valuesDict = dict(zip(self._intrinsicSymbols, intrinsicValues))
-        #valuesDict.update(dict(zip(self._extrinsicSymbols, extrinsicValues)))
-        insertModelPoints(valuesDict, modelPoint)
+        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
         for i, symbol in enumerate(self._intrinsicSymbols):
             du = self._intrinsicJacobianBlockExpr[0,i].evalf(subs=valuesDict)
-            print(du)
             dv = self._intrinsicJacobianBlockExpr[1,i].evalf(subs=valuesDict)
             intrinsicBlock[0,i] = du
             intrinsicBlock[1,i] = dv
@@ -33,14 +30,19 @@ class ProjectionJacobian:
 
     def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         extrinsicBlock = np.zeros(shape=self._extrinsicJacobianBlockExpr.shape)
-        valuesDict = dict(zip(self._extrinsicSymbols, extrinsicValues))
-        insertModelPoints(valuesDict, modelPoint)
+        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
         for i, symbol in enumerate(self._extrinsicSymbols):
             du = self._extrinsicJacobianBlockExpr[0,i].evalf(subs=valuesDict)
             dv = self._extrinsicJacobianBlockExpr[1,i].evalf(subs=valuesDict)
             extrinsicBlock[0,i] = du
             extrinsicBlock[1,i] = dv
         return extrinsicBlock
+
+    def _createValuesDict(self, intrinsicValues, extrinsicValues, modelPoint):
+        valuesDict = dict(zip(self._intrinsicSymbols, intrinsicValues))
+        valuesDict.update(dict(zip(self._extrinsicSymbols, extrinsicValues)))
+        insertModelPoints(valuesDict, modelPoint)
+        return valuesDict
 
     def _createJacobianBlockExpression(self, derivativeSymbols):
         uExpr, vExpr = self._uvExpr.ravel()
@@ -81,7 +83,7 @@ def insertModelPoints(valuesDict, modelPoint):
 
 
 def createExpressionIntrinsicProjectionRadTan():
-    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = getRadTanSymbols()
+    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = getIntrinsicRadTanSymbols()
     A = np.array([
         [α, γ, uc],
         [0, β, vc],
@@ -104,7 +106,7 @@ def createExpressionIntrinsicProjectionRadTan():
     return uvExpr
 
 
-def getRadTanSymbols():
+def getIntrinsicRadTanSymbols():
     return sympy.symbols("α β γ uc vc k1 k2 p1 p2 k3")
 
 
