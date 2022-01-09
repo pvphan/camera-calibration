@@ -20,6 +20,7 @@ Prerequisites: `make`, `docker`
 - [x] Write main method interface for calibrating from json files
 - [x] Support full radial-tangential distortion model
 - [x] Write nonlinear optimization by hand instead of using SciPy
+- [ ] Try vectorizing the Jacobian computation (takes ~14 sec per iteration of LM currently)
 - [ ] Button up as python package
 - [ ] Support fisheye distortion model
 

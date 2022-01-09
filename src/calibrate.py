@@ -488,7 +488,6 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     shouldPrint = True
     maxIters = 50
     Pt = composeParameterVector(Ainitial, Winitial, kInitial)
-    λ = 1e-3
     allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
     ydot = getSensorPoints(allDetections)
 
@@ -496,6 +495,7 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
 
     ts = time.time()
     # Levenberg-Marquardt
+    λ = 1e-3
     for iter in range(maxIters):
         J = jac.compute(Pt, allModelPoints)
 
