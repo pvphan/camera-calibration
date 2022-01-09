@@ -5,12 +5,13 @@
 A simple library for calibrating camera intrinsics from sensor (2D) and model point (3D) correspondences.
 Written with few external dependencies (numpy, sympy, imageio) for a deeper understanding.
 Non-linear optimization is done through computing partial derivatives with [`sympy`](https://docs.sympy.org/latest/index.html) to populate the Jacobian matrix.
-Also generates synthetic datasets for testing and rudimentary visualization.
+Generates synthetic datasets for testing and rudimentary visualization.
+
 
 Limitations:
 
-- Does not include any feature / fiducial detection
-- Currently only handles the radial-tangential distortion model (k1, k2, p1, p2, k3)
+- Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
+- Currently only handles the radial-tangential distortion model (k1, k2, p1, p2, k3).
 
 
 Prerequisites: `make`, `docker`
