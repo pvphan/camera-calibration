@@ -475,12 +475,12 @@ def refineCalibrationParametersSciPy(Ainitial, Winitial, kInitial, allDetections
         xdataIndex = np.vstack((xdataIndex, modelPointsWithIndex))
 
     p0 = composeParameterVector(Ainitial, Winitial, kInitial)
-    P, Pcovariance = curve_fit(f, xdataIndex, ydata.ravel(), p0, method='lm')
+    P, Pcovariance = curve_fit(valueFunctionSciPy, xdataIndex, ydata.ravel(), p0, method='lm')
     Arefined, Wrefined, kRefined = decomposeParameterVector(P)
     return Arefined, Wrefined, kRefined
 
 
-def f(xdataIndex, *P):
+def valueFunctionSciPy(xdataIndex, *P):
     """
     The function to minimize to refine all calibration parameters.
 
@@ -579,8 +579,8 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
 
 def computeReprojectionError(P, allDetections):
     allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
-    ydot = projectAllPoints(P, allModelPoints)
-    y = getSensorPoints(allDetections)
+    y = projectAllPoints(P, allModelPoints)
+    ydot = getSensorPoints(allDetections)
     totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
     return totalError
 
