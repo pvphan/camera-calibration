@@ -41,21 +41,25 @@ class ProjectionJacobian:
 
     def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
-        intrinsicBlock = np.zeros(shape=self._intrinsicJacobianBlockFunctions.shape)
-        for i in range(self._intrinsicJacobianBlockFunctions.shape[0]):
-            for j in range(self._intrinsicJacobianBlockFunctions.shape[1]):
-                intrinsicBlock[i,j] = evaluate(self._intrinsicJacobianBlockFunctions[i,j],
-                        self._intrinsicJacobianBlockInputSymbols[i,j], valuesDict)
+        intrinsicBlock = self._computeJacobianBlock(valuesDict,
+                self._intrinsicJacobianBlockFunctions,
+                self._intrinsicJacobianBlockInputSymbols)
         return intrinsicBlock
 
     def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
         valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
-        extrinsicBlock = np.zeros(shape=self._extrinsicJacobianBlockFunctions.shape)
-        for i in range(self._extrinsicJacobianBlockFunctions.shape[0]):
-            for j in range(self._extrinsicJacobianBlockFunctions.shape[1]):
-                extrinsicBlock[i,j] = evaluate(self._extrinsicJacobianBlockFunctions[i,j],
-                        self._extrinsicJacobianBlockInputSymbols[i,j], valuesDict)
+        extrinsicBlock = self._computeJacobianBlock(valuesDict,
+                self._extrinsicJacobianBlockFunctions,
+                self._extrinsicJacobianBlockInputSymbols)
         return extrinsicBlock
+
+    def _computeJacobianBlock(self, valuesDict, functionBlock, inputSymbolsBlock):
+        blockValues = np.zeros(shape=functionBlock.shape)
+        for i in range(functionBlock.shape[0]):
+            for j in range(functionBlock.shape[1]):
+                blockValues[i,j] = evaluate(functionBlock[i,j],
+                        inputSymbolsBlock[i,j], valuesDict)
+        return blockValues
 
     def _createValuesDict(self, intrinsicValues, extrinsicValues, modelPoint):
         """
