@@ -373,6 +373,8 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
 
         Solution: k = pinv(D) * Ddot
     """
+    fx = A[0,0]
+    fy = A[1,1]
     uc = A[0,2]
     vc = A[1,2]
     D = np.empty((0,5))
@@ -422,15 +424,15 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
                     [
                         (u - uc) * rij**2,
                         (u - uc) * rij**4,
-                        (u - uc) * (2 * xn * yn),
-                        (u - uc) * (rij**2 + 2 * xn**2),
+                        fx * (2 * xn * yn),
+                        fy * (rij**2 + 2 * xn**2),
                         (u - uc) * rij**6,
                     ],
                     [
                         (v - vc) * rij**2,
                         (v - vc) * rij**4,
-                        (v - vc) * (rij**2 + 2 * yn**2),
-                        (v - vc) * (2 * xn * yn),
+                        fx * (rij**2 + 2 * yn**2),
+                        fy * (2 * xn * yn),
                         (v - vc) * rij**6,
                     ],
                 ])
