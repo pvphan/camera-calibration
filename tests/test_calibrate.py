@@ -44,7 +44,7 @@ class TestCalibrate(unittest.TestCase):
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2, 0, 0, 0.05)
+        kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
         cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, kExpected)
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6

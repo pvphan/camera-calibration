@@ -482,7 +482,8 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
         Wrefined -- refined estimate of world-to-camera transforms
         kRefined -- refined estimate of distortion coefficients
 
-    Uses Levenberg-Marquardt to solve non-linear optimization.
+    Uses Levenberg-Marquardt to solve non-linear optimization. Jacobian matrices
+        are compute by jacobian.py
     """
     shouldPrint = True
     maxIters = 50

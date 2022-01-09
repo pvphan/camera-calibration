@@ -32,6 +32,19 @@ class ProjectionJacobian:
                 self._createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
 
     def _createJacobianBlockFunctions(self, jacobianBlockExpr):
+        """
+        Input:
+            jacobianBlockExpr -- (2, T) matrix of the sympy expressions of the partial
+                    derivatives of the projection equation
+
+        Output:
+            jacobianBlockFunctions -- (2, T) matrix of lambda functions to evaluate
+                    the values given inputs
+            inputSymbols -- (2, T) matrix of ordered tuples for the input symbols
+                    so that values are assigned in the correct order during evaluation
+
+        T is 6 for the extrinsic case, and 10 for the radial-tangential intrinsic case.
+        """
         inputSymbols = []
         jacobianBlockFunctions = []
         for i in range(jacobianBlockExpr.shape[0]):
@@ -63,6 +76,19 @@ class ProjectionJacobian:
         return extrinsicBlock
 
     def _computeJacobianBlock(self, valuesDict, functionBlock, inputSymbolsBlock):
+        """
+        Evaluates the values of J (general purpose)
+
+        Input:
+            valuesDict -- dictionary with items (key=symbol, value=value)
+            functionBlock -- (2, T) matrix of callable functions to compute the values of
+                    the Jacobian for that specific block
+            inputSymbolsBlock -- (2, T) ordered symbols so values are assigned correctly in
+                    functionBlock
+
+        Output:
+            blockValues -- (2, T) matrix block of the Jacobian J
+        """
         blockValues = np.zeros(shape=functionBlock.shape)
         for i in range(functionBlock.shape[0]):
             for j in range(functionBlock.shape[1]):
@@ -204,6 +230,7 @@ def createLambdaFunction(expression):
 
 
 def evaluate(f, orderedSymbols, valuesDict):
+    # need a very small number instead of zero to avoid divide-by-zero errors
     eps = 1e-100
     orderedInputs = [valuesDict[symbol] if np.abs(valuesDict[symbol]) > eps else eps
             for symbol in orderedSymbols]
