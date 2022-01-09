@@ -2,10 +2,11 @@
 
 [![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
 
-A simple library for calibrating camera intrinsics from sensor (2D) and model point (3D) correspondences.
-Written with few external dependencies (numpy, sympy, imageio) for a deeper understanding.
-Non-linear optimization is done through computing partial derivatives with [`sympy`](https://docs.sympy.org/latest/index.html) to populate the Jacobian matrix.
+A simple Python library for calibrating camera intrinsics from sensor (2D) and model point (3D) correspondences.
+Written with few external dependencies (numpy, sympy, imageio) for a more manual implementation and a deeper understanding.
+Non-linear optimization is done through minimizing projection error and computing partial derivatives with [`sympy`](https://docs.sympy.org/latest/index.html) to populate the Jacobian matrix.
 Generates synthetic datasets for testing and rudimentary visualization.
+Dockerized for convenience of development, testing, and maybe deployment.
 
 
 Limitations:
@@ -16,6 +17,15 @@ Limitations:
 
 
 Prerequisites: `make`, `docker`
+
+
+## Getting started
+
+If you'd like to try out the code:
+
+- Clone the repo and `cd` into it
+- (Modify code if desired)
+- `$ make test`
 
 
 ## TODO:
