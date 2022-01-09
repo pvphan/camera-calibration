@@ -350,7 +350,7 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
                 to each view
 
     Output:
-        k -- the distortion model, made up of (k1, k2)
+        k -- the distortion model, made up of (k1, k2, p1, p2, k3)
 
     Notes:
         We have M views, each with N points
@@ -358,7 +358,7 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
 
             D * k = Ddot
 
-        where D is (2MN, 2) and and Ddot is (2MN, 1)
+        where D is (2MN, 5) and and Ddot is (2MN, 1)
 
         for each 2 rows in D:
             [(uij - uc) * rij**2, (uij - uc) * rij**4]
@@ -375,10 +375,10 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
     """
     uc = A[0,2]
     vc = A[1,2]
-    D = np.empty((0,2))
+    D = np.empty((0,5))
     Ddot = np.empty((0,1))
 
-    shouldRunVectorized = True
+    shouldRunVectorized = False
     if shouldRunVectorized:
         # ~15x speedup over the unvectorized loop version below
         for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
@@ -402,7 +402,7 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
     else:
         # keeping the unvectorized version for posterity. it's also easier to read
         for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
-            for j, (udot, bXij) in enumerate(zip(U, bX)):
+            for j, (udot, bXij) in enumerate(zip(Udot, bX)):
                 # rij is computed from the normalized sensor coordinate, which is computed by
                 #   projecting the 3D model point to camera coordinates using the standard
                 #   projection matrix (f=1)
@@ -416,9 +416,12 @@ def estimateDistortion(A: np.ndarray, allDetections: list, allBoardPosesInCamera
                 # the projected sensor points without distortion
                 u, v = mu.project(A, np.eye(4), cXij)
 
+                xn, yn = xij.ravel()
                 Dij = np.array([
-                    [(u - uc) * rij**2, (u - uc) * rij**4],
-                    [(v - vc) * rij**2, (v - vc) * rij**4],
+                    [(u - uc) * rij**2, (u - uc) * rij**4,
+                            2 * xn * yn, rij**2 + 2 * xn**2, (u - uc) * rij**6],
+                    [(v - vc) * rij**2, (v - vc) * rij**4,
+                            rij**2 + 2 * yn**2, 2 * xn * yn, (v - vc) * rij**6],
                 ])
                 D = np.vstack((D, Dij))
 
@@ -596,7 +599,7 @@ def composeParameterVector(A, W, k):
 
     Output:
         P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
-            P = (α, β, γ, uc, uv, k1, k2,
+            P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
                     ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
                     ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
                     ...,
@@ -608,9 +611,9 @@ def composeParameterVector(A, W, k):
     γ = A[0,1]
     uc = A[0,2]
     vc = A[1,2]
-    k1, k2 = k
+    k1, k2, p1, p2, k3 = k
 
-    P = mu.col([α, β, γ, uc, vc, k1, k2])
+    P = mu.col([α, β, γ, uc, vc, k1, k2, p1, p2, k3])
 
     for cMw in W:
         R = cMw[:3,:3]
@@ -625,7 +628,7 @@ def decomposeParameterVector(P):
     """
     Input:
         P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
-            P = (α, β, γ, uc, uv, k1, k2,
+            P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
                     ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
                     ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
                     ...,
@@ -639,9 +642,9 @@ def decomposeParameterVector(P):
     """
     if isinstance(P, np.ndarray):
         P = P.ravel()
-    poseStartIndex = 7
+    poseStartIndex = 10
     numPoseParams = 6
-    α, β, γ, uc, vc, k1, k2 = P[:poseStartIndex]
+    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = P[:poseStartIndex]
     A = np.array([
         [α, γ, uc],
         [0, β, vc],
@@ -654,5 +657,5 @@ def decomposeParameterVector(P):
         t = (tix, tiy, tiz)
         W.append(mu.poseFromRT(R, t))
 
-    k = (k1, k2)
+    k = (k1, k2, p1, p2, k3)
     return A, W, k

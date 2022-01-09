@@ -44,8 +44,10 @@ class TestCalibrate(unittest.TestCase):
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2)
+        kExpected = (-0.5, 0.2, 0, 0, 0)
         cls.syntheticDatasetWithoutDistortion = dataset.createSyntheticDataset(A, width, height, kExpected)
+        cls.numIntrinsicParams = 10
+        cls.numExtrinsicParamsPerView = 6
 
     def test_getNormalizationMatrix(self):
         expectedShape = (3,3)
@@ -186,7 +188,7 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertEqual(Ainitial.shape, (3,3))
         self.assertEqual(len(Winitial), len(allDetections))
-        self.assertEqual(len(kInitial), 2)
+        self.assertEqual(len(kInitial), 5)
 
     def test_composeParameterVector(self):
         dataSet = self.syntheticDatasetWithoutDistortion
@@ -196,7 +198,8 @@ class TestCalibrate(unittest.TestCase):
         P = calibrate.composeParameterVector(A, W, k)
         Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
 
-        self.assertEqual(P.shape, (len(W) * 6 + 7, 1))
+        self.assertEqual(P.shape, (len(W) * self.numExtrinsicParamsPerView
+                + self.numIntrinsicParams, 1))
         self.assertTrue(np.allclose(A, Acomputed))
         self.assertTrue(len(W), len(Wcomputed))
         self.assertTrue(np.allclose(W, Wcomputed))

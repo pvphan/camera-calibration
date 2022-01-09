@@ -19,7 +19,7 @@ class TestVirtualCamera(unittest.TestCase):
         ], dtype=np.float64)
         k1 = 0.5
         k2 = 0.2
-        distortionCoeffients = (k1, k2)
+        distortionCoeffients = (k1, k2, 0, 0, 0)
         checkerboard = MagicMock()
         cornerPositions = np.array([
             [0.0, 0.0, 0],

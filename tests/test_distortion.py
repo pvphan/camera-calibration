@@ -25,10 +25,10 @@ class TestCalibrate(unittest.TestCase):
         p1 = 0
         p2 = 0
         k3 = 0
-        distortionCoeffients = (k1, k2, p1, p2, k3)
+        k = (k1, k2, p1, p2, k3)
 
         normalizedPointsNx2 = mu.projectStandard(self.pointsInWorld)
-        distortedPoints = distortion.distortPoints(normalizedPointsNx2, distortionCoeffients)
+        distortedPoints = distortion.distortPoints(normalizedPointsNx2, k)
 
         self.assertEqual(distortedPoints.shape, normalizedPointsNx2.shape)
         self.assertEqual(normalizedPointsNx2.shape, (distortedPoints.shape[0], 2))
@@ -40,7 +40,7 @@ class TestCalibrate(unittest.TestCase):
             [0, 400, 240],
             [0, 0, 1],
         ])
-        k = (-0.5, 0.2)
+        k = (-0.5, 0.2, 0.005, -0.03, 0.05)
         projectedPoints = distortion.projectWithDistortion(A, self.pointsInWorld, k)
 
         self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))
