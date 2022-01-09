@@ -47,7 +47,6 @@ class ProjectionJacobian:
 
     def _createJacobianBlockExpression(self, derivativeSymbols):
         uExpr, vExpr = self._uvExpr.ravel()
-        print(uExpr)
         uExprs = []
         vExprs = []
         for i, paramSymbol in enumerate(derivativeSymbols):

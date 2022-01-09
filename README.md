@@ -53,10 +53,9 @@ Where the json file has the structure:
 - [x] Compute distortion using linear least squares
 - [x] Use estimated parameters as initial guess and refine using non-linear optimization over all views
 - [x] Write main method interface for calibrating from json files
+- [x] Support full radial-tangential distortion model
 - [ ] Write nonlinear optimization by hand instead of using SciPy
-- [ ] Support full radial-tangential distortion model
-- [ ] Support full fisheye distortion model
-- [ ] Write make rule to easily pass in a file from the host
+- [ ] Support fisheye distortion model
 
 
 ## Notes:

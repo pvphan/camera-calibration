@@ -44,7 +44,7 @@ class TestCalibrate(unittest.TestCase):
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2, -0.001, 0.025, 0.05)
+        kExpected = (-0.5, 0.2, 0, 0, 0.05)
         cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, kExpected)
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
@@ -205,23 +205,7 @@ class TestCalibrate(unittest.TestCase):
         self.assertAllClose(W, Wcomputed)
         self.assertAllClose(k, kComputed)
 
-    #def test_refineCalibrationParametersSciPy(self):
-    #    dataSet = self.syntheticDataset
-    #    allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-    #    Aexpected = dataSet.getIntrinsicMatrix()
-    #    kExpected = dataSet.getDistortionVector()
-    #    Wexpected = dataSet.getAllBoardPosesInCamera()
-    #    Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
-
-    #    Arefined, Wrefined, kRefined = calibrate.refineCalibrationParametersSciPy(
-    #            Ainitial, Winitial, kInitial, allDetections)
-
-    #    atol = 1e-5
-    #    self.assertAllClose(kExpected, kRefined, atol)
-    #    self.assertAllClose(Aexpected, Arefined, atol)
-    #    self.assertAllClose(Wexpected, Wrefined, atol)
-
-    def test_refineCalibrationParameters(self):
+    def test_refineCalibrationParametersSciPy(self):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Aexpected = dataSet.getIntrinsicMatrix()
@@ -229,13 +213,29 @@ class TestCalibrate(unittest.TestCase):
         Wexpected = dataSet.getAllBoardPosesInCamera()
         Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
 
-        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParametersSciPy(
                 Ainitial, Winitial, kInitial, allDetections)
 
         atol = 1e-5
         self.assertAllClose(kExpected, kRefined, atol)
         self.assertAllClose(Aexpected, Arefined, atol)
         self.assertAllClose(Wexpected, Wrefined, atol)
+
+    #def test_refineCalibrationParameters(self):
+    #    dataSet = self.syntheticDataset
+    #    allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+    #    Aexpected = dataSet.getIntrinsicMatrix()
+    #    kExpected = dataSet.getDistortionVector()
+    #    Wexpected = dataSet.getAllBoardPosesInCamera()
+    #    Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+
+    #    Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+    #            Ainitial, Winitial, kInitial, allDetections)
+
+    #    atol = 1e-5
+    #    self.assertAllClose(kExpected, kRefined, atol)
+    #    self.assertAllClose(Aexpected, Arefined, atol)
+    #    self.assertAllClose(Wexpected, Wrefined, atol)
 
     def test_projectAllPoints(self):
         dataSet = self.syntheticDataset
