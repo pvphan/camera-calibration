@@ -1,3 +1,6 @@
+"""
+The user interface for intrinsic calibration
+"""
 import numpy as np
 
 from __context__ import src
@@ -18,7 +21,7 @@ def calibrateCamera(allDetections: list[tuple[np.ndarray, np.ndarray]],
 
     Output:
         Afinal -- intrinsic calibration matrix, (3,3)
-        kFinal -- distortion coefficient tuple, (5,)
+        kFinal -- distortion coefficient tuple of length 5
     """
     jac = jacobian.createJacRadTan()
     Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(

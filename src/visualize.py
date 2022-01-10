@@ -20,7 +20,7 @@ def createDetectionsImage(measuredPointsInSensor, w, h, color=teal):
     gray = (64, 64, 64)
     image = createBlankImage(w, h, color=gray)
     length = 9
-    drawCrosses(image, measuredPointsInSensor, length, teal)
+    drawCrosses(image, measuredPointsInSensor, length, color)
     return image
 
 
