@@ -23,19 +23,19 @@ class ProjectionJacobian:
             raise NotImplementedError("Unknown distortion model: {distortionModel}")
 
         self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
-        self._intrinsicJacobianBlockFunctions, self._intrinsicJacobianBlockInputSymbols = \
-                createJacobianBlockFunctions(self._intrinsicJacobianBlockExpr)
+        self._intrinsicJacobianBlockFunction, self._intrinsicInputSymbols = \
+                createLambdaFunction(self._intrinsicJacobianBlockExpr)
 
         self._extrinsicSymbols = getExtrinsicSymbols()
         self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
         self._extrinsicJacobianBlockFunctions, self._extrinsicJacobianBlockInputSymbols = \
-                createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
+                createLambdaFunction(self._extrinsicJacobianBlockExpr)
 
     def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
         valuesDicts = self._createValuesDicts(intrinsicValues, extrinsicValues, modelPoints)
         intrinsicBlock = self._computeJacobianBlock(valuesDicts,
-                self._intrinsicJacobianBlockFunctions,
-                self._intrinsicJacobianBlockInputSymbols)
+                self._intrinsicJacobianBlockFunction,
+                self._intrinsicBlockInputSymbols)
         return intrinsicBlock
 
     def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
@@ -45,7 +45,7 @@ class ProjectionJacobian:
                 self._extrinsicJacobianBlockInputSymbols)
         return extrinsicBlock
 
-    def _computeJacobianBlock(self, valuesDicts: list, functionBlock, inputSymbolsBlock):
+    def _computeJacobianBlock(self, valuesDicts: list, functionBlock, inputSymbols):
         """
         Evaluates the values of J (general purpose)
 
@@ -53,13 +53,13 @@ class ProjectionJacobian:
             valuesDicts -- list of N dictionaries with items (key=symbol, value=value)
             functionBlock -- (2*N, T) matrix of callable functions to compute the values of
                     the Jacobian for that specific block
-            inputSymbolsBlock -- (2*N, T) ordered symbols so values are assigned correctly in
+            inputSymbols -- (2*N, T) ordered symbols so values are assigned correctly in
                     functionBlock
 
         Output:
             blockValues -- (2*N, T) matrix block of the Jacobian J
         """
-        blockValues = evaluateBlock(functionBlock, inputSymbolsBlock, valuesDicts)
+        blockValues = evaluateBlock(functionBlock, inputSymbols, valuesDicts)
         return blockValues
 
     def _createValuesDicts(self, intrinsicValues, extrinsicValues, modelPoints):
@@ -97,7 +97,7 @@ class ProjectionJacobian:
             uExprs.append(sympy.diff(uExpr, paramSymbol))
             vExprs.append(sympy.diff(vExpr, paramSymbol))
 
-        jacobianBlockExpr = np.array([uExprs, vExprs])
+        jacobianBlockExpr = sympy.Matrix([uExprs, vExprs])
         return jacobianBlockExpr
 
     def compute(self, P, allModelPoints):
@@ -214,46 +214,20 @@ def createLambdaFunction(expression):
     return f, orderedSymbols
 
 
-def evaluate(f, orderedSymbols, valuesDict):
-    # need a very small number instead of zero to avoid divide-by-zero errors
+def evaluateBlock(functionBlock, inputSymbols, valuesDicts):
     eps = 1e-100
-    orderedInputs = [valuesDict[symbol] if np.abs(valuesDict[symbol]) > eps else eps
-            for symbol in orderedSymbols]
-    output = f(*orderedInputs)
-    return output
-
-
-def createJacobianBlockFunctions(jacobianBlockExpr):
-    """
-    Input:
-        jacobianBlockExpr -- (2, T) matrix of the sympy expressions of the partial
-                derivatives of the projection equation
-
-    Output:
-        jacobianBlockFunctions -- (2, T) matrix of lambda functions to evaluate
-                the values given inputs
-        inputSymbols -- (2, T) matrix of ordered tuples for the input symbols
-                so that values are assigned in the correct order during evaluation
-
-    T is 6 for the extrinsic case, and 10 for the radial-tangential intrinsic case.
-    """
-    inputSymbols = []
-    jacobianBlockFunctions = []
-    for i in range(jacobianBlockExpr.shape[0]):
-        rowInputSymbols = []
-        rowJacobianBlockFunctions = []
-        for j in range(jacobianBlockExpr.shape[1]):
-            expression = jacobianBlockExpr[i, j]
-            lambdaFunction, orderedInputSymbosl = createLambdaFunction(expression)
-            rowJacobianBlockFunctions.append(lambdaFunction)
-            rowInputSymbols.append(orderedInputSymbosl)
-
-        jacobianBlockFunctions.append(rowJacobianBlockFunctions)
-        inputSymbols.append(rowInputSymbols)
-    return (np.array(jacobianBlockFunctions, dtype=object),
-            np.array(inputSymbols, dtype=object))
-
-
-def evaluateBlock(functionBlock, inputSymbolsBlock, valuesDicts):
-    pass
+    blockValues = None
+    for valuesDict in valuesDicts:
+        orderedInputs = []
+        for inputSymbol in inputSymbols:
+            value = eps
+            if inputSymbol in valuesDict and valuesDict[inputSymbol] > eps:
+                value = valuesDict[inputSymbol]
+            orderedInputs.append(value)
+        blockValuesNext = functionBlock(*orderedInputs)
+        if blockValues is None:
+            blockValues = blockValuesNext
+        else:
+            blockValues = np.vstack((blockValues, blockValuesNext))
+    return blockValues
 

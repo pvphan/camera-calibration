@@ -16,7 +16,10 @@ class TestProjectionJacobian(unittest.TestCase):
         cls.jac = jacobian.createJacRadTan()
         cls.intrinsicValues = [400, 400, 0, 320, 240, -0.5, 0.2, 0, 0, 0]
         cls.extrinsicValues = [180, 0, 0, 0.1, 0.2, 1.0]
-        cls.modelPoint = [0.1, 0.1, 0]
+        cls.modelPoints = np.array([
+            [0.1, 0.1, 0],
+            [0.1, 0.2, 0],
+        ])
 
         width, height = 640, 480
         α, β, γ, uc, vc, k1, k2, p1, p2, k3 = cls.intrinsicValues
@@ -45,14 +48,14 @@ class TestProjectionJacobian(unittest.TestCase):
 
     def test__createIntrinsicsJacobianBlock(self):
         intrinsicBlock = self.jac._createIntrinsicsJacobianBlock(self.intrinsicValues,
-                self.extrinsicValues, self.modelPoint)
+                self.extrinsicValues, self.modelPoints)
         self.assertEqual(intrinsicBlock.shape, (2, 10))
         self.assertNoNans(intrinsicBlock)
         self.assertNonZero(intrinsicBlock)
 
     def test__createExtrinsicsJacobianBlock(self):
         extrinsicBlock = self.jac._createExtrinsicsJacobianBlock(self.intrinsicValues,
-                self.extrinsicValues, self.modelPoint)
+                self.extrinsicValues, self.modelPoints)
         self.assertEqual(extrinsicBlock.shape, (2, 6))
         self.assertNoNans(extrinsicBlock)
         self.assertNonZero(extrinsicBlock)
@@ -84,21 +87,19 @@ class TestProjectionJacobian(unittest.TestCase):
 class TestEvaluation(unittest.TestCase):
     def test_evaluateBlock(self):
         a, b, c, d = sympy.symbols("a b c d")
-        expressionBlock = np.array([
+        expressionBlock = sympy.Matrix([
             [a+b+c+d, a-b-c-d, a*b*c*d, a/b/c/d],
             [a+2*b+c**2+d/7, a/b**4-5*c-d, a**b*c**d, a/b**c/d],
         ], dtype=object)
 
-        functionBlock, inputSymbolsBlock = jacobian.createJacobianBlockFunctions(expressionBlock)
-        self.assertEqual(functionBlock.shape, expressionBlock.shape)
-        self.assertEqual(inputSymbolsBlock.shape[:2], expressionBlock.shape[:2])
+        functionBlock, inputSymbols = jacobian.createLambdaFunction(expressionBlock)
 
         valuesDicts = [
             {a: 0, b: 1, c: 2, d: 3},
             {a: -1, b: 20, c: 30, d: 70},
         ]
-        blockValues = jacobian.evaluateBlock(functionBlock, inputSymbolsBlock, valuesDicts)
-        self.assertEqual(blockValues.shape, expressionBlock.shape)
+        blockValues = jacobian.evaluateBlock(functionBlock, inputSymbols, valuesDicts)
+        self.assertEqual(blockValues.shape[0], expressionBlock.shape[0] * len(valuesDicts))
 
 
 if __name__ == "__main__":
