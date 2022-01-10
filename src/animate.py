@@ -14,7 +14,7 @@ from src import visualize
 
 
 class CalibrationAnimation:
-    _gifFps = 3
+    _gifFps = 5
     _maxIters = 50
     _epsilon = 1e-5
     def __init__(self, allDetections: list, jac: jacobian.ProjectionJacobian,

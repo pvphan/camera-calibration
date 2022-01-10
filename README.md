@@ -14,7 +14,6 @@ Limitations:
 
 - Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
 - Runs pretty slowly -- about 5 mins for the unit tested synthetic case (`tests/test_calibrate.py:test_refineCalibrationParameters`)
-- Currently only handles the radial-tangential distortion model (k1, k2, p1, p2, k3).
 
 
 Prerequisites: `make`, `docker`
@@ -31,14 +30,14 @@ If you'd like to try out the code:
 
 ## Animated reprojection
 
-This is an example of the reprojection animation of a calibration (see [animate.py](./src/animate.py)).
+This is an example of the reprojection animation of a calibration on a checkerboard, showing all views simultaneously (see [animate.py](./src/animate.py)).
 - Green: the measured points
 - Magenta: the reprojection of the model points
 
 ![reprojection animation](./media/reprojection.gif)
 
 
-## TODO:
+## Maybe later:
 
 - [ ] Vectorize the Jacobian computation (takes ~14 sec per iteration of Levenberg-Marquardt currently)
 - [ ] Button up as python package, add instructions to README

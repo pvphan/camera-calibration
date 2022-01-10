@@ -8,6 +8,11 @@ RUN_FLAGS = \
 	--volume=${OUTPUT_PATH}:/tmp/output \
 	${IMAGE_TAG}
 
+
+animation: image
+	docker run ${RUN_FLAGS} \
+		python3 src/animate.py
+
 test: image
 	docker run ${RUN_FLAGS} \
 		python3 -m unittest discover -s tests/
