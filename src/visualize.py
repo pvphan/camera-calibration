@@ -4,6 +4,8 @@ Convenience functions to visualize a simple scene of points in a virtual camera.
 import imageio
 import numpy as np
 
+teal = (0, 255, 255)
+
 
 def drawLine(image, pt1, pt2):
     pass
@@ -14,11 +16,10 @@ def writeDetectionsImage(measuredPointsInSensor, w, h, outputPath):
     imageio.imwrite(outputPath, image)
 
 
-def createDetectionsImage(measuredPointsInSensor, w, h):
+def createDetectionsImage(measuredPointsInSensor, w, h, color=teal):
     gray = (64, 64, 64)
     image = createBlankImage(w, h, color=gray)
     length = 9
-    teal = (0, 255, 255)
     drawCrosses(image, measuredPointsInSensor, length, teal)
     return image
 

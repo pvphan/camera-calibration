@@ -1,6 +1,7 @@
 """
 Calibrates from a synthetic dataset and animates a gif of the progress
 """
+import os
 import imageio
 import numpy as np
 
@@ -28,39 +29,37 @@ class CalibrationAnimation:
             as the estimated values of the intrinsics are updated.
             One gif per view.
         """
+        os.makedirs(outputFolderPath, exist_ok=True)
         width = self._syntheticDataset.getImageWidth()
         height = self._syntheticDataset.getImageHeight()
         A, W, k = self._Ainitial, self._Winitial, self._kInitial
         allDetections = self._allDetections
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
         ydot = calibrate.getSensorPoints(allDetections)
-        allViewImages = []
+        allImages = []
         for i in range(self._maxIters):
-            # do a single iteration
             A, W, k = calibrate.refineCalibrationParameters(A, W, k, allDetections,
                     self._jac, maxIters=1, shouldPrint=True)
             P = calibrate.composeParameterVector(A, W, k)
             y = calibrate.projectAllPoints(P, allModelPoints)
 
-            allImagesForView = []
-            for cMw in W:
-                imageForView = createProjectionErrorImage(ydot, y, A, cMw, k,
-                        allModelPoints, width, height)
-                print(imageForView)
-                allImagesForView.append(allImagesForView)
-            allViewImages.append(allImagesForView)
-            print(len(allViewImages))
+            imageForIteration = createProjectionErrorImage(ydot, y, width, height)
+            allImages.append(imageForIteration)
+            outputPath = os.path.join(outputFolderPath, f"iter{i:03d}.png")
+            imageio.imwrite(outputPath, imageForIteration) # TODO remove this line
 
             error = calibrate.computeReprojectionError(P, allDetections)
             if error < 1e-12:
                 break
 
 
-def createProjectionErrorImage(ydot, y, A, cMw, k, allModelPoints, width, height):
+def createProjectionErrorImage(ydot, y, width, height):
     length = 9
     green = (0, 255, 0)
-    image = visualize.createDetectionsImage(y, width, height)
+    magenta = (255, 0, 255)
+    image = visualize.createDetectionsImage(y, width, height, color=magenta)
     visualize.drawCrosses(image, ydot, length, green)
+    return image
 
 
 def createAnimation(outputFolderPath):
