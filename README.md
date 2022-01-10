@@ -6,6 +6,7 @@ A simple Python library for calibrating camera intrinsics from sensor (2D) and m
 Written with few external dependencies (numpy, sympy, imageio) for a more manual implementation and a deeper understanding.
 Non-linear optimization is done through minimizing projection error and computing partial derivatives with [`sympy`](https://docs.sympy.org/latest/index.html) to populate the Jacobian matrix.
 Generates synthetic datasets for testing and rudimentary visualization.
+Can animate of the reprojection error each iteration of the calibration.
 Dockerized for convenience of development, testing, and maybe deployment.
 
 
@@ -26,6 +27,15 @@ If you'd like to try out the code:
 - Clone the repo and `cd` into it
 - (Modify code if desired)
 - `$ make test`
+
+
+## Animated reprojection
+
+This is an example of the reprojection animation of a calibration (see [animate.py](./src/animate.py)).
+- Green: the measured points
+- Magenta: the reprojection of the model points
+
+![reprojection animation](./media/reprojection.gif)
 
 
 ## TODO:
