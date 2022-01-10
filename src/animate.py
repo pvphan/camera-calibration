@@ -52,8 +52,8 @@ class CalibrationAnimation:
             if error < self._epsilon:
                 break
 
-            outputPath = os.path.join(outputFolderPath, f"reprojection_{i:03d}.gif")
-            imageio.mimsave(outputPath, allImages, fps=self._gifFps)
+        outputPath = os.path.join(outputFolderPath, f"reprojection.gif")
+        imageio.mimsave(outputPath, allImages, fps=self._gifFps)
 
 
 def createProjectionErrorImage(ydot, y, width, height):
