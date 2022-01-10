@@ -24,92 +24,60 @@ class ProjectionJacobian:
 
         self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
         self._intrinsicJacobianBlockFunctions, self._intrinsicJacobianBlockInputSymbols = \
-                self._createJacobianBlockFunctions(self._intrinsicJacobianBlockExpr)
+                createJacobianBlockFunctions(self._intrinsicJacobianBlockExpr)
 
         self._extrinsicSymbols = getExtrinsicSymbols()
         self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
         self._extrinsicJacobianBlockFunctions, self._extrinsicJacobianBlockInputSymbols = \
-                self._createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
+                createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
 
-    def _createJacobianBlockFunctions(self, jacobianBlockExpr):
-        """
-        Input:
-            jacobianBlockExpr -- (2, T) matrix of the sympy expressions of the partial
-                    derivatives of the projection equation
-
-        Output:
-            jacobianBlockFunctions -- (2, T) matrix of lambda functions to evaluate
-                    the values given inputs
-            inputSymbols -- (2, T) matrix of ordered tuples for the input symbols
-                    so that values are assigned in the correct order during evaluation
-
-        T is 6 for the extrinsic case, and 10 for the radial-tangential intrinsic case.
-        """
-        inputSymbols = []
-        jacobianBlockFunctions = []
-        for i in range(jacobianBlockExpr.shape[0]):
-            rowInputSymbols = []
-            rowJacobianBlockFunctions = []
-            for j in range(jacobianBlockExpr.shape[1]):
-                expression = jacobianBlockExpr[i, j]
-                lambdaFunction, orderedInputSymbosl = createLambdaFunction(expression)
-                rowJacobianBlockFunctions.append(lambdaFunction)
-                rowInputSymbols.append(orderedInputSymbosl)
-
-            jacobianBlockFunctions.append(rowJacobianBlockFunctions)
-            inputSymbols.append(rowInputSymbols)
-        return (np.array(jacobianBlockFunctions, dtype=object),
-                np.array(inputSymbols, dtype=object))
-
-    def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
-        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
-        intrinsicBlock = self._computeJacobianBlock(valuesDict,
+    def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
+        valuesDicts = self._createValuesDicts(intrinsicValues, extrinsicValues, modelPoints)
+        intrinsicBlock = self._computeJacobianBlock(valuesDicts,
                 self._intrinsicJacobianBlockFunctions,
                 self._intrinsicJacobianBlockInputSymbols)
         return intrinsicBlock
 
-    def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
-        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
-        extrinsicBlock = self._computeJacobianBlock(valuesDict,
+    def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
+        valuesDicts = self._createValuesDicts(intrinsicValues, extrinsicValues, modelPoints)
+        extrinsicBlock = self._computeJacobianBlock(valuesDicts,
                 self._extrinsicJacobianBlockFunctions,
                 self._extrinsicJacobianBlockInputSymbols)
         return extrinsicBlock
 
-    def _computeJacobianBlock(self, valuesDict, functionBlock, inputSymbolsBlock):
+    def _computeJacobianBlock(self, valuesDicts: list, functionBlock, inputSymbolsBlock):
         """
         Evaluates the values of J (general purpose)
 
         Input:
-            valuesDict -- dictionary with items (key=symbol, value=value)
-            functionBlock -- (2, T) matrix of callable functions to compute the values of
+            valuesDicts -- list of N dictionaries with items (key=symbol, value=value)
+            functionBlock -- (2*N, T) matrix of callable functions to compute the values of
                     the Jacobian for that specific block
-            inputSymbolsBlock -- (2, T) ordered symbols so values are assigned correctly in
+            inputSymbolsBlock -- (2*N, T) ordered symbols so values are assigned correctly in
                     functionBlock
 
         Output:
-            blockValues -- (2, T) matrix block of the Jacobian J
+            blockValues -- (2*N, T) matrix block of the Jacobian J
         """
-        blockValues = np.zeros(shape=functionBlock.shape)
-        for i in range(functionBlock.shape[0]):
-            for j in range(functionBlock.shape[1]):
-                blockValues[i,j] = evaluate(functionBlock[i,j],
-                        inputSymbolsBlock[i,j], valuesDict)
+        blockValues = evaluateBlock(functionBlock, inputSymbolsBlock, valuesDicts)
         return blockValues
 
-    def _createValuesDict(self, intrinsicValues, extrinsicValues, modelPoint):
+    def _createValuesDicts(self, intrinsicValues, extrinsicValues, modelPoints):
         """
         Input:
             intrinsicValues -- α, β, γ, uc, uv, k1, k2, p1, p2, k3
             extrinsicValues -- ρx, ρy, ρz, tx, ty, tz
-            modelPoint -- X0, Y0, Z0
+            modelPoints -- (N,3) points in model coordinates
 
         Output:
-            valuesDict -- dictionary with items (key=symbol, value=value)
+            valuesDicts -- list of dictionares with items (key=symbol, value=value)
         """
         valuesDict = dict(zip(self._intrinsicSymbols, intrinsicValues))
         valuesDict.update(dict(zip(self._extrinsicSymbols, extrinsicValues)))
-        insertModelPoints(valuesDict, modelPoint)
-        return valuesDict
+        valuesDicts = []
+        for valuesDict, modelPoint in zip(valuesDicts, modelPoints):
+            valuesDicts.append(insertModelPoints(valuesDict, modelPoint))
+        return valuesDicts
 
     def _createJacobianBlockExpression(self, derivativeSymbols):
         """
@@ -160,17 +128,26 @@ class ProjectionJacobian:
             N = len(modelPoints)
             colIndexJ = L+i*self._numExtrinsicParamsPerView
 
-            # TODO: try to broadcast this
-            for j, modelPoint in enumerate(modelPoints):
-                intrinsicBlock = self._createIntrinsicsJacobianBlock(
-                        intrinsicValues, extrinsicValues, modelPoint)
-                extrinsicBlock = self._createExtrinsicsJacobianBlock(
-                        intrinsicValues, extrinsicValues, modelPoint)
+            intrinsicBlock = self._createIntrinsicsJacobianBlock(
+                    intrinsicValues, extrinsicValues, modelPoints)
+            extrinsicBlock = self._createExtrinsicsJacobianBlock(
+                    intrinsicValues, extrinsicValues, modelPoints)
 
-                J[rowIndexJ:rowIndexJ + 2, :L] = intrinsicBlock
-                J[rowIndexJ:rowIndexJ + 2, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
-                        extrinsicBlock
-                rowIndexJ += 2
+            J[rowIndexJ:rowIndexJ + 2*N, :L] = intrinsicBlock
+            J[rowIndexJ:rowIndexJ + 2*N, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
+                    extrinsicBlock
+            rowIndexJ += 2*N
+
+            #for j, modelPoint in enumerate(modelPoints):
+            #    intrinsicBlock = self._createIntrinsicsJacobianBlock(
+            #            intrinsicValues, extrinsicValues, modelPoint)
+            #    extrinsicBlock = self._createExtrinsicsJacobianBlock(
+            #            intrinsicValues, extrinsicValues, modelPoint)
+
+            #    J[rowIndexJ:rowIndexJ + 2, :L] = intrinsicBlock
+            #    J[rowIndexJ:rowIndexJ + 2, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
+            #            extrinsicBlock
+            #    rowIndexJ += 2
         return J
 
 
@@ -181,10 +158,12 @@ def createJacRadTan() -> ProjectionJacobian:
 
 
 def insertModelPoints(valuesDict, modelPoint):
+    newValuesDict = copy.deepcopy(valuesDict)
     X0, Y0, Z0 = getModelPointSymbols()
-    valuesDict[X0] = modelPoint[0]
-    valuesDict[Y0] = modelPoint[1]
-    valuesDict[Z0] = modelPoint[2]
+    newValuesDict[X0] = modelPoint[0]
+    newValuesDict[Y0] = modelPoint[1]
+    newValuesDict[Z0] = modelPoint[2]
+    return newValuesDict
 
 
 def createExpressionIntrinsicProjectionRadTan():
@@ -242,3 +221,39 @@ def evaluate(f, orderedSymbols, valuesDict):
             for symbol in orderedSymbols]
     output = f(*orderedInputs)
     return output
+
+
+def createJacobianBlockFunctions(jacobianBlockExpr):
+    """
+    Input:
+        jacobianBlockExpr -- (2, T) matrix of the sympy expressions of the partial
+                derivatives of the projection equation
+
+    Output:
+        jacobianBlockFunctions -- (2, T) matrix of lambda functions to evaluate
+                the values given inputs
+        inputSymbols -- (2, T) matrix of ordered tuples for the input symbols
+                so that values are assigned in the correct order during evaluation
+
+    T is 6 for the extrinsic case, and 10 for the radial-tangential intrinsic case.
+    """
+    inputSymbols = []
+    jacobianBlockFunctions = []
+    for i in range(jacobianBlockExpr.shape[0]):
+        rowInputSymbols = []
+        rowJacobianBlockFunctions = []
+        for j in range(jacobianBlockExpr.shape[1]):
+            expression = jacobianBlockExpr[i, j]
+            lambdaFunction, orderedInputSymbosl = createLambdaFunction(expression)
+            rowJacobianBlockFunctions.append(lambdaFunction)
+            rowInputSymbols.append(orderedInputSymbosl)
+
+        jacobianBlockFunctions.append(rowJacobianBlockFunctions)
+        inputSymbols.append(rowInputSymbols)
+    return (np.array(jacobianBlockFunctions, dtype=object),
+            np.array(inputSymbols, dtype=object))
+
+
+def evaluateBlock(functionBlock, inputSymbolsBlock, valuesDicts):
+    pass
+

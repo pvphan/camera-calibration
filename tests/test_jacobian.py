@@ -81,5 +81,25 @@ class TestProjectionJacobian(unittest.TestCase):
         self.assertGreater(np.sum(np.abs(Q)), 0)
 
 
+class TestEvaluation(unittest.TestCase):
+    def test_evaluateBlock(self):
+        a, b, c, d = sympy.symbols("a b c d")
+        expressionBlock = np.array([
+            [a+b+c+d, a-b-c-d, a*b*c*d, a/b/c/d],
+            [a+2*b+c**2+d/7, a/b**4-5*c-d, a**b*c**d, a/b**c/d],
+        ], dtype=object)
+
+        functionBlock, inputSymbolsBlock = jacobian.createJacobianBlockFunctions(expressionBlock)
+        self.assertEqual(functionBlock.shape, expressionBlock.shape)
+        self.assertEqual(inputSymbolsBlock.shape[:2], expressionBlock.shape[:2])
+
+        valuesDicts = [
+            {a: 0, b: 1, c: 2, d: 3},
+            {a: -1, b: 20, c: 30, d: 70},
+        ]
+        blockValues = jacobian.evaluateBlock(functionBlock, inputSymbolsBlock, valuesDicts)
+        self.assertEqual(blockValues.shape, expressionBlock.shape)
+
+
 if __name__ == "__main__":
     unittest.main()

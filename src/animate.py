@@ -29,9 +29,8 @@ class CalibrationAnimation:
 
     def writeGif(self, outputFolderPath):
         """
-        Creates a gif of the sensor point measurements being rectified
-            as the estimated values of the intrinsics are updated.
-            One gif per view.
+        Creates a gif of the projected model points and sensor points
+            as the estimated values of the intrinsics and extrinsics are updated.
         """
         os.makedirs(outputFolderPath, exist_ok=True)
         A, W, k = self._Ainitial, self._Winitial, self._kInitial
