@@ -36,6 +36,12 @@ class Dataset:
     def getDistortionVector(self):
         return self._virtualCamera.getDistortionVector()
 
+    def getImageWidth(self):
+        return self._virtualCamera.getImageWidth()
+
+    def getImageHeight(self):
+        return self._virtualCamera.getImageHeight()
+
     def writeDatasetImages(self, outputFolderPath):
         os.makedirs(outputFolderPath, exist_ok=True)
         w = self._virtualCamera.getImageWidth()
@@ -65,7 +71,7 @@ class Dataset:
             boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
             allBoardPosesInCamera.append(boardPoseInCamera)
             measuredPointsInSensor, measuredPointsInBoard = (
-                    self._virtualCamera.measureDetectedPoints(self._checkerboard,
+                    self._virtualCamera.measureBoardPoints(self._checkerboard,
                             boardPoseInCamera))
             allDetections.append((measuredPointsInSensor, measuredPointsInBoard))
         return allDetections, allBoardPosesInCamera

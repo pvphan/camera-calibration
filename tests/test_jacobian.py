@@ -6,7 +6,6 @@ import sympy
 from __context__ import src
 from src import calibrate
 from src import dataset
-from src import distortion
 from src import jacobian
 from src import mathutils as mu
 
@@ -14,8 +13,7 @@ from src import mathutils as mu
 class TestProjectionJacobian(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        distortionModel = distortion.DistortionModel.RadialTangential
-        cls.jac = jacobian.ProjectionJacobian(distortionModel)
+        cls.jac = jacobian.createJacRadTan()
         cls.intrinsicValues = [400, 400, 0, 320, 240, -0.5, 0.2, 0, 0, 0]
         cls.extrinsicValues = [180, 0, 0, 0.1, 0.2, 1.0]
         cls.modelPoint = [0.1, 0.1, 0]

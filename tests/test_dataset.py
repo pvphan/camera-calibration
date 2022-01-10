@@ -36,7 +36,7 @@ class TestDataset(unittest.TestCase):
             [0.100, 0.200, 0],
             [0.300, 0.400, 0],
         ])
-        virtualCamera.measureDetectedPoints.return_value = (measuredPointsInSensor,
+        virtualCamera.measureBoardPoints.return_value = (measuredPointsInSensor,
                 measuredPointsInBoard)
         cls.imageWidth = 640
         cls.imageHeight = 480

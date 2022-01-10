@@ -29,17 +29,20 @@ class VirtualCamera:
     def getImageHeight(self):
         return self._imageHeight
 
-    def measureDetectedPoints(self, checkerboard: checkerboard.Checkerboard,
+    def measureBoardPoints(self, checkerboard: checkerboard.Checkerboard,
             boardPoseInCamera: np.ndarray):
-        cornerPointsInBoard = checkerboard.getCornerPositions()
-        camera_M_board = boardPoseInCamera
-        cornerPointsInCamera = mu.transform(camera_M_board, cornerPointsInBoard)
-        distortedPointsInSensor = distortion.projectWithDistortion(self._intrinsicMatrix,
-                cornerPointsInCamera, self._distortionVector)
+        wP = checkerboard.getCornerPositions()
+        cMw = boardPoseInCamera
+        return self.measurePoints(cMw, wP)
+
+    def measurePoints(self, cMw, wP):
+        cP = mu.transform(cMw, wP)
+        u = distortion.projectWithDistortion(self._intrinsicMatrix,
+                cP, self._distortionVector)
 
         pointInImageSlice = np.s_[
-                (distortedPointsInSensor[:,0] > 0) & (distortedPointsInSensor[:,0] < self._imageWidth)
-                & (distortedPointsInSensor[:,1] > 0) & (distortedPointsInSensor[:,1] < self._imageHeight)
+                (u[:,0] > 0) & (u[:,0] < self._imageWidth)
+                & (u[:,1] > 0) & (u[:,1] < self._imageHeight)
         ]
-        return distortedPointsInSensor[pointInImageSlice], cornerPointsInBoard[pointInImageSlice]
+        return u[pointInImageSlice], wP[pointInImageSlice]
 

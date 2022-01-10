@@ -5,6 +5,10 @@ import imageio
 import numpy as np
 
 
+def drawLine(image, pt1, pt2):
+    pass
+
+
 def writeDetectionsImage(measuredPointsInSensor, w, h, outputPath):
     image = createDetectionsImage(measuredPointsInSensor, w, h)
     imageio.imwrite(outputPath, image)

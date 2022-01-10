@@ -443,7 +443,8 @@ def estimateCalibrationParameters(allDetections):
     return Ainitial, Winitial, kInitial
 
 
-def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
+def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections,
+        jac: jacobian.ProjectionJacobian, maxIters=50, shouldPrint=False):
     """
     Input:
         Ainitial -- initial estimate of intrinsic matrix
@@ -452,6 +453,7 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
         allDetections -- list of tuples (one for each view).
                 Each tuple is (Xa, Xb), a set of sensor points
                 and model points respectively
+        jac -- Jacobian computation class
 
     Output:
         Arefined -- refined estimate of intrinsic matrix
@@ -461,13 +463,9 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     Uses Levenberg-Marquardt to solve non-linear optimization. Jacobian matrices
         are compute by jacobian.py
     """
-    shouldPrint = True
-    maxIters = 50
     Pt = composeParameterVector(Ainitial, Winitial, kInitial)
     allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
     ydot = getSensorPoints(allDetections)
-
-    jac = jacobian.ProjectionJacobian(distortion.DistortionModel.RadialTangential)
 
     ts = time.time()
     # Levenberg-Marquardt
@@ -494,7 +492,7 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
             λ *= 10
 
         if shouldPrint:
-            printIterationStats(iter, ts, Pt, Pt_error)
+            printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error))
 
         if λ < 1e-150 or Pt_error < 1e-12:
             break
@@ -503,9 +501,9 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections):
     return Arefined, Wrefined, kRefined
 
 
-def printIterationStats(iter, ts, Pt, Pt_error):
+def printIterationStats(iter, ts, Pt, error):
     At, Wt, kt = decomposeParameterVector(Pt)
-    print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error = {Pt_error:0.3f}")
+    print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error={error:0.3f}")
     print(f"A:\n{At}")
     print(f"k:\n{kt}")
 

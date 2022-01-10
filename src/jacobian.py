@@ -174,6 +174,12 @@ class ProjectionJacobian:
         return J
 
 
+def createJacRadTan() -> ProjectionJacobian:
+    distortionModel = distortion.DistortionModel.RadialTangential
+    jac = ProjectionJacobian(distortionModel)
+    return jac
+
+
 def insertModelPoints(valuesDict, modelPoint):
     X0, Y0, Z0 = getModelPointSymbols()
     valuesDict[X0] = modelPoint[0]
