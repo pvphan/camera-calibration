@@ -35,12 +35,7 @@ class TestProjectionJacobian(unittest.TestCase):
 
     def test_init(self):
         self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))
-        self.assertEqual(self.jac._intrinsicJacobianBlockFunctions.shape, (2, 10))
-        self.assertEqual(self.jac._intrinsicJacobianBlockInputSymbols.shape, (2, 10))
-
         self.assertEqual(self.jac._extrinsicJacobianBlockExpr.shape, (2, 6))
-        self.assertEqual(self.jac._extrinsicJacobianBlockFunctions.shape, (2, 6))
-        self.assertEqual(self.jac._extrinsicJacobianBlockInputSymbols.shape, (2, 6))
 
     def test_createExpressionIntrinsicProjection(self):
         expr = jacobian.createExpressionIntrinsicProjectionRadTan()
@@ -49,14 +44,14 @@ class TestProjectionJacobian(unittest.TestCase):
     def test__createIntrinsicsJacobianBlock(self):
         intrinsicBlock = self.jac._createIntrinsicsJacobianBlock(self.intrinsicValues,
                 self.extrinsicValues, self.modelPoints)
-        self.assertEqual(intrinsicBlock.shape, (2, 10))
+        self.assertEqual(intrinsicBlock.shape, (self.modelPoints.shape[0] * 2, 10))
         self.assertNoNans(intrinsicBlock)
         self.assertNonZero(intrinsicBlock)
 
     def test__createExtrinsicsJacobianBlock(self):
         extrinsicBlock = self.jac._createExtrinsicsJacobianBlock(self.intrinsicValues,
                 self.extrinsicValues, self.modelPoints)
-        self.assertEqual(extrinsicBlock.shape, (2, 6))
+        self.assertEqual(extrinsicBlock.shape, (self.modelPoints.shape[0] * 2, 6))
         self.assertNoNans(extrinsicBlock)
         self.assertNonZero(extrinsicBlock)
 
@@ -69,7 +64,6 @@ class TestProjectionJacobian(unittest.TestCase):
         L = 10
         K = 6 * M + L
 
-        # takes ~14 sec for one iteration
         J = self.jac.compute(self.P, allModelPoints)
 
         self.assertEqual(J.shape, (2*MN, K))
@@ -96,9 +90,9 @@ class TestEvaluation(unittest.TestCase):
         functionBlock = sympy.lambdify(orderedSymbols, expressionBlock, "numpy")
 
         wP = np.arange(9).reshape(-1, 3)
-        X = wP[:,0]
-        Y = wP[:,1]
-        Z = wP[:,2]
+        X = list(wP[:,0])
+        Y = list(wP[:,1])
+        Z = list(wP[:,2])
         P = np.array([
             [1, 1, 2, 3],
             [1, 20, 30, 70],

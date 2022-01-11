@@ -13,6 +13,7 @@ class ProjectionJacobian:
     parameter vector P (intrinsics, distortion, extrinsics).
     """
     _numExtrinsicParamsPerView = 6
+    _epsilon = 1e-100
     def __init__(self, distortionModel: distortion.DistortionModel):
         if distortionModel == distortion.DistortionModel.RadialTangential:
             self._uvExpr = createExpressionIntrinsicProjectionRadTan()
@@ -56,17 +57,24 @@ class ProjectionJacobian:
         Output:
             blockValues -- (2*N, T) matrix block of the Jacobian J
         """
-        import time
         P = list(intrinsicValues) + list(extrinsicValues)
-        X = modelPoints[:,0]
-        Y = modelPoints[:,1]
-        Z = modelPoints[:,2]
-        breakpoint()
-        ts = time.time()
-        blockValues = functionBlock(*P, X, Y, Z)
-        print(time.time() - ts)
-        blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
-        return blockValuesReshaped
+        P = [p + self._epsilon for p in P]
+        X = mu.col(modelPoints[:,0]) + self._epsilon
+        Y = mu.col(modelPoints[:,1]) + self._epsilon
+        Z = mu.col(modelPoints[:,2]) + self._epsilon
+        N = modelPoints.shape[0]
+        functionResults = functionBlock(*P, X, Y, Z)
+        blockValues = np.zeros((2*N, functionResults.shape[1]))
+        for i in range(functionResults.shape[1]):
+            uResult = functionResults[0,i]
+            if isinstance(uResult, np.ndarray):
+                uResult = uResult.ravel()
+            vResult = functionResults[1,i]
+            if isinstance(vResult, np.ndarray):
+                vResult = vResult.ravel()
+            blockValues[::2, i] = uResult
+            blockValues[1::2, i] = vResult
+        return blockValues
 
     def _createJacobianBlockExpression(self, derivativeSymbols):
         """
@@ -126,17 +134,6 @@ class ProjectionJacobian:
             J[rowIndexJ:rowIndexJ + 2*N, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
                     extrinsicBlock
             rowIndexJ += 2*N
-
-            #for j, modelPoint in enumerate(modelPoints):
-            #    intrinsicBlock = self._createIntrinsicsJacobianBlock(
-            #            intrinsicValues, extrinsicValues, modelPoint)
-            #    extrinsicBlock = self._createExtrinsicsJacobianBlock(
-            #            intrinsicValues, extrinsicValues, modelPoint)
-
-            #    J[rowIndexJ:rowIndexJ + 2, :L] = intrinsicBlock
-            #    J[rowIndexJ:rowIndexJ + 2, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
-            #            extrinsicBlock
-            #    rowIndexJ += 2
         return J
 
 

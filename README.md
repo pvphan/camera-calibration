@@ -39,7 +39,6 @@ This is an example of the reprojection animation of a calibration on a checkerbo
 
 ## Maybe later:
 
-- [ ] Vectorize the Jacobian computation (takes ~14 sec per iteration of Levenberg-Marquardt currently)
 - [ ] Button up as python package, add instructions to README
 - [ ] Support fisheye distortion model
 
