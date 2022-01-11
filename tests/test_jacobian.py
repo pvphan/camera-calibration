@@ -88,8 +88,8 @@ class TestEvaluation(unittest.TestCase):
     def test_evaluateBlock(self):
         a, b, c, d = sympy.symbols("a b c d")
         expressionBlock = sympy.Matrix([
-            [a+b+c+d, a-b-c-d, a*b*c*d, a/b/c/d],
-            [a+2*b+c**2+d/7, a/b**4-5*c-d, a**b*c**d, a/b**c/d],
+            [a+b+c+d, a-b-c-d, a*c*d, a/b/c],
+            [2*b+c**2+d/7, a/b**4-5*c-d, a**b*c**d, a/b**c/d],
         ], dtype=object)
 
         functionBlock, inputSymbols = jacobian.createLambdaFunction(expressionBlock)
