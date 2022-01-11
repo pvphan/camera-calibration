@@ -105,7 +105,7 @@ class TestEvaluation(unittest.TestCase):
             [1, 1, 2, 3],
         ], dtype=np.float32)
         blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
-        blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, expressionBlock.shape[1])
+        blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
 
 
 if __name__ == "__main__":

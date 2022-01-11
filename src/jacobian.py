@@ -56,8 +56,17 @@ class ProjectionJacobian:
         Output:
             blockValues -- (2*N, T) matrix block of the Jacobian J
         """
-        blockValues = evaluateBlock(functionBlock, inputSymbols, valuesDicts)
-        return blockValues
+        import time
+        P = list(intrinsicValues) + list(extrinsicValues)
+        X = modelPoints[:,0]
+        Y = modelPoints[:,1]
+        Z = modelPoints[:,2]
+        breakpoint()
+        ts = time.time()
+        blockValues = functionBlock(*P, X, Y, Z)
+        print(time.time() - ts)
+        blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
+        return blockValuesReshaped
 
     def _createJacobianBlockExpression(self, derivativeSymbols):
         """
@@ -140,7 +149,7 @@ def createJacRadTan() -> ProjectionJacobian:
 def createExpressionIntrinsicProjectionRadTan():
     """
     Creates the base expression for point projection (u, v) from P vector symbols
-    and a single world point wP = (X0, Y0, Z0), with
+    and a single world point wP = (X, Y, Z), with
             P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3, ρx, ρy, ρz, tx, ty, tz)
     """
     isSymbolic = True
