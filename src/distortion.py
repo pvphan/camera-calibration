@@ -11,9 +11,6 @@ class DistortionModel:
     def getProjectionExpression(self):
         raise NotImplementedError()
 
-    def getIntrinsicSymbols(self):
-        raise NotImplementedError()
-
     def projectWithDistortion(self, A: np.ndarray, X: np.ndarray, k: tuple, isSymbolic: bool):
         raise NotImplementedError()
 
@@ -23,10 +20,17 @@ class DistortionModel:
     def estimateDistortion(self, A: np.ndarray, allDetections: list, allBoardPosesInCamera: list):
         raise NotImplementedError()
 
+    def getIntrinsicSymbols(self):
+        return tuple(sympy.symbols("α β γ uc vc"))
+
+    def getIntrinsicAndDistortionSymbols(self):
+        return self.getIntrinsicSymbols() + self.getDistortionSymbols()
+
 
 class RadialTangentialModel(DistortionModel):
-    def getIntrinsicSymbols(self):
-        return tuple(sympy.symbols("α β γ uc vc k1 k2 p1 p2 k3"))
+
+    def getDistortionSymbols(self):
+        return tuple(sympy.symbols("k1 k2 p1 p2 k3"))
 
     def getProjectionExpression(self):
         """
@@ -35,7 +39,7 @@ class RadialTangentialModel(DistortionModel):
                 P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3, ρx, ρy, ρz, tx, ty, tz)
         """
         isSymbolic = True
-        α, β, γ, uc, vc, k1, k2, p1, p2, k3 = self.getIntrinsicSymbols()
+        α, β, γ, uc, vc, k1, k2, p1, p2, k3 = self.getIntrinsicAndDistortionSymbols()
         A = np.array([
             [α, γ, uc],
             [0, β, vc],
@@ -189,5 +193,5 @@ class RadialTangentialModel(DistortionModel):
 
 
 class FisheyeModel(DistortionModel):
-    def getIntrinsicSymbols(self):
-        return tuple(sympy.symbols("α β γ uc vc k1 k2 k3 k4"))
+    def getDistortionSymbols(self):
+        return tuple(sympy.symbols("k1 k2 k3 k4"))

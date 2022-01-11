@@ -50,7 +50,7 @@ class Calibrator:
         """
         Input:
             P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
-                P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
+                P = (α, β, γ, uc, uv, k[...],
                         ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
                         ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
                         ...,
@@ -65,8 +65,9 @@ class Calibrator:
         if isinstance(P, np.ndarray):
             P = P.ravel()
         poseStartIndex = 10
-        poseStartIndex = 10
         numPoseParams = 6
+        numIntrinsicParams = 5
+        α, β, γ, uc, vc = P[:numIntrinsicParams]
         α, β, γ, uc, vc, k1, k2, p1, p2, k3 = P[:poseStartIndex]
         A = np.array([
             [α, γ, uc],

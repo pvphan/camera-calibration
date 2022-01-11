@@ -18,13 +18,13 @@ class ProjectionJacobian:
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
         self._uvExpr = distortionModel.getProjectionExpression()
-        self._intrinsicSymbols = distortionModel.getIntrinsicSymbols()
+        self._intrinsicAndDistortionSymbols = distortionModel.getIntrinsicAndDistortionSymbols()
         self._extrinsicSymbols = symbolic.getExtrinsicSymbols()
-        self._orderedSymbols = (self._intrinsicSymbols +
+        self._orderedSymbols = (self._intrinsicAndDistortionSymbols +
                 self._extrinsicSymbols + symbolic.getModelPointSymbols())
 
         self._intrinsicJacobianBlockExpr = createJacobianBlockExpression(
-                self._uvExpr, self._intrinsicSymbols)
+                self._uvExpr, self._intrinsicAndDistortionSymbols)
         self._intrinsicJacobianBlockFunction = createLambdaFunction(
                 self._intrinsicJacobianBlockExpr, self._orderedSymbols)
 
@@ -91,7 +91,7 @@ class ProjectionJacobian:
         M = len(allModelPoints)
         intrinsicValues = P[:-M * self._numExtrinsicParamsPerView]
         MN = sum([modelPoints.shape[0] for modelPoints in allModelPoints])
-        L = len(self._intrinsicSymbols)
+        L = len(self._intrinsicAndDistortionSymbols)
         K = L + self._numExtrinsicParamsPerView * M
         J = np.zeros((2*MN, K))
 
