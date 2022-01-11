@@ -13,7 +13,6 @@ Dockerized for convenience of development, testing, and maybe deployment.
 Limitations:
 
 - Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
-- Runs pretty slowly -- about 5 mins for the unit tested synthetic case (`tests/test_calibrate.py:test_refineCalibrationParameters`)
 
 
 Prerequisites: `make`, `docker`
@@ -39,7 +38,6 @@ This is an example of the reprojection animation of a calibration on a checkerbo
 
 ## Maybe later:
 
-- [ ] Vectorize the Jacobian computation (takes ~14 sec per iteration of Levenberg-Marquardt currently)
 - [ ] Button up as python package, add instructions to README
 - [ ] Support fisheye distortion model
 

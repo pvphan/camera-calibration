@@ -13,103 +13,68 @@ class ProjectionJacobian:
     parameter vector P (intrinsics, distortion, extrinsics).
     """
     _numExtrinsicParamsPerView = 6
+    _epsilon = 1e-100
     def __init__(self, distortionModel: distortion.DistortionModel):
         if distortionModel == distortion.DistortionModel.RadialTangential:
             self._uvExpr = createExpressionIntrinsicProjectionRadTan()
             self._intrinsicSymbols = getIntrinsicRadTanSymbols()
+            self._orderedSymbols = getAllOrderedSymbols()
         elif distortionModel == distortion.DistortionModel.FishEye:
             raise NotImplementedError("Fish eye distortion model not yet supported")
         else:
             raise NotImplementedError("Unknown distortion model: {distortionModel}")
 
         self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
-        self._intrinsicJacobianBlockFunctions, self._intrinsicJacobianBlockInputSymbols = \
-                self._createJacobianBlockFunctions(self._intrinsicJacobianBlockExpr)
+        self._intrinsicJacobianBlockFunction = createLambdaFunction(self._intrinsicJacobianBlockExpr,
+                self._orderedSymbols)
 
         self._extrinsicSymbols = getExtrinsicSymbols()
         self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
-        self._extrinsicJacobianBlockFunctions, self._extrinsicJacobianBlockInputSymbols = \
-                self._createJacobianBlockFunctions(self._extrinsicJacobianBlockExpr)
+        self._extrinsicJacobianBlockFunctions = createLambdaFunction(self._extrinsicJacobianBlockExpr,
+                self._orderedSymbols)
 
-    def _createJacobianBlockFunctions(self, jacobianBlockExpr):
-        """
-        Input:
-            jacobianBlockExpr -- (2, T) matrix of the sympy expressions of the partial
-                    derivatives of the projection equation
-
-        Output:
-            jacobianBlockFunctions -- (2, T) matrix of lambda functions to evaluate
-                    the values given inputs
-            inputSymbols -- (2, T) matrix of ordered tuples for the input symbols
-                    so that values are assigned in the correct order during evaluation
-
-        T is 6 for the extrinsic case, and 10 for the radial-tangential intrinsic case.
-        """
-        inputSymbols = []
-        jacobianBlockFunctions = []
-        for i in range(jacobianBlockExpr.shape[0]):
-            rowInputSymbols = []
-            rowJacobianBlockFunctions = []
-            for j in range(jacobianBlockExpr.shape[1]):
-                expression = jacobianBlockExpr[i, j]
-                lambdaFunction, orderedInputSymbosl = createLambdaFunction(expression)
-                rowJacobianBlockFunctions.append(lambdaFunction)
-                rowInputSymbols.append(orderedInputSymbosl)
-
-            jacobianBlockFunctions.append(rowJacobianBlockFunctions)
-            inputSymbols.append(rowInputSymbols)
-        return (np.array(jacobianBlockFunctions, dtype=object),
-                np.array(inputSymbols, dtype=object))
-
-    def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
-        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
-        intrinsicBlock = self._computeJacobianBlock(valuesDict,
-                self._intrinsicJacobianBlockFunctions,
-                self._intrinsicJacobianBlockInputSymbols)
+    def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
+        intrinsicBlock = self._computeJacobianBlock(self._intrinsicJacobianBlockFunction,
+                intrinsicValues, extrinsicValues, modelPoints)
         return intrinsicBlock
 
-    def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoint):
-        valuesDict = self._createValuesDict(intrinsicValues, extrinsicValues, modelPoint)
-        extrinsicBlock = self._computeJacobianBlock(valuesDict,
-                self._extrinsicJacobianBlockFunctions,
-                self._extrinsicJacobianBlockInputSymbols)
+    def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
+        extrinsicBlock = self._computeJacobianBlock(self._extrinsicJacobianBlockFunctions,
+                intrinsicValues, extrinsicValues, modelPoints)
         return extrinsicBlock
 
-    def _computeJacobianBlock(self, valuesDict, functionBlock, inputSymbolsBlock):
+    def _computeJacobianBlock(self, functionBlock, intrinsicValues, extrinsicValues, modelPoints):
         """
         Evaluates the values of J (general purpose)
 
         Input:
-            valuesDict -- dictionary with items (key=symbol, value=value)
-            functionBlock -- (2, T) matrix of callable functions to compute the values of
+            valuesDicts -- list of N dictionaries with items (key=symbol, value=value)
+            functionBlock -- (2*N, T) matrix of callable functions to compute the values of
                     the Jacobian for that specific block
-            inputSymbolsBlock -- (2, T) ordered symbols so values are assigned correctly in
+            inputSymbols -- (2*N, T) ordered symbols so values are assigned correctly in
                     functionBlock
 
         Output:
-            blockValues -- (2, T) matrix block of the Jacobian J
+            blockValues -- (2*N, T) matrix block of the Jacobian J
         """
-        blockValues = np.zeros(shape=functionBlock.shape)
-        for i in range(functionBlock.shape[0]):
-            for j in range(functionBlock.shape[1]):
-                blockValues[i,j] = evaluate(functionBlock[i,j],
-                        inputSymbolsBlock[i,j], valuesDict)
+        P = list(intrinsicValues) + list(extrinsicValues)
+        P = [p + self._epsilon for p in P]
+        X = mu.col(modelPoints[:,0]) + self._epsilon
+        Y = mu.col(modelPoints[:,1]) + self._epsilon
+        Z = mu.col(modelPoints[:,2]) + self._epsilon
+        N = modelPoints.shape[0]
+        functionResults = functionBlock(*P, X, Y, Z)
+        blockValues = np.zeros((2*N, functionResults.shape[1]))
+        for i in range(functionResults.shape[1]):
+            uResult = functionResults[0,i]
+            if isinstance(uResult, np.ndarray):
+                uResult = uResult.ravel()
+            vResult = functionResults[1,i]
+            if isinstance(vResult, np.ndarray):
+                vResult = vResult.ravel()
+            blockValues[::2, i] = uResult
+            blockValues[1::2, i] = vResult
         return blockValues
-
-    def _createValuesDict(self, intrinsicValues, extrinsicValues, modelPoint):
-        """
-        Input:
-            intrinsicValues -- α, β, γ, uc, uv, k1, k2, p1, p2, k3
-            extrinsicValues -- ρx, ρy, ρz, tx, ty, tz
-            modelPoint -- X0, Y0, Z0
-
-        Output:
-            valuesDict -- dictionary with items (key=symbol, value=value)
-        """
-        valuesDict = dict(zip(self._intrinsicSymbols, intrinsicValues))
-        valuesDict.update(dict(zip(self._extrinsicSymbols, extrinsicValues)))
-        insertModelPoints(valuesDict, modelPoint)
-        return valuesDict
 
     def _createJacobianBlockExpression(self, derivativeSymbols):
         """
@@ -129,7 +94,7 @@ class ProjectionJacobian:
             uExprs.append(sympy.diff(uExpr, paramSymbol))
             vExprs.append(sympy.diff(vExpr, paramSymbol))
 
-        jacobianBlockExpr = np.array([uExprs, vExprs])
+        jacobianBlockExpr = sympy.Matrix([uExprs, vExprs])
         return jacobianBlockExpr
 
     def compute(self, P, allModelPoints):
@@ -160,17 +125,15 @@ class ProjectionJacobian:
             N = len(modelPoints)
             colIndexJ = L+i*self._numExtrinsicParamsPerView
 
-            # TODO: try to broadcast this
-            for j, modelPoint in enumerate(modelPoints):
-                intrinsicBlock = self._createIntrinsicsJacobianBlock(
-                        intrinsicValues, extrinsicValues, modelPoint)
-                extrinsicBlock = self._createExtrinsicsJacobianBlock(
-                        intrinsicValues, extrinsicValues, modelPoint)
+            intrinsicBlock = self._createIntrinsicsJacobianBlock(
+                    intrinsicValues, extrinsicValues, modelPoints)
+            extrinsicBlock = self._createExtrinsicsJacobianBlock(
+                    intrinsicValues, extrinsicValues, modelPoints)
 
-                J[rowIndexJ:rowIndexJ + 2, :L] = intrinsicBlock
-                J[rowIndexJ:rowIndexJ + 2, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
-                        extrinsicBlock
-                rowIndexJ += 2
+            J[rowIndexJ:rowIndexJ + 2*N, :L] = intrinsicBlock
+            J[rowIndexJ:rowIndexJ + 2*N, colIndexJ:colIndexJ+self._numExtrinsicParamsPerView] = \
+                    extrinsicBlock
+            rowIndexJ += 2*N
         return J
 
 
@@ -180,17 +143,10 @@ def createJacRadTan() -> ProjectionJacobian:
     return jac
 
 
-def insertModelPoints(valuesDict, modelPoint):
-    X0, Y0, Z0 = getModelPointSymbols()
-    valuesDict[X0] = modelPoint[0]
-    valuesDict[Y0] = modelPoint[1]
-    valuesDict[Z0] = modelPoint[2]
-
-
 def createExpressionIntrinsicProjectionRadTan():
     """
     Creates the base expression for point projection (u, v) from P vector symbols
-    and a single world point wP = (X0, Y0, Z0), with
+    and a single world point wP = (X, Y, Z), with
             P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3, ρx, ρy, ρz, tx, ty, tz)
     """
     isSymbolic = True
@@ -208,8 +164,8 @@ def createExpressionIntrinsicProjectionRadTan():
         [R[2,0], R[2,1], R[2,2], tz],
         [     0,      0,      0,  1],
     ])
-    X0, Y0, Z0 = getModelPointSymbols()
-    wPHom = mu.col((X0, Y0, Z0, 1))
+    X, Y, Z = getModelPointSymbols()
+    wPHom = mu.col((X, Y, Z, 1))
     cPHom = (cMw @ wPHom).T
     cP = mu.unhom(cPHom)
     k = (k1, k2, p1, p2, k3)
@@ -226,19 +182,17 @@ def getExtrinsicSymbols():
 
 
 def getModelPointSymbols():
-    return tuple(sympy.symbols("X0 Y0 Z0"))
+    return tuple(sympy.symbols("X Y Z"))
 
 
-def createLambdaFunction(expression):
-    orderedSymbols = tuple(expression.atoms(sympy.Symbol))
+def getAllOrderedSymbols():
+    intrinsicSymbols = getIntrinsicRadTanSymbols()
+    extrinsicSymbols = getExtrinsicSymbols()
+    modelPointSymbol = getModelPointSymbols()
+    return intrinsicSymbols + extrinsicSymbols + modelPointSymbol
+
+
+def createLambdaFunction(expression, orderedSymbols):
     f = sympy.lambdify(orderedSymbols, expression, "numpy")
-    return f, orderedSymbols
+    return f
 
-
-def evaluate(f, orderedSymbols, valuesDict):
-    # need a very small number instead of zero to avoid divide-by-zero errors
-    eps = 1e-100
-    orderedInputs = [valuesDict[symbol] if np.abs(valuesDict[symbol]) > eps else eps
-            for symbol in orderedSymbols]
-    output = f(*orderedInputs)
-    return output

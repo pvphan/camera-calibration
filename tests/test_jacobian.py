@@ -16,7 +16,10 @@ class TestProjectionJacobian(unittest.TestCase):
         cls.jac = jacobian.createJacRadTan()
         cls.intrinsicValues = [400, 400, 0, 320, 240, -0.5, 0.2, 0, 0, 0]
         cls.extrinsicValues = [180, 0, 0, 0.1, 0.2, 1.0]
-        cls.modelPoint = [0.1, 0.1, 0]
+        cls.modelPoints = np.array([
+            [0.1, 0.1, 0],
+            [0.1, 0.2, 0],
+        ])
 
         width, height = 640, 480
         α, β, γ, uc, vc, k1, k2, p1, p2, k3 = cls.intrinsicValues
@@ -32,12 +35,7 @@ class TestProjectionJacobian(unittest.TestCase):
 
     def test_init(self):
         self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))
-        self.assertEqual(self.jac._intrinsicJacobianBlockFunctions.shape, (2, 10))
-        self.assertEqual(self.jac._intrinsicJacobianBlockInputSymbols.shape, (2, 10))
-
         self.assertEqual(self.jac._extrinsicJacobianBlockExpr.shape, (2, 6))
-        self.assertEqual(self.jac._extrinsicJacobianBlockFunctions.shape, (2, 6))
-        self.assertEqual(self.jac._extrinsicJacobianBlockInputSymbols.shape, (2, 6))
 
     def test_createExpressionIntrinsicProjection(self):
         expr = jacobian.createExpressionIntrinsicProjectionRadTan()
@@ -45,15 +43,15 @@ class TestProjectionJacobian(unittest.TestCase):
 
     def test__createIntrinsicsJacobianBlock(self):
         intrinsicBlock = self.jac._createIntrinsicsJacobianBlock(self.intrinsicValues,
-                self.extrinsicValues, self.modelPoint)
-        self.assertEqual(intrinsicBlock.shape, (2, 10))
+                self.extrinsicValues, self.modelPoints)
+        self.assertEqual(intrinsicBlock.shape, (self.modelPoints.shape[0] * 2, 10))
         self.assertNoNans(intrinsicBlock)
         self.assertNonZero(intrinsicBlock)
 
     def test__createExtrinsicsJacobianBlock(self):
         extrinsicBlock = self.jac._createExtrinsicsJacobianBlock(self.intrinsicValues,
-                self.extrinsicValues, self.modelPoint)
-        self.assertEqual(extrinsicBlock.shape, (2, 6))
+                self.extrinsicValues, self.modelPoints)
+        self.assertEqual(extrinsicBlock.shape, (self.modelPoints.shape[0] * 2, 6))
         self.assertNoNans(extrinsicBlock)
         self.assertNonZero(extrinsicBlock)
 
@@ -66,7 +64,6 @@ class TestProjectionJacobian(unittest.TestCase):
         L = 10
         K = 6 * M + L
 
-        # takes ~14 sec for one iteration
         J = self.jac.compute(self.P, allModelPoints)
 
         self.assertEqual(J.shape, (2*MN, K))
@@ -79,6 +76,30 @@ class TestProjectionJacobian(unittest.TestCase):
 
     def assertNonZero(self, Q):
         self.assertGreater(np.sum(np.abs(Q)), 0)
+
+
+class TestEvaluation(unittest.TestCase):
+    def test_evaluateBlock(self):
+        a, b, c, d, e, f, g, h = sympy.symbols("a b c d e f g h")
+        expressionBlock = sympy.Matrix([
+            [(a+b+c+d) * e, (a+b*c+d) * f, (a*c*d) * g, a/b/c],
+            [(2*b+c**2+d/7) * e, (a/b**4+5-d) * f, (a**b*c**d) * g, a/b**d],
+        ], dtype=object)
+
+        orderedSymbols = (a, b, c, d, e, f, g)
+        functionBlock = sympy.lambdify(orderedSymbols, expressionBlock, "numpy")
+
+        wP = np.arange(9).reshape(-1, 3)
+        X = list(wP[:,0])
+        Y = list(wP[:,1])
+        Z = list(wP[:,2])
+        P = np.array([
+            [1, 1, 2, 3],
+            [1, 20, 30, 70],
+            [1, 1, 2, 3],
+        ], dtype=np.float32)
+        blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
+        blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
 
 
 if __name__ == "__main__":
