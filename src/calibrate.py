@@ -498,7 +498,7 @@ def refineCalibrationParameters(Ainitial, Winitial, kInitial, allDetections,
             break
 
     Arefined, Wrefined, kRefined = decomposeParameterVector(Pt)
-    return Arefined, Wrefined, kRefined
+    return Pt_error, Arefined, Wrefined, kRefined
 
 
 def printIterationStats(iter, ts, Pt, error):

@@ -39,7 +39,7 @@ class CalibrationAnimation:
         ydot = calibrate.getSensorPoints(allDetections)
         allImages = []
         for i in range(self._maxIters):
-            A, W, k = calibrate.refineCalibrationParameters(A, W, k, allDetections,
+            sse, A, W, k = calibrate.refineCalibrationParameters(A, W, k, allDetections,
                     self._jac, maxIters=1, shouldPrint=True)
             P = calibrate.composeParameterVector(A, W, k)
             y = calibrate.projectAllPoints(P, allModelPoints)
@@ -47,8 +47,7 @@ class CalibrationAnimation:
             imageForIteration = createProjectionErrorImage(ydot, y, self._width, self._height)
             allImages.append(imageForIteration)
 
-            error = calibrate.computeReprojectionError(P, allDetections)
-            if error < self._epsilon:
+            if sse < self._epsilon:
                 break
 
         outputPath = os.path.join(outputFolderPath, f"reprojection.gif")

@@ -9,7 +9,7 @@ from src import jacobian
 
 
 def calibrateCamera(allDetections: list[tuple[np.ndarray, np.ndarray]],
-        maxIters=50) -> tuple[np.ndarray, tuple]:
+        maxIters=50) -> tuple[float, np.ndarray, list[np.ndarray], tuple]:
     """
     Computes the intrinsic matrix and distortion coefficients from a
         set of detections.
@@ -20,14 +20,16 @@ def calibrateCamera(allDetections: list[tuple[np.ndarray, np.ndarray]],
                 and model points respectively
 
     Output:
+        sse -- final sum squared error
         Afinal -- intrinsic calibration matrix, (3,3)
+        Wfinal -- list of world-to-camera transforms
         kFinal -- distortion coefficient tuple of length 5
     """
     jac = jacobian.createJacRadTan()
     Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(
             allDetections)
-    Afinal, _, kFinal = calibrate.refineCalibrationParameters(
+    sse, Afinal, Wfinal, kFinal = calibrate.refineCalibrationParameters(
             Ainitial, Winitial, kInitial, allDetections, jac,
             maxIters=maxIters, shouldPrint=True)
-    return Afinal, kFinal
+    return sse, Afinal, Wfinal, kFinal
 

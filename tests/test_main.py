@@ -17,10 +17,13 @@ class TestMain(unittest.TestCase):
         ])
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
         syntheticDataset = dataset.createSyntheticDataset(Aexpected, width, height, kExpected)
+        Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
 
-        Acomputed, kComputed = main.calibrateCamera(allDetections)
+        sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections)
+        self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
+        self.assertAllClose(Wexpected, Wcomputed)
         self.assertAllClose(kExpected, kComputed)
 
     def assertAllClose(self, A, B, atol=1e-9):

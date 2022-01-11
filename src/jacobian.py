@@ -48,11 +48,11 @@ class ProjectionJacobian:
         Evaluates the values of J (general purpose)
 
         Input:
-            valuesDicts -- list of N dictionaries with items (key=symbol, value=value)
             functionBlock -- (2*N, T) matrix of callable functions to compute the values of
                     the Jacobian for that specific block
-            inputSymbols -- (2*N, T) ordered symbols so values are assigned correctly in
-                    functionBlock
+            intrinsicValues -- intrinsic parameter values held fixed for this block of J
+            extrinsicValues -- extrinsic parameter values held fixed for this block of J
+            allModelPoints -- (N, 3) model points which are projected into the camera
 
         Output:
             blockValues -- (2*N, T) matrix block of the Jacobian J
@@ -101,7 +101,7 @@ class ProjectionJacobian:
         """
         Input:
             P -- parameter value vector (intrinsics, distortion, extrinsics)
-            allModelPoints -- model points which are projected into the camera
+            allModelPoints -- (N, 3) model points which are projected into the camera
 
         Output:
             J -- Jacobian matrix made up of the partial derivatives of the

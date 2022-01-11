@@ -219,10 +219,11 @@ class TestCalibrate(unittest.TestCase):
         jac.compute.return_value = J
         maxIters = 1
 
-        Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+        sse, Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
                 Ainitial, Winitial, kInitial, allDetections, jac, maxIters)
 
         # not checking for correctness, just want it to run
+        self.assertIsInstance(sse, float)
         self.assertEqual(Arefined.shape, (3,3))
         self.assertEqual(len(Wrefined), len(allDetections))
         self.assertEqual(len(kRefined), 5)
