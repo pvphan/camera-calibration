@@ -9,6 +9,7 @@ import numpy as np
 from __context__ import src
 from src import calibrate
 from src import dataset
+from src import distortion
 from src import jacobian
 from src import visualize
 
@@ -18,14 +19,15 @@ class CalibrationAnimation:
     _maxIters = 50
     _epsilon = 1e-5
     def __init__(self, allDetections: list, jac: jacobian.ProjectionJacobian,
-            width: int, height: int):
+            distortionModel: distortion.DistortionModel, width: int, height: int):
         self._allDetections = allDetections
         self._jac = jac
+        self._distortioModel = distortionModel
         self._width = width
         self._height = height
 
         self._Ainitial, self._Winitial, self._kInitial = calibrate.estimateCalibrationParameters(
-                self._allDetections)
+                self._allDetections, self._distortioModel)
 
     def writeGif(self, outputFolderPath):
         """

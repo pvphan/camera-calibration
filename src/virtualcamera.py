@@ -11,9 +11,10 @@ class VirtualCamera:
     An ideal camera with radial-tangential distortion.
     """
     def __init__(self, intrinsicMatrix: np.ndarray, distortionVector: tuple,
-            imageWidth: int, imageHeight: int):
+            distortionModel: distortion.DistortionModel, imageWidth: int, imageHeight: int):
         self._intrinsicMatrix = intrinsicMatrix
         self._distortionVector = distortionVector
+        self._distortionModel = distortionModel
         self._imageWidth = imageWidth
         self._imageHeight = imageHeight
 
@@ -37,7 +38,7 @@ class VirtualCamera:
 
     def measurePoints(self, cMw, wP):
         cP = mu.transform(cMw, wP)
-        u = distortion.projectWithDistortion(self._intrinsicMatrix,
+        u = self._distortionModel.projectWithDistortion(self._intrinsicMatrix,
                 cP, self._distortionVector)
 
         pointInImageSlice = np.s_[
