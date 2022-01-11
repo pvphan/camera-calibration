@@ -13,7 +13,6 @@ Dockerized for convenience of development, testing, and maybe deployment.
 Limitations:
 
 - Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
-- Runs pretty slowly -- about 5 mins for the unit tested synthetic case (`tests/test_calibrate.py:test_refineCalibrationParameters`)
 
 
 Prerequisites: `make`, `docker`
