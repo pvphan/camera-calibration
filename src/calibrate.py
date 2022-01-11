@@ -14,6 +14,75 @@ class Calibrator:
         self._distortionModel = distortionModel
         self._jac = jacobian.ProjectionJacobian(self._distortionModel)
 
+    def composeParameterVector(self, A, W, k):
+        """
+        Input:
+            A -- intrinsic matrix
+            W -- world-to-camera transforms
+            k -- distortion coefficients
+
+        Output:
+            P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
+                P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
+                        ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
+                        ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
+                        ...,
+                        ρM-1x, ρM-1y, ρM-1z, tM-1x, tM-1y, tM-1z,
+                        ...)^T
+        """
+        α = A[0,0]
+        β = A[1,1]
+        γ = A[0,1]
+        uc = A[0,2]
+        vc = A[1,2]
+
+        P = mu.col([α, β, γ, uc, vc] + k)
+
+        for cMw in W:
+            R = cMw[:3,:3]
+            t = cMw[:3,3]
+            ρix, ρiy, ρiz = mu.rotationMatrixToEuler(R)
+            tix, tiy, tiz = t
+            P = np.vstack((P, mu.col([ρix, ρiy, ρiz, tix, tiy, tiz])))
+        return P
+
+    def decomposeParameterVector(self, P):
+        """
+        Input:
+            P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
+                P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
+                        ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
+                        ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
+                        ...,
+                        ρM-1x, ρM-1y, ρM-1z, tM-1x, tM-1y, tM-1z,
+                        ...)^T
+
+        Output:
+            A -- intrinsic matrix
+            W -- world-to-camera transforms
+            k -- distortion coefficients
+        """
+        if isinstance(P, np.ndarray):
+            P = P.ravel()
+        poseStartIndex = 10
+        poseStartIndex = 10
+        numPoseParams = 6
+        α, β, γ, uc, vc, k1, k2, p1, p2, k3 = P[:poseStartIndex]
+        A = np.array([
+            [α, γ, uc],
+            [0, β, vc],
+            [0, 0,  1],
+        ])
+        W = []
+        for i in range(poseStartIndex, len(P), numPoseParams):
+            ρix, ρiy, ρiz, tix, tiy, tiz = P[i:i+numPoseParams]
+            R = mu.eulerToRotationMatrix((ρix, ρiy, ρiz))
+            t = (tix, tiy, tiz)
+            W.append(mu.poseFromRT(R, t))
+
+        k = (k1, k2, p1, p2, k3)
+        return A, W, k
+
     def estimateCalibrationParameters(self, allDetections):
         """
         Input:
@@ -120,74 +189,3 @@ def getSensorPoints(allDetections):
     return y
 
 
-# TODO: make this a class method
-def composeParameterVector(A, W, k):
-    """
-    Input:
-        A -- intrinsic matrix
-        W -- world-to-camera transforms
-        k -- distortion coefficients
-
-    Output:
-        P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
-            P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
-                    ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
-                    ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
-                    ...,
-                    ρM-1x, ρM-1y, ρM-1z, tM-1x, tM-1y, tM-1z,
-                    ...)^T
-    """
-    α = A[0,0]
-    β = A[1,1]
-    γ = A[0,1]
-    uc = A[0,2]
-    vc = A[1,2]
-    k1, k2, p1, p2, k3 = k
-
-    P = mu.col([α, β, γ, uc, vc, k1, k2, p1, p2, k3])
-
-    for cMw in W:
-        R = cMw[:3,:3]
-        t = cMw[:3,3]
-        ρix, ρiy, ρiz = mu.rotationMatrixToEuler(R)
-        tix, tiy, tiz = t
-        P = np.vstack((P, mu.col([ρix, ρiy, ρiz, tix, tiy, tiz])))
-    return P
-
-
-# TODO: make this a class method
-def decomposeParameterVector(P):
-    """
-    Input:
-        P -- vector of all calibration parameters, intrinsic and all M views extrinsic:
-            P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3,
-                    ρ0x, ρ0y, ρ0z, t0x, t0y, t0z,
-                    ρ1x, ρ1y, ρ1z, t1x, t1y, t1z,
-                    ...,
-                    ρM-1x, ρM-1y, ρM-1z, tM-1x, tM-1y, tM-1z,
-                    ...)^T
-
-    Output:
-        A -- intrinsic matrix
-        W -- world-to-camera transforms
-        k -- distortion coefficients
-    """
-    if isinstance(P, np.ndarray):
-        P = P.ravel()
-    poseStartIndex = 10
-    numPoseParams = 6
-    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = P[:poseStartIndex]
-    A = np.array([
-        [α, γ, uc],
-        [0, β, vc],
-        [0, 0,  1],
-    ])
-    W = []
-    for i in range(poseStartIndex, len(P), numPoseParams):
-        ρix, ρiy, ρiz, tix, tiy, tiz = P[i:i+numPoseParams]
-        R = mu.eulerToRotationMatrix((ρix, ρiy, ρiz))
-        t = (tix, tiy, tiz)
-        W.append(mu.poseFromRT(R, t))
-
-    k = (k1, k2, p1, p2, k3)
-    return A, W, k
