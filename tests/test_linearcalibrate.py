@@ -65,7 +65,7 @@ class TestCalibrate(unittest.TestCase):
         Hcomputed = linearcalibrate.estimateHomography(x, X[:,:2])
 
         self.assertEqual(Hcomputed.shape, (3,3))
-        self.assertTrue(np.allclose(Hcomputed, Hexpected))
+        self.assertAllClose(Hcomputed, Hexpected)
 
     def test_estimateHomographies(self):
         Aexpected = np.array([
@@ -131,7 +131,7 @@ class TestCalibrate(unittest.TestCase):
 
         Acomputed = linearcalibrate.computeIntrinsicMatrixFrombClosedForm(b)
 
-        self.assertTrue(np.allclose(Aexpected, Acomputed))
+        self.assertAllClose(Aexpected, Acomputed)
 
     def test_computeIntrinsicMatrixFrombCholesky(self):
         Aexpected = np.array([
@@ -143,7 +143,7 @@ class TestCalibrate(unittest.TestCase):
 
         Acomputed = linearcalibrate.computeIntrinsicMatrixFrombCholesky(b)
 
-        self.assertTrue(np.allclose(Aexpected, Acomputed))
+        self.assertAllClose(Aexpected, Acomputed)
 
     def test_computeIntrinsicMatrix(self):
         Aexpected = np.array([
@@ -159,7 +159,7 @@ class TestCalibrate(unittest.TestCase):
 
         A = linearcalibrate.computeIntrinsicMatrix(Hs)
 
-        self.assertTrue(np.allclose(A, Aexpected))
+        self.assertAllClose(A, Aexpected)
 
     def assertAllClose(self, A, B, atol=1e-9):
         self.assertTrue(np.allclose(A, B, atol=atol),

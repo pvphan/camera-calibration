@@ -97,6 +97,12 @@ class TestEvaluation(unittest.TestCase):
         blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
         blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
 
+    def test_createJacobianBlockExpression(self):
+        a, b, c, d = sympy.symbols("a b c d")
+        uvExpression = np.array([[(a+b+c+d), (2*b+c**2+d/7)]], dtype=object)
+        inputSymbols = a, b, c, d
+        blockExpression = jacobian.createJacobianBlockExpression(uvExpression, inputSymbols)
+
 
 if __name__ == "__main__":
     unittest.main()

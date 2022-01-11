@@ -10,7 +10,6 @@ from __context__ import src
 from src import calibrate
 from src import dataset
 from src import distortion
-from src import jacobian
 from src import visualize
 
 
@@ -18,16 +17,11 @@ class CalibrationAnimation:
     _gifFps = 5
     _maxIters = 50
     _epsilon = 1e-5
-    def __init__(self, allDetections: list, jac: jacobian.ProjectionJacobian,
-            distortionModel: distortion.DistortionModel, width: int, height: int):
+    def __init__(self, calibrator: calibrate.Calibrator, allDetections: list, width: int, height: int):
+        self._calibrator = calibrator
         self._allDetections = allDetections
-        self._jac = jac
-        self._distortioModel = distortionModel
         self._width = width
         self._height = height
-
-        self._Ainitial, self._Winitial, self._kInitial = calibrate.estimateCalibrationParameters(
-                self._allDetections, self._distortioModel)
 
     def writeGif(self, outputFolderPath):
         """
@@ -35,16 +29,17 @@ class CalibrationAnimation:
             as the estimated values of the intrinsics and extrinsics are updated.
         """
         os.makedirs(outputFolderPath, exist_ok=True)
-        A, W, k = self._Ainitial, self._Winitial, self._kInitial
+        A, W, k = self._calibrator.estimateCalibrationParameters(
+                self._allDetections)
         allDetections = self._allDetections
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
         ydot = calibrate.getSensorPoints(allDetections)
         allImages = []
         for i in range(self._maxIters):
-            sse, A, W, k = calibrate.refineCalibrationParameters(A, W, k, allDetections,
-                    self._jac, maxIters=1, shouldPrint=True)
+            sse, A, W, k = self._calibrator.refineCalibrationParameters(A, W, k, allDetections,
+                    maxIters=1, shouldPrint=True)
             P = calibrate.composeParameterVector(A, W, k)
-            y = calibrate.projectAllPoints(P, allModelPoints)
+            y = self._calibrator.projectAllPoints(P, allModelPoints)
 
             imageForIteration = createProjectionErrorImage(ydot, y, self._width, self._height)
             allImages.append(imageForIteration)
@@ -75,9 +70,10 @@ def createAnimation(outputFolderPath):
     ])
     syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
     allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
-    jac = jacobian.createJacRadTan()
+    distortionModel = distortion.RadialTangentialModel()
+    calibrator = calibrate.Calibrator(distortionModel)
 
-    ani = CalibrationAnimation(allDetections, jac, width, height)
+    ani = CalibrationAnimation(calibrator, allDetections, width, height)
     ani.writeGif(outputFolderPath)
 
 

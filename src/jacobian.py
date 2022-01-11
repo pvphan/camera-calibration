@@ -23,13 +23,13 @@ class ProjectionJacobian:
         self._orderedSymbols = (self._intrinsicSymbols +
                 self._extrinsicSymbols + symbolic.getModelPointSymbols())
 
-        self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(
-                self._intrinsicSymbols)
+        self._intrinsicJacobianBlockExpr = createJacobianBlockExpression(
+                self._uvExpr, self._intrinsicSymbols)
         self._intrinsicJacobianBlockFunction = createLambdaFunction(
                 self._intrinsicJacobianBlockExpr, self._orderedSymbols)
 
-        self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(
-                self._extrinsicSymbols)
+        self._extrinsicJacobianBlockExpr = createJacobianBlockExpression(
+                self._uvExpr, self._extrinsicSymbols)
         self._extrinsicJacobianBlockFunctions = createLambdaFunction(
                 self._extrinsicJacobianBlockExpr, self._orderedSymbols)
 
@@ -76,27 +76,6 @@ class ProjectionJacobian:
             blockValues[1::2, i] = vResult
         return blockValues
 
-    def _createJacobianBlockExpression(self, derivativeSymbols):
-        """
-        Input:
-            derivativeSymbols -- the symbols with which to take the partial derivative
-                    of the projection expression (left-to-right along column dimension)
-
-        Output:
-            jacobianBlockExpr -- matrix containing the expressions for the partial
-                    derivative of the point projection expression wrt the corresponding
-                    derivative symbol
-        """
-        uExpr, vExpr = self._uvExpr.ravel()
-        uExprs = []
-        vExprs = []
-        for i, paramSymbol in enumerate(derivativeSymbols):
-            uExprs.append(sympy.diff(uExpr, paramSymbol))
-            vExprs.append(sympy.diff(vExpr, paramSymbol))
-
-        jacobianBlockExpr = sympy.Matrix([uExprs, vExprs])
-        return jacobianBlockExpr
-
     def compute(self, P, allModelPoints):
         """
         Input:
@@ -135,6 +114,29 @@ class ProjectionJacobian:
                     extrinsicBlock
             rowIndexJ += 2*N
         return J
+
+
+def createJacobianBlockExpression(uvExpression, derivativeSymbols):
+    """
+    Input:
+        uvExpression -- the sympy expression for projection
+        derivativeSymbols -- the symbols with which to take the partial derivative
+                of the projection expression (left-to-right along column dimension)
+
+    Output:
+        jacobianBlockExpr -- matrix containing the expressions for the partial
+                derivative of the point projection expression wrt the corresponding
+                derivative symbol
+    """
+    uExpr, vExpr = uvExpression.ravel()
+    uExprs = []
+    vExprs = []
+    for i, paramSymbol in enumerate(derivativeSymbols):
+        uExprs.append(sympy.diff(uExpr, paramSymbol))
+        vExprs.append(sympy.diff(vExpr, paramSymbol))
+
+    jacobianBlockExpr = sympy.Matrix([uExprs, vExprs])
+    return jacobianBlockExpr
 
 
 def createJacRadTan() -> ProjectionJacobian:

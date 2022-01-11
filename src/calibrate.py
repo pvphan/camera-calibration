@@ -42,7 +42,6 @@ class Calibrator:
             allDetections -- list of tuples (one for each view).
                     Each tuple is (Xa, Xb), a set of sensor points
                     and model points respectively
-            jac -- Jacobian computation class
 
         Output:
             Arefined -- refined estimate of intrinsic matrix
@@ -64,7 +63,7 @@ class Calibrator:
 
             JTJ = J.T @ J
             diagJTJ = np.diag(np.diagonal(JTJ))
-            y = self._projectAllPoints(Pt, allModelPoints)
+            y = self.projectAllPoints(Pt, allModelPoints)
 
             # compute residuum
             r = ydot.reshape(-1, 1) - y.reshape(-1, 1)
@@ -91,12 +90,12 @@ class Calibrator:
 
     def _computeReprojectionError(self, P, allDetections):
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
-        y = self._projectAllPoints(P, allModelPoints)
+        y = self.projectAllPoints(P, allModelPoints)
         ydot = getSensorPoints(allDetections)
         totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
         return totalError
 
-    def _projectAllPoints(self, P, allModelPoints):
+    def projectAllPoints(self, P, allModelPoints):
         A, W, k = decomposeParameterVector(P)
         ydot = np.empty((0, 2))
         for wP, cMw in zip(allModelPoints, W):
@@ -121,6 +120,7 @@ def getSensorPoints(allDetections):
     return y
 
 
+# TODO: make this a class method
 def composeParameterVector(A, W, k):
     """
     Input:
@@ -155,6 +155,7 @@ def composeParameterVector(A, W, k):
     return P
 
 
+# TODO: make this a class method
 def decomposeParameterVector(P):
     """
     Input:

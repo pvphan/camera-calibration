@@ -7,6 +7,7 @@ import numpy as np
 from __context__ import src
 from src import calibrate
 from src import dataset
+from src import distortion
 from src import mathutils as mu
 
 
@@ -37,25 +38,14 @@ class TestCalibrate(unittest.TestCase):
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDataset(cls.Aexpected, width, height, kExpected)
+        cls.kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
+        cls.syntheticDataset = dataset.createSyntheticDataset(cls.Aexpected, width, height, cls.kExpected)
         cls.Wexpected = cls.syntheticDataset.getAllBoardPosesInCamera()
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
 
-        distortionModel = MagicMock()
+        distortionModel = distortion.RadialTangentialModel()
         cls.calibrator = calibrate.Calibrator(distortionModel)
-
-    def test_estimateDistortion(self):
-        dataSet = self.syntheticDataset
-        A = dataSet.getIntrinsicMatrix()
-        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
-        kExpected = dataSet.getDistortionVector()
-
-        kComputed = self.calibrator.estimateDistortion(A, allDetections, allBoardPosesInCamera)
-
-        self.assertAllClose(kExpected, kComputed)
 
     def test_estimateCalibrationParameters(self):
         dataSet = self.syntheticDataset
