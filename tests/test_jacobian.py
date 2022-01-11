@@ -37,10 +37,6 @@ class TestProjectionJacobian(unittest.TestCase):
         self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))
         self.assertEqual(self.jac._extrinsicJacobianBlockExpr.shape, (2, 6))
 
-    def test_createExpressionIntrinsicProjection(self):
-        expr = jacobian.createExpressionIntrinsicProjectionRadTan()
-        self.assertNotEqual(str(expr), "None")
-
     def test__createIntrinsicsJacobianBlock(self):
         intrinsicBlock = self.jac._createIntrinsicsJacobianBlock(self.intrinsicValues,
                 self.extrinsicValues, self.modelPoints)

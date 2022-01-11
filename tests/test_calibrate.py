@@ -13,14 +13,6 @@ from src import mathutils as mu
 class TestCalibrate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pointsInWorld = np.array([
-            [1, -1, 0.4, 1],
-            [-1, 1, 0.4, 1],
-            [0.3, 0.1, 2.0, 1],
-            [0.3, -0.1, 2.0, 1],
-            [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.2, 1.2, 1],
-        ])
         H1 = np.array([
             [400, 10, 320],
             [20, 400, 240],
@@ -38,7 +30,7 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
-        A = np.array([
+        cls.Aexpected = np.array([
             [400, 0, 320],
             [0, 400, 240],
             [0, 0, 1],
@@ -46,9 +38,13 @@ class TestCalibrate(unittest.TestCase):
 
         width, height = 640, 480
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, kExpected)
+        cls.syntheticDataset = dataset.createSyntheticDataset(cls.Aexpected, width, height, kExpected)
+        cls.Wexpected = cls.syntheticDataset.getAllBoardPosesInCamera()
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
+
+        distortionModel = MagicMock()
+        cls.calibrator = calibrate.Calibrator(distortionModel)
 
     def test_estimateDistortion(self):
         dataSet = self.syntheticDataset
@@ -57,7 +53,7 @@ class TestCalibrate(unittest.TestCase):
         allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
         kExpected = dataSet.getDistortionVector()
 
-        kComputed = calibrate.estimateDistortion(A, allDetections, allBoardPosesInCamera)
+        kComputed = self.calibrator.estimateDistortion(A, allDetections, allBoardPosesInCamera)
 
         self.assertAllClose(kExpected, kComputed)
 
@@ -65,7 +61,7 @@ class TestCalibrate(unittest.TestCase):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
 
-        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+        Ainitial, Winitial, kInitial = self.calibrator.estimateCalibrationParameters(allDetections)
 
         self.assertEqual(Ainitial.shape, (3,3))
         self.assertEqual(len(Winitial), len(allDetections))
@@ -74,7 +70,9 @@ class TestCalibrate(unittest.TestCase):
     def test_composeParameterVector(self):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
+        A = self.Aexpected
+        W = self.Wexpected
+        k = self.kExpected
 
         P = calibrate.composeParameterVector(A, W, k)
         Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
@@ -90,7 +88,7 @@ class TestCalibrate(unittest.TestCase):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         ydot = calibrate.getSensorPoints(allDetections)
-        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+        Ainitial, Winitial, kInitial = self.calibrator.estimateCalibrationParameters(allDetections)
         jac = MagicMock()
         MN = ydot.shape[0]
         K = 10 + len(Winitial) * 6
@@ -99,7 +97,7 @@ class TestCalibrate(unittest.TestCase):
         jac.compute.return_value = J
         maxIters = 1
 
-        sse, Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+        sse, Arefined, Wrefined, kRefined = self.calibrator.refineCalibrationParameters(
                 Ainitial, Winitial, kInitial, allDetections, jac, maxIters)
 
         # not checking for correctness, just want it to run
@@ -111,11 +109,11 @@ class TestCalibrate(unittest.TestCase):
     def test_projectAllPoints(self):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
+        A, W, k = self.calibrator.estimateCalibrationParameters(allDetections)
         P = calibrate.composeParameterVector(A, W, k)
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
 
-        ydot = calibrate.projectAllPoints(P, allModelPoints)
+        ydot = self.calibrator.projectAllPoints(P, allModelPoints)
 
         self.assertGreater(ydot.shape[0], 0)
         self.assertEqual(ydot.shape[1], 2)
@@ -137,7 +135,7 @@ class TestCalibrate(unittest.TestCase):
         kExpected = dataSet.getDistortionVector()
         Pexpected = calibrate.composeParameterVector(Aexpected, Wexpected, kExpected)
 
-        totalError = calibrate.computeReprojectionError(Pexpected, allDetections)
+        totalError = self.calibrator._computeReprojectionError(Pexpected, allDetections)
 
         self.assertAlmostEqual(totalError, 0)
 

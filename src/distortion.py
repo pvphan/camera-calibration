@@ -17,6 +17,12 @@ class DistortionModel:
     def projectWithDistortion(self, A: np.ndarray, X: np.ndarray, k: tuple, isSymbolic: bool):
         raise NotImplementedError()
 
+    def distortPoints(self, x: np.ndarray, k: tuple, isSymbolic=False):
+        raise NotImplementedError()
+
+    def estimateDistortion(self, A: np.ndarray, allDetections: list, allBoardPosesInCamera: list):
+        raise NotImplementedError()
+
 
 class RadialTangentialModel(DistortionModel):
     def getIntrinsicSymbols(self):
@@ -183,9 +189,5 @@ class RadialTangentialModel(DistortionModel):
 
 
 class FisheyeModel(DistortionModel):
-
-    def distortPointsFisheye(x: np.ndarray, k: tuple):
-        raise NotImplementedError()
-
-
-
+    def getIntrinsicSymbols(self):
+        return tuple(sympy.symbols("α β γ uc vc k1 k2 k3 k4"))
