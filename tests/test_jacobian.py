@@ -86,20 +86,26 @@ class TestProjectionJacobian(unittest.TestCase):
 
 class TestEvaluation(unittest.TestCase):
     def test_evaluateBlock(self):
-        a, b, c, d = sympy.symbols("a b c d")
+        a, b, c, d, e, f, g, h = sympy.symbols("a b c d e f g h")
         expressionBlock = sympy.Matrix([
-            [a+b+c+d, a-b-c-d, a*c*d, a/b/c],
-            [2*b+c**2+d/7, a/b**4-5*c-d, a**b*c**d, a/b**c/d],
+            [(a+b+c+d) * e, (a+b*c+d) * f, (a*c*d) * g, a/b/c],
+            [(2*b+c**2+d/7) * e, (a/b**4+5-d) * f, (a**b*c**d) * g, a/b**d],
         ], dtype=object)
 
-        functionBlock, inputSymbols = jacobian.createLambdaFunction(expressionBlock)
+        orderedSymbols = (a, b, c, d, e, f, g)
+        functionBlock = sympy.lambdify(orderedSymbols, expressionBlock, "numpy")
 
-        valuesDicts = [
-            {a: 0, b: 1, c: 2, d: 3},
-            {a: -1, b: 20, c: 30, d: 70},
-        ]
-        blockValues = jacobian.evaluateBlock(functionBlock, inputSymbols, valuesDicts)
-        self.assertEqual(blockValues.shape[0], expressionBlock.shape[0] * len(valuesDicts))
+        wP = np.arange(9).reshape(-1, 3)
+        X = wP[:,0]
+        Y = wP[:,1]
+        Z = wP[:,2]
+        P = np.array([
+            [1, 1, 2, 3],
+            [1, 20, 30, 70],
+            [1, 1, 2, 3],
+        ], dtype=np.float32)
+        blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
+        blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, expressionBlock.shape[1])
 
 
 if __name__ == "__main__":
