@@ -36,10 +36,6 @@ class TestProjectionJacobian(unittest.TestCase):
         calibrator = calibrate.Calibrator(distortionModel)
         cls.P = calibrator._composeParameterVector(A, W, k)
 
-    def test_init(self):
-        self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))
-        self.assertEqual(self.jac._extrinsicJacobianBlockExpr.shape, (2, 6))
-
     def test__createIntrinsicsJacobianBlock(self):
         intrinsicBlock = self.jac._createIntrinsicsJacobianBlock(self.intrinsicValues,
                 self.extrinsicValues, self.modelPoints)
