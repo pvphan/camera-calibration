@@ -32,9 +32,12 @@ class TestVirtualCamera(unittest.TestCase):
             [0.3, 0.1, 0],
         ])
         checkerboard.getCornerPositions.return_value = cornerPositions
+        distortionModel = MagicMock()
+        u = np.arange(2 * cornerPositions.shape[0]).reshape(-1, 2)
+        distortionModel.projectWithDistortion.return_value = u
 
         virtualCamera = virtualcamera.VirtualCamera(intrinsicMatrix, distortionCoeffients,
-                imageWidth, imageHeight)
+                distortionModel, imageWidth, imageHeight)
 
         R = mu.eulerToRotationMatrix((0, 0, 180))
         t = (0.05, 0.05, 2)

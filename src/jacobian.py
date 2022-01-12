@@ -4,6 +4,7 @@ import sympy
 from __context__ import src
 from src import distortion
 from src import mathutils as mu
+from src import symbolic
 
 
 class ProjectionJacobian:
@@ -15,23 +16,23 @@ class ProjectionJacobian:
     _numExtrinsicParamsPerView = 6
     _epsilon = 1e-100
     def __init__(self, distortionModel: distortion.DistortionModel):
-        if distortionModel == distortion.DistortionModel.RadialTangential:
-            self._uvExpr = createExpressionIntrinsicProjectionRadTan()
-            self._intrinsicSymbols = getIntrinsicRadTanSymbols()
-            self._orderedSymbols = getAllOrderedSymbols()
-        elif distortionModel == distortion.DistortionModel.FishEye:
-            raise NotImplementedError("Fish eye distortion model not yet supported")
-        else:
-            raise NotImplementedError("Unknown distortion model: {distortionModel}")
+        self._distortionModel = distortionModel
+        self._uvExpr = distortionModel.getProjectionExpression()
+        self._intrinsicAndDistortionSymbols = (distortionModel.getIntrinsicSymbols()
+                + distortionModel.getDistortionSymbols())
+        self._extrinsicSymbols = symbolic.getExtrinsicSymbols()
+        self._orderedSymbols = (self._intrinsicAndDistortionSymbols +
+                self._extrinsicSymbols + symbolic.getModelPointSymbols())
 
-        self._intrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._intrinsicSymbols)
-        self._intrinsicJacobianBlockFunction = createLambdaFunction(self._intrinsicJacobianBlockExpr,
-                self._orderedSymbols)
+        self._intrinsicJacobianBlockExpr = createJacobianBlockExpression(
+                self._uvExpr, self._intrinsicAndDistortionSymbols)
+        self._intrinsicJacobianBlockFunction = createLambdaFunction(
+                self._intrinsicJacobianBlockExpr, self._orderedSymbols)
 
-        self._extrinsicSymbols = getExtrinsicSymbols()
-        self._extrinsicJacobianBlockExpr = self._createJacobianBlockExpression(self._extrinsicSymbols)
-        self._extrinsicJacobianBlockFunctions = createLambdaFunction(self._extrinsicJacobianBlockExpr,
-                self._orderedSymbols)
+        self._extrinsicJacobianBlockExpr = createJacobianBlockExpression(
+                self._uvExpr, self._extrinsicSymbols)
+        self._extrinsicJacobianBlockFunctions = createLambdaFunction(
+                self._extrinsicJacobianBlockExpr, self._orderedSymbols)
 
     def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
         intrinsicBlock = self._computeJacobianBlock(self._intrinsicJacobianBlockFunction,
@@ -76,27 +77,6 @@ class ProjectionJacobian:
             blockValues[1::2, i] = vResult
         return blockValues
 
-    def _createJacobianBlockExpression(self, derivativeSymbols):
-        """
-        Input:
-            derivativeSymbols -- the symbols with which to take the partial derivative
-                    of the projection expression (left-to-right along column dimension)
-
-        Output:
-            jacobianBlockExpr -- matrix containing the expressions for the partial
-                    derivative of the point projection expression wrt the corresponding
-                    derivative symbol
-        """
-        uExpr, vExpr = self._uvExpr.ravel()
-        uExprs = []
-        vExprs = []
-        for i, paramSymbol in enumerate(derivativeSymbols):
-            uExprs.append(sympy.diff(uExpr, paramSymbol))
-            vExprs.append(sympy.diff(vExpr, paramSymbol))
-
-        jacobianBlockExpr = sympy.Matrix([uExprs, vExprs])
-        return jacobianBlockExpr
-
     def compute(self, P, allModelPoints):
         """
         Input:
@@ -112,7 +92,7 @@ class ProjectionJacobian:
         M = len(allModelPoints)
         intrinsicValues = P[:-M * self._numExtrinsicParamsPerView]
         MN = sum([modelPoints.shape[0] for modelPoints in allModelPoints])
-        L = len(self._intrinsicSymbols)
+        L = len(self._intrinsicAndDistortionSymbols)
         K = L + self._numExtrinsicParamsPerView * M
         J = np.zeros((2*MN, K))
 
@@ -137,59 +117,33 @@ class ProjectionJacobian:
         return J
 
 
+def createJacobianBlockExpression(uvExpression, derivativeSymbols):
+    """
+    Input:
+        uvExpression -- the sympy expression for projection
+        derivativeSymbols -- the symbols with which to take the partial derivative
+                of the projection expression (left-to-right along column dimension)
+
+    Output:
+        jacobianBlockExpr -- matrix containing the expressions for the partial
+                derivative of the point projection expression wrt the corresponding
+                derivative symbol
+    """
+    uExpr, vExpr = uvExpression.ravel()
+    uExprs = []
+    vExprs = []
+    for i, paramSymbol in enumerate(derivativeSymbols):
+        uExprs.append(sympy.diff(uExpr, paramSymbol))
+        vExprs.append(sympy.diff(vExpr, paramSymbol))
+
+    jacobianBlockExpr = sympy.Matrix([uExprs, vExprs])
+    return jacobianBlockExpr
+
+
 def createJacRadTan() -> ProjectionJacobian:
-    distortionModel = distortion.DistortionModel.RadialTangential
+    distortionModel = distortion.RadialTangentialModel()
     jac = ProjectionJacobian(distortionModel)
     return jac
-
-
-def createExpressionIntrinsicProjectionRadTan():
-    """
-    Creates the base expression for point projection (u, v) from P vector symbols
-    and a single world point wP = (X, Y, Z), with
-            P = (α, β, γ, uc, uv, k1, k2, p1, p2, k3, ρx, ρy, ρz, tx, ty, tz)
-    """
-    isSymbolic = True
-    α, β, γ, uc, vc, k1, k2, p1, p2, k3 = getIntrinsicRadTanSymbols()
-    A = np.array([
-        [α, γ, uc],
-        [0, β, vc],
-        [0, 0,  1],
-    ])
-    ρx, ρy, ρz, tx, ty, tz = getExtrinsicSymbols()
-    R = mu.eulerToRotationMatrix((ρx, ρy, ρz), isSymbolic=isSymbolic)
-    cMw = np.array([
-        [R[0,0], R[0,1], R[0,2], tx],
-        [R[1,0], R[1,1], R[1,2], ty],
-        [R[2,0], R[2,1], R[2,2], tz],
-        [     0,      0,      0,  1],
-    ])
-    X, Y, Z = getModelPointSymbols()
-    wPHom = mu.col((X, Y, Z, 1))
-    cPHom = (cMw @ wPHom).T
-    cP = mu.unhom(cPHom)
-    k = (k1, k2, p1, p2, k3)
-    uvExpr = distortion.projectWithDistortion(A, cP, k, isSymbolic=isSymbolic)
-    return uvExpr
-
-
-def getIntrinsicRadTanSymbols():
-    return tuple(sympy.symbols("α β γ uc vc k1 k2 p1 p2 k3"))
-
-
-def getExtrinsicSymbols():
-    return tuple(sympy.symbols("ρx ρy ρz tx ty tz"))
-
-
-def getModelPointSymbols():
-    return tuple(sympy.symbols("X Y Z"))
-
-
-def getAllOrderedSymbols():
-    intrinsicSymbols = getIntrinsicRadTanSymbols()
-    extrinsicSymbols = getExtrinsicSymbols()
-    modelPointSymbol = getModelPointSymbols()
-    return intrinsicSymbols + extrinsicSymbols + modelPointSymbol
 
 
 def createLambdaFunction(expression, orderedSymbols):

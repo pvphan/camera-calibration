@@ -6,6 +6,7 @@ import sympy
 from __context__ import src
 from src import calibrate
 from src import dataset
+from src import distortion
 from src import jacobian
 from src import mathutils as mu
 
@@ -29,17 +30,15 @@ class TestProjectionJacobian(unittest.TestCase):
             [0, 0,  1],
         ])
         k = (k1, k2, p1, p2, k3)
-        cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
         W = cls.syntheticDataset.getAllBoardPosesInCamera()
-        cls.P = calibrate.composeParameterVector(A, W, k)
+        distortionModel = distortion.RadialTangentialModel()
+        calibrator = calibrate.Calibrator(distortionModel)
+        cls.P = calibrator._composeParameterVector(A, W, k)
 
     def test_init(self):
         self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))
         self.assertEqual(self.jac._extrinsicJacobianBlockExpr.shape, (2, 6))
-
-    def test_createExpressionIntrinsicProjection(self):
-        expr = jacobian.createExpressionIntrinsicProjectionRadTan()
-        self.assertNotEqual(str(expr), "None")
 
     def test__createIntrinsicsJacobianBlock(self):
         intrinsicBlock = self.jac._createIntrinsicsJacobianBlock(self.intrinsicValues,
@@ -100,6 +99,12 @@ class TestEvaluation(unittest.TestCase):
         ], dtype=np.float32)
         blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
         blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
+
+    def test_createJacobianBlockExpression(self):
+        a, b, c, d = sympy.symbols("a b c d")
+        uvExpression = np.array([[(a+b+c+d), (2*b+c**2+d/7)]], dtype=object)
+        inputSymbols = a, b, c, d
+        blockExpression = jacobian.createJacobianBlockExpression(uvExpression, inputSymbols)
 
 
 if __name__ == "__main__":

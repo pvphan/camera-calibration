@@ -7,20 +7,13 @@ import numpy as np
 from __context__ import src
 from src import calibrate
 from src import dataset
+from src import distortion
 from src import mathutils as mu
 
 
 class TestCalibrate(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pointsInWorld = np.array([
-            [1, -1, 0.4, 1],
-            [-1, 1, 0.4, 1],
-            [0.3, 0.1, 2.0, 1],
-            [0.3, -0.1, 2.0, 1],
-            [-0.8, 0.4, 1.2, 1],
-            [-0.8, 0.2, 1.2, 1],
-        ])
         H1 = np.array([
             [400, 10, 320],
             [20, 400, 240],
@@ -38,154 +31,27 @@ class TestCalibrate(unittest.TestCase):
         ])
         cls.Hs = [H1, H2, H3]
 
-        A = np.array([
+        cls.Aexpected = np.array([
             [400, 0, 320],
             [0, 400, 240],
             [0, 0, 1],
         ])
 
         width, height = 640, 480
-        kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, kExpected)
+        cls.kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(cls.Aexpected, width, height, cls.kExpected)
+        cls.Wexpected = cls.syntheticDataset.getAllBoardPosesInCamera()
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
 
-    def test_getNormalizationMatrix(self):
-        expectedShape = (3,3)
-        numPoints = 10
-        X = generateRandomPointsInFrontOfCamera(numPoints)
-
-        N_X = calibrate.getNormalizationMatrix(X[:,:2])
-
-        self.assertEqual(N_X.shape, expectedShape)
-
-    def test_estimateHomography(self):
-        numPoints = 10
-        X = generateRandomPointsInFrontOfCamera(numPoints)
-        X[:,2] = 1
-        Hexpected = np.array([
-            [400, 10, 320],
-            [20, 400, 240],
-            [0, 0, 1],
-        ])
-        x = (Hexpected @ X.T).T
-        x = (x / mu.col(x[:,2]))[:,:2]
-
-        Hcomputed = calibrate.estimateHomography(x, X[:,:2])
-
-        self.assertEqual(Hcomputed.shape, (3,3))
-        self.assertTrue(np.allclose(Hcomputed, Hexpected))
-
-    def test_estimateHomographies(self):
-        Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-        width, height = 640, 480
-        k = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, k)
-        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-
-        Hs = calibrate.estimateHomographies(allDetections)
-
-        self.assertEqual(len(Hs), len(allDetections))
-        self.assertEqual(Hs[0].shape, (3,3))
-
-    def test_vecHomog(self):
-        expectedShape = (1, 6)
-        H = np.array([
-            [400, 10, 320],
-            [20, 400, 240],
-            [0, 0, 1],
-        ])
-
-        v1 = calibrate.vecHomography(H, 0, 0)
-        v2 = calibrate.vecHomography(H, 0, 1)
-        v3 = calibrate.vecHomography(H, 1, 1)
-
-        self.assertEqual(v1.shape, expectedShape)
-        self.assertEqual(v2.shape, expectedShape)
-        self.assertEqual(v3.shape, expectedShape)
-
-    def test_approximateRotationMatrix(self):
-        Q = np.array([
-            [0.95, 0, 0],
-            [0, 1, -0.05],
-            [0, 0, 1.05],
-        ])
-
-        R = calibrate.approximateRotationMatrix(Q)
-
-        self.assertAlmostEqual(np.linalg.det(R), 1)
-
-    def test_computeExtrinsics(self):
-        A = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-
-        worldToCameraTransforms = calibrate.computeExtrinsics(self.Hs, A)
-
-        self.assertEqual(len(self.Hs), len(worldToCameraTransforms))
-
-    def test_computeIntrinsicMatrixFrombClosedForm(self):
-        Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-        b = createbVectorFromIntrinsicMatrix(Aexpected)
-
-        Acomputed = calibrate.computeIntrinsicMatrixFrombClosedForm(b)
-
-        self.assertTrue(np.allclose(Aexpected, Acomputed))
-
-    def test_computeIntrinsicMatrixFrombCholesky(self):
-        Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-        b = createbVectorFromIntrinsicMatrix(Aexpected)
-
-        Acomputed = calibrate.computeIntrinsicMatrixFrombCholesky(b)
-
-        self.assertTrue(np.allclose(Aexpected, Acomputed))
-
-    def test_computeIntrinsicMatrix(self):
-        Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
-        width, height = 640, 480
-        k = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDataset(Aexpected, width, height, k)
-        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        Hs = calibrate.estimateHomographies(allDetections)
-
-        A = calibrate.computeIntrinsicMatrix(Hs)
-
-        self.assertTrue(np.allclose(A, Aexpected))
-
-    def test_estimateDistortion(self):
-        dataSet = self.syntheticDataset
-        A = dataSet.getIntrinsicMatrix()
-        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
-        kExpected = dataSet.getDistortionVector()
-
-        kComputed = calibrate.estimateDistortion(A, allDetections, allBoardPosesInCamera)
-
-        self.assertAllClose(kExpected, kComputed)
+        distortionModel = distortion.RadialTangentialModel()
+        cls.calibrator = calibrate.Calibrator(distortionModel)
 
     def test_estimateCalibrationParameters(self):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
 
-        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+        Ainitial, Winitial, kInitial = self.calibrator.estimateCalibrationParameters(allDetections)
 
         self.assertEqual(Ainitial.shape, (3,3))
         self.assertEqual(len(Winitial), len(allDetections))
@@ -194,10 +60,12 @@ class TestCalibrate(unittest.TestCase):
     def test_composeParameterVector(self):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
+        A = self.Aexpected
+        W = self.Wexpected
+        k = self.kExpected
 
-        P = calibrate.composeParameterVector(A, W, k)
-        Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
+        P = self.calibrator._composeParameterVector(A, W, k)
+        Acomputed, Wcomputed, kComputed = self.calibrator._decomposeParameterVector(P)
 
         self.assertEqual(P.shape, (len(W) * self.numExtrinsicParamsPerView
                 + self.numIntrinsicParams, 1))
@@ -210,7 +78,7 @@ class TestCalibrate(unittest.TestCase):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         ydot = calibrate.getSensorPoints(allDetections)
-        Ainitial, Winitial, kInitial = calibrate.estimateCalibrationParameters(allDetections)
+        Ainitial, Winitial, kInitial = self.calibrator.estimateCalibrationParameters(allDetections)
         jac = MagicMock()
         MN = ydot.shape[0]
         K = 10 + len(Winitial) * 6
@@ -219,7 +87,7 @@ class TestCalibrate(unittest.TestCase):
         jac.compute.return_value = J
         maxIters = 1
 
-        sse, Arefined, Wrefined, kRefined = calibrate.refineCalibrationParameters(
+        sse, Arefined, Wrefined, kRefined = self.calibrator.refineCalibrationParameters(
                 Ainitial, Winitial, kInitial, allDetections, jac, maxIters)
 
         # not checking for correctness, just want it to run
@@ -231,11 +99,11 @@ class TestCalibrate(unittest.TestCase):
     def test_projectAllPoints(self):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
-        A, W, k = calibrate.estimateCalibrationParameters(allDetections)
-        P = calibrate.composeParameterVector(A, W, k)
+        A, W, k = self.calibrator.estimateCalibrationParameters(allDetections)
+        P = self.calibrator._composeParameterVector(A, W, k)
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
 
-        ydot = calibrate.projectAllPoints(P, allModelPoints)
+        ydot = self.calibrator.projectAllPoints(P, allModelPoints)
 
         self.assertGreater(ydot.shape[0], 0)
         self.assertEqual(ydot.shape[1], 2)
@@ -255,9 +123,9 @@ class TestCalibrate(unittest.TestCase):
         Aexpected = dataSet.getIntrinsicMatrix()
         Wexpected = dataSet.getAllBoardPosesInCamera()
         kExpected = dataSet.getDistortionVector()
-        Pexpected = calibrate.composeParameterVector(Aexpected, Wexpected, kExpected)
+        Pexpected = self.calibrator._composeParameterVector(Aexpected, Wexpected, kExpected)
 
-        totalError = calibrate.computeReprojectionError(Pexpected, allDetections)
+        totalError = self.calibrator._computeReprojectionError(Pexpected, allDetections)
 
         self.assertAlmostEqual(totalError, 0)
 

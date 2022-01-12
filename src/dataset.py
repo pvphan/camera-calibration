@@ -8,6 +8,7 @@ import numpy as np
 
 from __context__ import src
 from src import checkerboard
+from src import distortion
 from src import mathutils as mu
 from src import virtualcamera
 from src import visualize
@@ -104,9 +105,19 @@ class Dataset:
             f.write(json.dumps(detectionsDict))
 
 
-def createSyntheticDataset(A, width, height, k):
+def createSyntheticDatasetRadTan(A, width, height, k):
+    distortionModel = distortion.RadialTangentialModel()
+    return createSyntheticDataset(A, width, height, k, distortionModel)
+
+
+def createSyntheticDatasetFisheye(A, width, height, k):
+    distortionModel = distortion.FisheyeModel()
+    return createSyntheticDataset(A, width, height, k, distortionModel)
+
+
+def createSyntheticDataset(A, width, height, k, distortionModel):
     checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
-    virtualCamera = virtualcamera.VirtualCamera(A, k, width, height)
+    virtualCamera = virtualcamera.VirtualCamera(A, k, distortionModel, width, height)
     numViews = 10
     dataSet = Dataset(checkerBoard, virtualCamera, numViews)
     return dataSet

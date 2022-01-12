@@ -16,11 +16,29 @@ class TestMain(unittest.TestCase):
             [0, 0, 1],
         ])
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        syntheticDataset = dataset.createSyntheticDataset(Aexpected, width, height, kExpected)
+        syntheticDataset = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, kExpected)
         Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
 
         sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections)
+        self.assertAlmostEqual(sse, 0)
+        self.assertAllClose(Aexpected, Acomputed)
+        self.assertAllClose(Wexpected, Wcomputed)
+        self.assertAllClose(kExpected, kComputed)
+
+    def test_calibrateCameraFisheye(self):
+        width, height = 640, 480
+        Aexpected = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        kExpected = (0.5, 0.2, 0.07, -0.03)
+        syntheticDataset = dataset.createSyntheticDatasetFisheye(Aexpected, width, height, kExpected)
+        Wexpected = syntheticDataset.getAllBoardPosesInCamera()
+        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+
+        sse, Acomputed, Wcomputed, kComputed = main.calibrateCameraFisheye(allDetections)
         self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
         self.assertAllClose(Wexpected, Wcomputed)

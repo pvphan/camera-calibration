@@ -8,11 +8,10 @@ Non-linear optimization is done through minimizing projection error and computin
 Generates synthetic datasets for testing and rudimentary visualization.
 Can animate of the reprojection error each iteration of the calibration.
 Dockerized for convenience of development, testing, and maybe deployment.
+Supports radial-tangential `(k1, k2, p1, p2, p3)` and fisheye `(k1, k2, k3, k4)` distortion models.
 
 
-Limitations:
-
-- Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
+Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
 
 
 Prerequisites: `make`, `docker`
@@ -39,7 +38,6 @@ This is an example of the reprojection animation of a calibration on a checkerbo
 ## Maybe later:
 
 - [ ] Button up as python package, add instructions to README
-- [ ] Support fisheye distortion model
 
 
 ## References:
