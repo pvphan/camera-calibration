@@ -259,8 +259,6 @@ def approximateRotationMatrix(Q: np.ndarray):
     return R
 
 
-
-
 def computeExtrinsics(Hs: list, A: np.ndarray):
     """
     Input:
@@ -293,5 +291,4 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
         transformWorldToCamera = mu.poseFromRT(R, t)
         worldToCameraTransforms.append(transformWorldToCamera)
     return worldToCameraTransforms
-
 

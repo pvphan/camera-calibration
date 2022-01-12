@@ -25,7 +25,7 @@ class Calibrator:
             sse -- final sum squared error
             Afinal -- intrinsic calibration matrix, (3,3)
             Wfinal -- list of world-to-camera transforms
-            kFinal -- distortion coefficient tuple of length 5
+            kFinal -- distortion coefficient tuple
         """
         Ainitial, Winitial, kInitial = self.estimateCalibrationParameters(
                 allDetections)
