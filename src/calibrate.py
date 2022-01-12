@@ -14,6 +14,26 @@ class Calibrator:
         self._distortionModel = distortionModel
         self._jac = jacobian.ProjectionJacobian(self._distortionModel)
 
+    def calibrate(self, allDetections, maxIters=50):
+        """
+        Input:
+            allDetections -- list of tuples (one for each view).
+                    Each tuple is (Xa, Xb), a set of sensor points
+                    and model points respectively
+
+        Output:
+            sse -- final sum squared error
+            Afinal -- intrinsic calibration matrix, (3,3)
+            Wfinal -- list of world-to-camera transforms
+            kFinal -- distortion coefficient tuple of length 5
+        """
+        Ainitial, Winitial, kInitial = self.estimateCalibrationParameters(
+                allDetections)
+        sse, Afinal, Wfinal, kFinal = self.refineCalibrationParameters(
+                Ainitial, Winitial, kInitial, allDetections,
+                maxIters=maxIters, shouldPrint=True)
+        return sse, Afinal, Wfinal, kFinal
+
     def estimateCalibrationParameters(self, allDetections):
         """
         Input:

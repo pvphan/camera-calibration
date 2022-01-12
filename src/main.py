@@ -9,15 +9,16 @@ from src import distortion
 
 
 def calibrateCamera(allDetections: list[tuple[np.ndarray, np.ndarray]],
-        maxIters=50) -> tuple[float, np.ndarray, list[np.ndarray], tuple]:
+        distortionType: str, maxIters=50) -> tuple[float, np.ndarray, list[np.ndarray], tuple]:
     """
-    Computes the intrinsic matrix and distortion coefficients from a
-        set of detections with the radial-tangential distortion model.
+    Computes the intrinsic matrix, distortion coefficients,
+        and board poses in camera coordinates from a set of detections.
 
     Input:
         allDetections -- list of tuples (one for each view).
                 Each tuple is (Xa, Xb), a set of sensor points
                 and model points respectively
+        distortionType -- one of ["radtan", "fisheye"]
 
     Output:
         sse -- final sum squared error
@@ -25,39 +26,13 @@ def calibrateCamera(allDetections: list[tuple[np.ndarray, np.ndarray]],
         Wfinal -- list of world-to-camera transforms
         kFinal -- distortion coefficient tuple of length 5
     """
-    distortionModel = distortion.RadialTangentialModel()
+    if distortionType == "radtan":
+        distortionModel = distortion.RadialTangentialModel()
+    elif distortionType == "fisheye":
+        distortionModel = distortion.FisheyeModel()
+    else:
+        raise ValueError(f"Distortion type: {distortionType} unknown")
     calibrator = calibrate.Calibrator(distortionModel)
-    Ainitial, Winitial, kInitial = calibrator.estimateCalibrationParameters(
-            allDetections)
-    sse, Afinal, Wfinal, kFinal = calibrator.refineCalibrationParameters(
-            Ainitial, Winitial, kInitial, allDetections,
-            maxIters=maxIters, shouldPrint=True)
-    return sse, Afinal, Wfinal, kFinal
-
-
-def calibrateCameraFisheye(allDetections: list[tuple[np.ndarray, np.ndarray]],
-        maxIters=50) -> tuple[float, np.ndarray, list[np.ndarray], tuple]:
-    """
-    Computes the intrinsic matrix and distortion coefficients from a
-        set of detections with the radial-tangential distortion model.
-
-    Input:
-        allDetections -- list of tuples (one for each view).
-                Each tuple is (Xa, Xb), a set of sensor points
-                and model points respectively
-
-    Output:
-        sse -- final sum squared error
-        Afinal -- intrinsic calibration matrix, (3,3)
-        Wfinal -- list of world-to-camera transforms
-        kFinal -- distortion coefficient tuple of length 5
-    """
-    distortionModel = distortion.FisheyeModel()
-    calibrator = calibrate.Calibrator(distortionModel)
-    Ainitial, Winitial, kInitial = calibrator.estimateCalibrationParameters(
-            allDetections)
-    sse, Afinal, Wfinal, kFinal = calibrator.refineCalibrationParameters(
-            Ainitial, Winitial, kInitial, allDetections,
-            maxIters=maxIters, shouldPrint=True)
+    sse, Afinal, Wfinal, kFinal = calibrator.calibrate(allDetections, maxIters)
     return sse, Afinal, Wfinal, kFinal
 

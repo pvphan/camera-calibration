@@ -67,7 +67,7 @@ def createAnimation(outputFilePath):
         [0, 415, 222],
         [0, 0, 1],
     ])
-    isFisheye = True
+    isFisheye = False
     if isFisheye:
         k = (0.717, -0.055, 0.054, -0.019)
         distortionModel = distortion.FisheyeModel()

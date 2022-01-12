@@ -19,8 +19,9 @@ class TestMain(unittest.TestCase):
         syntheticDataset = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, kExpected)
         Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        distortionType = "radtan"
 
-        sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections)
+        sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections, distortionType)
         self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
         self.assertAllClose(Wexpected, Wcomputed)
@@ -37,8 +38,9 @@ class TestMain(unittest.TestCase):
         syntheticDataset = dataset.createSyntheticDatasetFisheye(Aexpected, width, height, kExpected)
         Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        distortionType = "fisheye"
 
-        sse, Acomputed, Wcomputed, kComputed = main.calibrateCameraFisheye(allDetections)
+        sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections, distortionType)
         self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
         self.assertAllClose(Wexpected, Wcomputed)
