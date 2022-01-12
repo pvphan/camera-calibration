@@ -8,8 +8,7 @@ from src import calibrate
 from src import distortion
 
 
-def calibrateCamera(allDetections: list[tuple[np.ndarray, np.ndarray]],
-        distortionType: str, maxIters=50) -> tuple[float, np.ndarray, list[np.ndarray], tuple]:
+def calibrateCamera(allDetections: list, distortionType: str, maxIters=50) -> tuple:
     """
     Computes the intrinsic matrix, distortion coefficients,
         and board poses in camera coordinates from a set of detections.

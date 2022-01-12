@@ -1,3 +1,5 @@
 *.vim
 __pycache__/
 output/
+dist/
+src/*.egg-info/
