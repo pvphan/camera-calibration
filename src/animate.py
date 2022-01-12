@@ -68,7 +68,7 @@ def createAnimation(outputFolderPath):
         [0, 415, 222],
         [0, 0, 1],
     ])
-    syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
+    syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
     allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
     distortionModel = distortion.RadialTangentialModel()
     calibrator = calibrate.Calibrator(distortionModel)

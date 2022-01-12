@@ -105,9 +105,18 @@ class Dataset:
             f.write(json.dumps(detectionsDict))
 
 
-def createSyntheticDataset(A, width, height, k):
-    checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
+def createSyntheticDatasetRadTan(A, width, height, k):
     distortionModel = distortion.RadialTangentialModel()
+    return createSyntheticDataset(A, width, height, k, distortionModel)
+
+
+def createSyntheticDatasetFisheye(A, width, height, k):
+    distortionModel = distortion.FisheyeModel()
+    return createSyntheticDataset(A, width, height, k, distortionModel)
+
+
+def createSyntheticDataset(A, width, height, k, distortionModel):
+    checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
     virtualCamera = virtualcamera.VirtualCamera(A, k, distortionModel, width, height)
     numViews = 10
     dataSet = Dataset(checkerBoard, virtualCamera, numViews)

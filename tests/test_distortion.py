@@ -27,7 +27,7 @@ class TestRadialTangentialModel(unittest.TestCase):
         ])
         width, height = 640, 480
         k = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
 
     def test_createExpressionIntrinsicProjection(self):
         expr = self.distortionModel.getProjectionExpression()
@@ -93,7 +93,14 @@ class TestFisheyeModel(unittest.TestCase):
         k2 = 0.2
         k3 = 0.1
         k4 = -0.05
+        cls.A = np.array([
+            [400, 0, 320],
+            [0, 400, 240],
+            [0, 0, 1],
+        ])
+        width, height = 640, 480
         cls.k = (k1, k2, k3, k4)
+        cls.syntheticDataset = dataset.createSyntheticDatasetFisheye(cls.A, width, height, cls.k)
 
     def test_createExpressionIntrinsicProjection(self):
         expr = self.distortionModel.getProjectionExpression()
@@ -109,14 +116,9 @@ class TestFisheyeModel(unittest.TestCase):
         self.assertFalse(np.allclose(normalizedPointsNx2, distortedPoints))
 
     def test_projectWithDistortion(self):
-        A = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
-            [0, 0, 1],
-        ])
         self.k = (-0.5, 0.2, 0.1, -0.05)
         isSymbolic = False
-        projectedPoints = self.distortionModel.projectWithDistortion(A, self.pointsInWorld, self.k,
+        projectedPoints = self.distortionModel.projectWithDistortion(self.A, self.pointsInWorld, self.k,
                 isSymbolic=isSymbolic)
 
         self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))

@@ -16,7 +16,7 @@ class TestMain(unittest.TestCase):
             [0, 0, 1],
         ])
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        syntheticDataset = dataset.createSyntheticDataset(Aexpected, width, height, kExpected)
+        syntheticDataset = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, kExpected)
         Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
 

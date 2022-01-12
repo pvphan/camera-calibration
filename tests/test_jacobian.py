@@ -30,7 +30,7 @@ class TestProjectionJacobian(unittest.TestCase):
             [0, 0,  1],
         ])
         k = (k1, k2, p1, p2, k3)
-        cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
         W = cls.syntheticDataset.getAllBoardPosesInCamera()
         distortionModel = distortion.RadialTangentialModel()
         calibrator = calibrate.Calibrator(distortionModel)

@@ -59,9 +59,6 @@ class DistortionModel:
     def getIntrinsicSymbols(self):
         return tuple(sympy.symbols("α β γ uc vc"))
 
-    def getIntrinsicAndDistortionSymbols(self):
-        return self.getIntrinsicSymbols() + self.getDistortionSymbols()
-
     def getDistortionSymbols(self):
         raise NotImplementedError()
 
@@ -200,25 +197,26 @@ class FisheyeModel(DistortionModel):
 
         Outputs:
             xd -- distorted normalized points (N,2)
+
+        Reference: https://euratom-software.github.io/calcam/html/intro_theory.html#fisheye-lens-distirtion-model
         """
-        raise NotImplementedError()
         k1, k2, k3, k4 = k
 
         if isSymbolic:
             xn = x[0,0]
             yn = x[0,1]
             r = sympy.sqrt(xn**2 + yn**2)
+            θ = sympy.atan(r)
         else:
             xn = x[:,0]
             yn = x[:,1]
             r = np.linalg.norm(x, axis=1)
+            θ = np.arctan(r)
 
-        radialComponent = (1 + k1 * r**2 + k2 * r**4 + k3 * r**6)
-        tangentialComponentX = (2 * p1 * xn * yn + p2 * (r**2 + 2 * xn**2))
-        tangentialComponentY = (p1 * (r**2 + 2 * yn**2) + 2 * p2 * xn * yn)
+        radialComponent = (θ / r) * (1 + k1 * θ**2 + k2 * θ**4 + k3 * θ**6 + k4 * θ**8)
 
-        xd = radialComponent * xn + tangentialComponentX
-        yd = radialComponent * yn + tangentialComponentY
+        xd = radialComponent * xn
+        yd = radialComponent * yn
 
         return np.hstack((mu.col(xd), mu.col(yd)))
 
@@ -232,7 +230,7 @@ class FisheyeModel(DistortionModel):
                     to each view
 
         Output:
-            k -- the distortion model, made up of (k1, k2, p1, p2, k3)
+            k -- the distortion model, made up of (k1, k2, k3, k4)
 
         Notes:
             We have M views, each with N points

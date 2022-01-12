@@ -18,7 +18,8 @@ class ProjectionJacobian:
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
         self._uvExpr = distortionModel.getProjectionExpression()
-        self._intrinsicAndDistortionSymbols = distortionModel.getIntrinsicAndDistortionSymbols()
+        self._intrinsicAndDistortionSymbols = (distortionModel.getIntrinsicSymbols()
+                + distortionModel.getDistortionSymbols())
         self._extrinsicSymbols = symbolic.getExtrinsicSymbols()
         self._orderedSymbols = (self._intrinsicAndDistortionSymbols +
                 self._extrinsicSymbols + symbolic.getModelPointSymbols())
