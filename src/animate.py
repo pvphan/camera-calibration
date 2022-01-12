@@ -23,11 +23,12 @@ class CalibrationAnimation:
         self._width = width
         self._height = height
 
-    def writeGif(self, outputFolderPath):
+    def writeGif(self, outputFilePath):
         """
         Creates a gif of the projected model points and sensor points
             as the estimated values of the intrinsics and extrinsics are updated.
         """
+        outputFolderPath = os.path.dirname(outputFilePath)
         os.makedirs(outputFolderPath, exist_ok=True)
         A, W, k = self._calibrator.estimateCalibrationParameters(
                 self._allDetections)
@@ -47,8 +48,7 @@ class CalibrationAnimation:
             if sse < self._epsilon:
                 break
 
-        outputPath = os.path.join(outputFolderPath, f"reprojection.gif")
-        imageio.mimsave(outputPath, allImages, fps=self._gifFps)
+        imageio.mimsave(outputFilePath, allImages, fps=self._gifFps)
 
 
 def createProjectionErrorImage(ydot, y, width, height):
@@ -60,31 +60,31 @@ def createProjectionErrorImage(ydot, y, width, height):
     return image
 
 
-def createAnimation(outputFolderPath):
+def createAnimation(outputFilePath):
     width, height = 640, 480
     A = np.array([
         [415, 0, 326],
         [0, 415, 222],
         [0, 0, 1],
     ])
-    isFisheye = False
+    isFisheye = True
     if isFisheye:
-        k = (-0.5, 0.2, 0.07, -0.03)
-        syntheticDataset = dataset.createSyntheticDatasetFisheye(A, width, height, k)
+        k = (0.717, -0.055, 0.054, -0.019)
+        distortionModel = distortion.FisheyeModel()
     else:
         k = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
+        distortionModel = distortion.RadialTangentialModel()
+    syntheticDataset = dataset.createSyntheticDataset(A, width, height, k, distortionModel)
     allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
-    distortionModel = distortion.RadialTangentialModel()
     calibrator = calibrate.Calibrator(distortionModel)
 
     ani = CalibrationAnimation(calibrator, allDetections, width, height)
-    ani.writeGif(outputFolderPath)
+    ani.writeGif(outputFilePath)
 
 
 def main():
-    outputFolderPath = "/tmp/output/animation"
-    createAnimation(outputFolderPath)
+    outputFilePath = "/tmp/output/animation/projection.gif"
+    createAnimation(outputFilePath)
 
 
 if __name__ == "__main__":

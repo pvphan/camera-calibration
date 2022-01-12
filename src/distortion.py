@@ -164,13 +164,13 @@ class RadialTangentialModel(DistortionModel):
                         (u - uc) * rij**2,
                         (u - uc) * rij**4,
                         fx * (2 * xn * yn),
-                        fy * (rij**2 + 2 * xn**2),
+                        fx * (rij**2 + 2 * xn**2),
                         (u - uc) * rij**6,
                     ],
                     [
                         (v - vc) * rij**2,
                         (v - vc) * rij**4,
-                        fx * (rij**2 + 2 * yn**2),
+                        fy * (rij**2 + 2 * yn**2),
                         fy * (2 * xn * yn),
                         (v - vc) * rij**6,
                     ],
@@ -239,16 +239,16 @@ class FisheyeModel(DistortionModel):
                 θij = np.arctan(rij)
                 Dij = np.array([
                     [
-                        (u - uc) * (θij/rij) * θij**2,
-                        (u - uc) * (θij/rij) * θij**4,
-                        (u - uc) * (θij/rij) * θij**6,
-                        (u - uc) * (θij/rij) * θij**8,
+                        fx * (u - uc) * (θij/rij) * θij**2,
+                        fx * (u - uc) * (θij/rij) * θij**4,
+                        fx * (u - uc) * (θij/rij) * θij**6,
+                        fx * (u - uc) * (θij/rij) * θij**8,
                     ],
                     [
-                        (v - vc) * (θij/rij) * θij**2,
-                        (v - vc) * (θij/rij) * θij**4,
-                        (v - vc) * (θij/rij) * θij**6,
-                        (v - vc) * (θij/rij) * θij**8,
+                        fy * (v - vc) * (θij/rij) * θij**2,
+                        fy * (v - vc) * (θij/rij) * θij**4,
+                        fy * (v - vc) * (θij/rij) * θij**6,
+                        fy * (v - vc) * (θij/rij) * θij**8,
                     ],
                 ])
                 D = np.vstack((D, Dij))
