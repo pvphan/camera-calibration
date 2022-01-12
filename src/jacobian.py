@@ -14,34 +14,33 @@ class ProjectionJacobian:
     parameter vector P (intrinsics, distortion, extrinsics).
     """
     _numExtrinsicParamsPerView = 6
-    _epsilon = 1e-100
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
-        self._uvExpr = distortionModel.getProjectionExpression()
+        uvExpr = distortionModel.getProjectionExpression()
         self._intrinsicAndDistortionSymbols = (distortionModel.getIntrinsicSymbols()
                 + distortionModel.getDistortionSymbols())
-        self._extrinsicSymbols = symbolic.getExtrinsicSymbols()
+        extrinsicSymbols = symbolic.getExtrinsicSymbols()
         orderedSymbols = (self._intrinsicAndDistortionSymbols +
-                self._extrinsicSymbols + symbolic.getModelPointSymbols())
+                extrinsicSymbols + symbolic.getModelPointSymbols())
 
         intrinsicJacobianBlockExpr = createJacobianBlockExpression(
-                self._uvExpr, self._intrinsicAndDistortionSymbols)
+                uvExpr, self._intrinsicAndDistortionSymbols)
         self._intrinsicJacobianBlockFunction = createLambdaFunction(
                 intrinsicJacobianBlockExpr, orderedSymbols)
 
         extrinsicJacobianBlockExpr = createJacobianBlockExpression(
-                self._uvExpr, self._extrinsicSymbols)
+                uvExpr, extrinsicSymbols)
         self._extrinsicJacobianBlockFunctions = createLambdaFunction(
                 extrinsicJacobianBlockExpr, orderedSymbols)
 
     def _createIntrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
         intrinsicBlock = computeJacobianBlock(self._intrinsicJacobianBlockFunction,
-                intrinsicValues, extrinsicValues, modelPoints, self._epsilon)
+                intrinsicValues, extrinsicValues, modelPoints)
         return intrinsicBlock
 
     def _createExtrinsicsJacobianBlock(self, intrinsicValues, extrinsicValues, modelPoints):
         extrinsicBlock = computeJacobianBlock(self._extrinsicJacobianBlockFunctions,
-                intrinsicValues, extrinsicValues, modelPoints, self._epsilon)
+                intrinsicValues, extrinsicValues, modelPoints)
         return extrinsicBlock
 
     def compute(self, P, allModelPoints):
@@ -107,7 +106,7 @@ def createJacobianBlockExpression(uvExpression, derivativeSymbols):
     return jacobianBlockExpr
 
 
-def computeJacobianBlock(functionBlock, intrinsicValues, extrinsicValues, modelPoints, epsilon):
+def computeJacobianBlock(functionBlock, intrinsicValues, extrinsicValues, modelPoints):
     """
     Evaluates the values of J (general purpose)
 
@@ -121,6 +120,7 @@ def computeJacobianBlock(functionBlock, intrinsicValues, extrinsicValues, modelP
     Output:
         blockValues -- (2*N, T) matrix block of the Jacobian J
     """
+    epsilon = 1e-100
     P = list(intrinsicValues) + list(extrinsicValues)
     P = [p + epsilon for p in P]
     X = mu.col(modelPoints[:,0]) + epsilon
