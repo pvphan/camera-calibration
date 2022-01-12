@@ -38,7 +38,7 @@ class CalibrationAnimation:
         for i in range(self._maxIters):
             sse, A, W, k = self._calibrator.refineCalibrationParameters(A, W, k, allDetections,
                     maxIters=1, shouldPrint=True)
-            P = calibrate.composeParameterVector(A, W, k)
+            P = self._calibrator._composeParameterVector(A, W, k)
             y = self._calibrator.projectAllPoints(P, allModelPoints)
 
             imageForIteration = createProjectionErrorImage(ydot, y, self._width, self._height)
@@ -62,13 +62,18 @@ def createProjectionErrorImage(ydot, y, width, height):
 
 def createAnimation(outputFolderPath):
     width, height = 640, 480
-    k = (-0.5, 0.2, 0.07, -0.03, 0.05)
     A = np.array([
         [415, 0, 326],
         [0, 415, 222],
         [0, 0, 1],
     ])
-    syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
+    isFisheye = False
+    if isFisheye:
+        k = (-0.5, 0.2, 0.07, -0.03)
+        syntheticDataset = dataset.createSyntheticDatasetFisheye(A, width, height, k)
+    else:
+        k = (-0.5, 0.2, 0.07, -0.03, 0.05)
+        syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
     allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
     distortionModel = distortion.RadialTangentialModel()
     calibrator = calibrate.Calibrator(distortionModel)

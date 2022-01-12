@@ -139,7 +139,8 @@ class RadialTangentialModel(DistortionModel):
         fy = A[1,1]
         uc = A[0,2]
         vc = A[1,2]
-        D = np.empty((0,5))
+        numDistortionParameters = len(self.getDistortionSymbols())
+        D = np.empty((0,numDistortionParameters))
         Ddot = np.empty((0,1))
 
         for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
@@ -190,16 +191,6 @@ class FisheyeModel(DistortionModel):
         return tuple(sympy.symbols("k1 k2 k3 k4"))
 
     def distortPoints(self, x: np.ndarray, k: tuple, isSymbolic=False):
-        """
-        Inputs:
-            x -- normalized points (undistorted), (N,2)
-            k -- distortion coefficients, (5,)
-
-        Outputs:
-            xd -- distorted normalized points (N,2)
-
-        Reference: https://euratom-software.github.io/calcam/html/intro_theory.html#fisheye-lens-distirtion-model
-        """
         k1, k2, k3, k4 = k
 
         if isSymbolic:
@@ -221,44 +212,12 @@ class FisheyeModel(DistortionModel):
         return np.hstack((mu.col(xd), mu.col(yd)))
 
     def estimateDistortion(self, A: np.ndarray, allDetections: list, allBoardPosesInCamera: list):
-        """
-        Input:
-            A -- estimated intrinsic matrix
-            allDetections -- a list of tuples, where the tuples are the measurements
-                    (measuredPointsInSensor, measuredPointsInBoard)
-            allBoardPosesInCamera -- a list of all board poses in camera, corresponding
-                    to each view
-
-        Output:
-            k -- the distortion model, made up of (k1, k2, k3, k4)
-
-        Notes:
-            We have M views, each with N points
-            Formulate the problem as the linear system:
-
-                D * k = Ddot
-
-            where D is (2MN, 5) and and Ddot is (2MN, 1)
-
-            for each 2 rows in D:
-                [(uij - uc) * rij**2, (uij - uc) * rij**4]
-                [(uij - vc) * rij**2, (uij - vc) * rij**4]
-
-            for each 2 rows in Ddot:
-                (udotij - uij)
-                (vdotij - uij)
-
-            We'll solve this linear system by taking the pseudo-inverse of D and
-            left-multiplying it with Ddot.
-
-            Solution: k = pinv(D) * Ddot
-        """
-        raise NotImplementedError()
         fx = A[0,0]
         fy = A[1,1]
         uc = A[0,2]
         vc = A[1,2]
-        D = np.empty((0,5))
+        numDistortionParameters = len(self.getDistortionSymbols())
+        D = np.empty((0,numDistortionParameters))
         Ddot = np.empty((0,1))
 
         for i, ((Udot, bX), cMb) in enumerate(zip(allDetections, allBoardPosesInCamera)):
@@ -277,20 +236,19 @@ class FisheyeModel(DistortionModel):
                 u, v = mu.project(A, np.eye(4), cXij)
 
                 xn, yn = xij.ravel()
+                θij = np.arctan(rij)
                 Dij = np.array([
                     [
-                        (u - uc) * rij**2,
-                        (u - uc) * rij**4,
-                        fx * (2 * xn * yn),
-                        fy * (rij**2 + 2 * xn**2),
-                        (u - uc) * rij**6,
+                        (u - uc) * (θij/rij) * θij**2,
+                        (u - uc) * (θij/rij) * θij**4,
+                        (u - uc) * (θij/rij) * θij**6,
+                        (u - uc) * (θij/rij) * θij**8,
                     ],
                     [
-                        (v - vc) * rij**2,
-                        (v - vc) * rij**4,
-                        fx * (rij**2 + 2 * yn**2),
-                        fy * (2 * xn * yn),
-                        (v - vc) * rij**6,
+                        (v - vc) * (θij/rij) * θij**2,
+                        (v - vc) * (θij/rij) * θij**4,
+                        (v - vc) * (θij/rij) * θij**6,
+                        (v - vc) * (θij/rij) * θij**8,
                     ],
                 ])
                 D = np.vstack((D, Dij))
