@@ -6,6 +6,7 @@ import sympy
 from __context__ import src
 from src import calibrate
 from src import dataset
+from src import distortion
 from src import jacobian
 from src import mathutils as mu
 
@@ -31,7 +32,9 @@ class TestProjectionJacobian(unittest.TestCase):
         k = (k1, k2, p1, p2, k3)
         cls.syntheticDataset = dataset.createSyntheticDataset(A, width, height, k)
         W = cls.syntheticDataset.getAllBoardPosesInCamera()
-        cls.P = calibrate.composeParameterVector(A, W, k)
+        distortionModel = distortion.RadialTangentialModel()
+        calibrator = calibrate.Calibrator(distortionModel)
+        cls.P = calibrator._composeParameterVector(A, W, k)
 
     def test_init(self):
         self.assertEqual(self.jac._intrinsicJacobianBlockExpr.shape, (2, 10))

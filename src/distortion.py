@@ -8,6 +8,9 @@ from src import symbolic
 
 
 class DistortionModel:
+    def getDistortionSymbols(self):
+        raise NotImplementedError()
+
     def getProjectionExpression(self):
         raise NotImplementedError()
 
@@ -28,7 +31,6 @@ class DistortionModel:
 
 
 class RadialTangentialModel(DistortionModel):
-
     def getDistortionSymbols(self):
         return tuple(sympy.symbols("k1 k2 p1 p2 k3"))
 

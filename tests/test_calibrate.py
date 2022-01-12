@@ -64,8 +64,8 @@ class TestCalibrate(unittest.TestCase):
         W = self.Wexpected
         k = self.kExpected
 
-        P = calibrate.composeParameterVector(A, W, k)
-        Acomputed, Wcomputed, kComputed = calibrate.decomposeParameterVector(P)
+        P = self.calibrator._composeParameterVector(A, W, k)
+        Acomputed, Wcomputed, kComputed = self.calibrator._decomposeParameterVector(P)
 
         self.assertEqual(P.shape, (len(W) * self.numExtrinsicParamsPerView
                 + self.numIntrinsicParams, 1))
@@ -100,7 +100,7 @@ class TestCalibrate(unittest.TestCase):
         dataSet = self.syntheticDataset
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         A, W, k = self.calibrator.estimateCalibrationParameters(allDetections)
-        P = calibrate.composeParameterVector(A, W, k)
+        P = self.calibrator._composeParameterVector(A, W, k)
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
 
         ydot = self.calibrator.projectAllPoints(P, allModelPoints)
@@ -123,7 +123,7 @@ class TestCalibrate(unittest.TestCase):
         Aexpected = dataSet.getIntrinsicMatrix()
         Wexpected = dataSet.getAllBoardPosesInCamera()
         kExpected = dataSet.getDistortionVector()
-        Pexpected = calibrate.composeParameterVector(Aexpected, Wexpected, kExpected)
+        Pexpected = self.calibrator._composeParameterVector(Aexpected, Wexpected, kExpected)
 
         totalError = self.calibrator._computeReprojectionError(Pexpected, allDetections)
 
