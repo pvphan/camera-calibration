@@ -7,9 +7,6 @@ from src import mathutils as mu
 
 
 class VirtualCamera:
-    """
-    An ideal camera with radial-tangential distortion.
-    """
     def __init__(self, intrinsicMatrix: np.ndarray, distortionVector: tuple,
             distortionModel: distortion.DistortionModel, imageWidth: int, imageHeight: int):
         self._intrinsicMatrix = intrinsicMatrix

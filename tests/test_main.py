@@ -11,8 +11,8 @@ class TestMain(unittest.TestCase):
     def test_calibrateCamera(self):
         width, height = 640, 480
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [395.1, 0, 320.5],
+            [0, 405.8, 249.2],
             [0, 0, 1],
         ])
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
@@ -22,6 +22,7 @@ class TestMain(unittest.TestCase):
         distortionType = "radtan"
 
         sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections, distortionType)
+
         self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
         self.assertAllClose(Wexpected, Wcomputed)
@@ -30,8 +31,8 @@ class TestMain(unittest.TestCase):
     def test_calibrateCameraFisheye(self):
         width, height = 640, 480
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [395.1, 0, 310.5],
+            [0, 405.8, 249.2],
             [0, 0, 1],
         ])
         kExpected = (0.5, 0.2, 0.07, -0.03)
@@ -41,6 +42,7 @@ class TestMain(unittest.TestCase):
         distortionType = "fisheye"
 
         sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(allDetections, distortionType)
+
         self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
         self.assertAllClose(Wexpected, Wcomputed)
