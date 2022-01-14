@@ -81,11 +81,10 @@ class TestHomographyJacobian(unittest.TestCase):
         h = H1.ravel()
         modelPoints = np.arange(15).reshape(-1, 3)
         N = modelPoints.shape[0]
-        numModelParams = 2
 
         J = homographyJac.compute(h, modelPoints)
 
-        self.assertEqual(J.shape, (N * 2, h.shape[0] + numModelParams))
+        self.assertEqual(J.shape, (N * 2, h.shape[0]))
 
 
 class TestEvaluation(unittest.TestCase):

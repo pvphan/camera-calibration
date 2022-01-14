@@ -47,55 +47,70 @@ class Calibrator:
             kInitial -- initial estimate of distortion coefficients
         """
         Hs = linearcalibrate.estimateHomographies(allDetections)
-        Hsref = self._refineHomographies(Hs)
+        Hsref = self._refineHomographies(Hs, allDetections)
         Ainitial = linearcalibrate.computeIntrinsicMatrix(Hsref)
         Winitial = linearcalibrate.computeExtrinsics(Hsref, Ainitial)
         kInitial = self._distortionModel.estimateDistortion(Ainitial, allDetections, Winitial)
         return Ainitial, Winitial, kInitial
 
     def _refineHomographies(self, Hs, allDetections):
-        return [self._refineHomography(H, allDetections) for H in Hs]
-
-    def _refineHomography(self, H, allDetections):
         homographyJac = jacobian.HomographyJacobian()
-        allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
-        ydot = getSensorPoints(allDetections)
+        Hsref = []
+        for H, detections in zip(Hs, allDetections):
+            sensorPoints, modelPoints = detections
+            Href = self._refineHomography(H, sensorPoints, modelPoints, homographyJac)
+            Hsref.append(Href)
+        return Hsref
+
+    def _refineHomography(self, H, sensorPoints, modelPoints, jac):
+        """
+        Use Levenberg-Marquardt nonlinear optimization to refine the homography
+        """
+        ydot = sensorPoints
 
         ts = time.time()
         λ = 1e-3
-        h = H.ravel()
+        maxIters = 20
+        shouldPrint = True
+        Pt = H.ravel()
         for iter in range(maxIters):
-            J = homographyJac.compute(h, allModelPoints)
+            J = jac.compute(Pt, modelPoints)
 
             JTJ = J.T @ J
             diagJTJ = np.diag(np.diagonal(JTJ))
-            y = self.projectAllPoints(h, allModelPoints)
+            Ht = Pt.reshape(3,3)
+            y = self._projectPointsHomography(Ht, modelPoints)
 
             # compute residuum
             r = ydot.reshape(-1, 1) - y.reshape(-1, 1)
-            Δ = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ r
+            Δ = (np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ r).ravel()
 
-            # evaluate if h + Δ reduces the error or not
-            Pt_error = self._computeReprojectionError(h, allDetections)
-            Pt1_error = self._computeReprojectionError(h + Δ, allDetections)
+            # evaluate if Pt + Δ reduces the error or not
+            Pt_error = self._computeTotalError(ydot, y)
+
+            Pt1 = Pt + Δ
+            Ht1 = Pt1.reshape(3,3)
+            yt1 = self._projectPointsHomography(Ht1, modelPoints)
+            Pt1_error = self._computeTotalError(ydot, yt1)
 
             if Pt1_error < Pt_error:
-                h += Δ
+                Pt += Δ
                 λ /= 10
             else:
                 λ *= 10
 
-            if shouldPrint:
-                self._printIterationStats(iter, ts, h, min(Pt1_error, Pt_error))
-
             if λ < 1e-150 or Pt_error < 1e-12:
                 break
 
-        Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
-        return Pt_error, Arefined, Wrefined, kRefined
+        Href = Pt.reshape(3,3)
+        return Href
+
+    def _projectPointsHomography(self, H, modelPoints):
+        y = mu.unhom((H @ mu.hom(modelPoints[:,:2]).T).T)
+        return y
 
     def refineCalibrationParameters(self, Ainitial, Winitial, kInitial, allDetections,
-            maxIters=50, shouldPrint=False):
+            maxIters=100, shouldPrint=False):
         """
         Input:
             Ainitial -- initial estimate of intrinsic matrix

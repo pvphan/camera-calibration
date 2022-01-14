@@ -95,7 +95,7 @@ class HomographyJacobian:
         uvExpr = (uvExpr / uvExpr[2,:])[:2,:]
         uExprs, vExprs = uvExpr.ravel()
         orderedSymbols = list(h) + [X, Y]
-        jacobianBlockExpr = createJacobianBlockExpression(uvExpr, orderedSymbols)
+        jacobianBlockExpr = createJacobianBlockExpression(uvExpr, h)
         self._jacobianBlockFunctions = createLambdaFunction(
                 jacobianBlockExpr, orderedSymbols)
 

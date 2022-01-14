@@ -8,6 +8,7 @@ from __context__ import src
 from src import calibrate
 from src import dataset
 from src import distortion
+from src import linearcalibrate
 from src import mathutils as mu
 
 
