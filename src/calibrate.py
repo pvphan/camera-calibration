@@ -103,6 +103,7 @@ class Calibrator:
                 break
 
         Href = Pt.reshape(3,3)
+        Href /= Href[2,2]
         return Href
 
     def _projectPointsHomography(self, H, modelPoints):
