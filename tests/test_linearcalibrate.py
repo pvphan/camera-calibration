@@ -112,14 +112,22 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeExtrinsics(self):
         A = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [420, 0, 327],
+            [0, 415, 243],
             [0, 0, 1],
         ])
+        width, height = 640, 480
+        k = (0, 0, 0, 0, 0)
+        dataSet = dataset.createSyntheticDatasetRadTan(
+                A, width, height, k)
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        Wexpected = dataSet.getAllBoardPosesInCamera()
+        Hs = linearcalibrate.estimateHomographies(allDetections)
 
-        worldToCameraTransforms = linearcalibrate.computeExtrinsics(self.Hs, A)
+        Wcomputed = linearcalibrate.computeExtrinsics(Hs, A)
 
-        self.assertEqual(len(self.Hs), len(worldToCameraTransforms))
+        self.assertEqual(len(Hs), len(allDetections))
+        self.assertAllClose(Wexpected, Wcomputed)
 
     def test_computeIntrinsicMatrixFrombClosedForm(self):
         Aexpected = np.array([

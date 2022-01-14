@@ -33,7 +33,7 @@ def readCacheFile(detectionsCachePath):
 
 
 def main():
-    detectionsCachePaths = sorted(glob("/tmp/output/detectioncache/*_left.npy"))
+    detectionsCachePaths = sorted(glob("/tmp/output/detectioncache1/*_left.npy"))
     allDetections = []
     for detectionsCachePath in detectionsCachePaths:
         detections = readCacheFile(detectionsCachePath)
