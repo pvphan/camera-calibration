@@ -73,6 +73,18 @@ class TestProjectionJacobian(unittest.TestCase):
         self.assertGreater(np.sum(np.abs(Q)), 0)
 
 
+class TestHomographyJacobian(unittest.TestCase):
+    def test_compute(self):
+        homographyJac = jacobian.HomographyJacobian()
+        H1 = np.eye(3)
+        h = H1.ravel()
+        modelPoints = np.arange(15).reshape(-1, 3)
+
+        J = homographyJac.compute(h, modelPoints)
+
+        self.assertEqual(J.shape, (modelPoints.shape[0] * 2, h.shape[0] + 2))
+
+
 class TestEvaluation(unittest.TestCase):
     def test_evaluateBlock(self):
         a, b, c, d, e, f, g, h = sympy.symbols("a b c d e f g h")

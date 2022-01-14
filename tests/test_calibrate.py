@@ -129,6 +129,14 @@ class TestCalibrate(unittest.TestCase):
 
         self.assertAlmostEqual(totalError, 0)
 
+    def test__refineHomographies(self):
+        allDetections = self.syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        Hs = linearcalibrate.estimateHomographies(allDetections)
+
+        Hsref = self.calibrator._refineHomographies(Hs, allDetections)
+
+        self.assertEqual(len(Hs), len(Hsref))
+
     def assertAllClose(self, A, B, atol=1e-9):
         self.assertTrue(np.allclose(A, B, atol=atol),
                 f"\n{A} \n != \n {B}")

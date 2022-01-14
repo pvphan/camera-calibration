@@ -14,11 +14,6 @@ class Calibrator:
         self._distortionModel = distortionModel
         self._jac = None
 
-    def _initializeJacobian(self):
-        # this takes ~7 sec, so only do this once and only when required
-        if self._jac is None:
-            self._jac = jacobian.ProjectionJacobian(self._distortionModel)
-
     def calibrate(self, allDetections, maxIters=50):
         """
         Input:
@@ -52,10 +47,52 @@ class Calibrator:
             kInitial -- initial estimate of distortion coefficients
         """
         Hs = linearcalibrate.estimateHomographies(allDetections)
-        Ainitial = linearcalibrate.computeIntrinsicMatrix(Hs)
-        Winitial = linearcalibrate.computeExtrinsics(Hs, Ainitial)
+        Hsref = self._refineHomographies(Hs)
+        Ainitial = linearcalibrate.computeIntrinsicMatrix(Hsref)
+        Winitial = linearcalibrate.computeExtrinsics(Hsref, Ainitial)
         kInitial = self._distortionModel.estimateDistortion(Ainitial, allDetections, Winitial)
         return Ainitial, Winitial, kInitial
+
+    def _refineHomographies(self, Hs, allDetections):
+        return [self._refineHomography(H, allDetections) for H in Hs]
+
+    def _refineHomography(self, H, allDetections):
+        homographyJac = jacobian.HomographyJacobian()
+        allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
+        ydot = getSensorPoints(allDetections)
+
+        ts = time.time()
+        λ = 1e-3
+        h = H.ravel()
+        for iter in range(maxIters):
+            J = homographyJac.compute(h, allModelPoints)
+
+            JTJ = J.T @ J
+            diagJTJ = np.diag(np.diagonal(JTJ))
+            y = self.projectAllPoints(h, allModelPoints)
+
+            # compute residuum
+            r = ydot.reshape(-1, 1) - y.reshape(-1, 1)
+            Δ = np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ r
+
+            # evaluate if h + Δ reduces the error or not
+            Pt_error = self._computeReprojectionError(h, allDetections)
+            Pt1_error = self._computeReprojectionError(h + Δ, allDetections)
+
+            if Pt1_error < Pt_error:
+                h += Δ
+                λ /= 10
+            else:
+                λ *= 10
+
+            if shouldPrint:
+                self._printIterationStats(iter, ts, h, min(Pt1_error, Pt_error))
+
+            if λ < 1e-150 or Pt_error < 1e-12:
+                break
+
+        Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
+        return Pt_error, Arefined, Wrefined, kRefined
 
     def refineCalibrationParameters(self, Ainitial, Winitial, kInitial, allDetections,
             maxIters=50, shouldPrint=False):
@@ -113,10 +150,19 @@ class Calibrator:
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
         return Pt_error, Arefined, Wrefined, kRefined
 
+    def _initializeJacobian(self):
+        # this takes ~7 sec, so only do this once and only when required
+        if self._jac is None:
+            self._jac = jacobian.ProjectionJacobian(self._distortionModel)
+
     def _computeReprojectionError(self, P, allDetections):
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
         y = self.projectAllPoints(P, allModelPoints)
         ydot = getSensorPoints(allDetections)
+        totalError = self._computeTotalError(ydot, y)
+        return totalError
+
+    def _computeTotalError(self, ydot, y):
         totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
         return totalError
 
