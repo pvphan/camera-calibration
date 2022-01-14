@@ -118,9 +118,7 @@ def computeIntrinsicMatrix(Hs: list):
     U, S, V_T = np.linalg.svd(V)
     b = V_T[-1]
 
-    # could use the 'closed form' solution here instead (also implemented),
-    #   but using Cholesky decomposition was more interesting
-    A = computeIntrinsicMatrixFrombCholesky(b)
+    A = computeIntrinsicMatrixFrombClosedForm(b)
     return A
 
 
@@ -154,7 +152,7 @@ def vecHomography(H: np.ndarray, p: int, q: int):
     return v
 
 
-def computeIntrinsicMatrixFrombClosedForm(b):
+def computeIntrinsicMatrixFrombClosedForm_old(b):
     """
     Computes the intrinsic matrix from the vector b using the closed
     form solution given in Burger, equations 99 - 104.
@@ -173,7 +171,7 @@ def computeIntrinsicMatrixFrombClosedForm(b):
 
     α = np.sqrt(w / (d * B0))          # eq 99
     β = np.sqrt(w / d**2 * B0)         # eq 100
-    γ = np.sqrt(w / (d**2 * B0) * B1)  # eq 101
+    γ = np.sqrt(w / (d**2 * B0)) * B1  # eq 101
     uc = (B1*B4 - B2*B3) / d           # eq 102
     vc = (B1*B3 - B0*B4) / d           # eq 103
 
@@ -183,6 +181,50 @@ def computeIntrinsicMatrixFrombClosedForm(b):
         [0, 0,  1],
     ])
     return A
+
+
+def computeIntrinsicMatrixFrombClosedForm(b):
+    """
+    Computes the intrinsic matrix from the vector b using the closed
+    form solution given in Burger, equations 99 - 104.
+
+    Input:
+        b -- vector made up of (B0, B1, B2, B3, B4, B5)^T
+
+    Output:
+        A -- intrinsic matrix
+    """
+    B = matrixBfromVector(b)
+    B11 = B[0,0]
+    B12 = B[1,0]
+    B13 = B[2,0]
+    B22 = B[1,1]
+    B23 = B[1,2]
+    B33 = B[2,2]
+
+    v0 = (B12 * B13 - B11 * B23) / (B11 * B22 - B12**2)
+    λ = B33 - (B13**2 + v0 * (B12 * B13 - B11 * B23)) / B11
+    α = np.sqrt(λ / B11)
+    β = np.sqrt((λ * B11) / (B11 * B22 - B12**2))
+    γ = -B12 * α**2 * β / λ
+    u0 = γ * v0 / β - B13 * α**2 / λ
+
+    A = np.array([
+        [α, γ, u0],
+        [0, β, v0],
+        [0, 0,  1],
+    ])
+    return A
+
+
+def matrixBfromVector(b):
+    B0, B1, B2, B3, B4, B5 = b
+    B = np.array([
+        [B0, B1, B3],
+        [B1, B2, B4],
+        [B3, B4, B5],
+    ])
+    return B
 
 
 def computeIntrinsicMatrixFrombCholesky(b):
@@ -225,40 +267,6 @@ def computeIntrinsicMatrixFrombCholesky(b):
     return A
 
 
-def approximateRotationMatrix(Q: np.ndarray):
-    """
-    Input:
-        Q -- a 3x3 matrix which is close to a rotation matrix
-
-    Output:
-        R -- a 3x3 rotation matrix which is in SO(3)
-
-    Method from Zhang paper, Appendix C
-
-    Notes:
-        minimize R in frobenius_norm(R - Q) subject to R^T * R = I
-
-        frobenius_norm(R - Q) = trace((R - Q)^T * (R - Q))
-                              = 3 + trace(Q^T * Q) - 2*trace(R^T * Q)
-
-        so equivalently, maximize trace(R^T * Q)
-
-        let
-            U, S, V^T = svd(Q)
-
-        we define
-            Z = V^T * R^T * U
-        ==>
-            trace(R^T * Q)
-            trace(R^T * U * S * V^T)
-            trace(V^T * R^T * U * S)
-            trace(Z * S)
-    """
-    U, S, V_T = np.linalg.svd(Q)
-    R = U @ V_T
-    return R
-
-
 def computeExtrinsics(Hs: list, A: np.ndarray):
     """
     Input:
@@ -291,4 +299,38 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
         transformWorldToCamera = mu.poseFromRT(R, t)
         worldToCameraTransforms.append(transformWorldToCamera)
     return worldToCameraTransforms
+
+
+def approximateRotationMatrix(Q: np.ndarray):
+    """
+    Input:
+        Q -- a 3x3 matrix which is close to a rotation matrix
+
+    Output:
+        R -- a 3x3 rotation matrix which is in SO(3)
+
+    Method from Zhang paper, Appendix C
+
+    Notes:
+        minimize R in frobenius_norm(R - Q) subject to R^T * R = I
+
+        frobenius_norm(R - Q) = trace((R - Q)^T * (R - Q))
+                              = 3 + trace(Q^T * Q) - 2*trace(R^T * Q)
+
+        so equivalently, maximize trace(R^T * Q)
+
+        let
+            U, S, V^T = svd(Q)
+
+        we define
+            Z = V^T * R^T * U
+        ==>
+            trace(R^T * Q)
+            trace(R^T * U * S * V^T)
+            trace(V^T * R^T * U * S)
+            trace(Z * S)
+    """
+    U, S, V_T = np.linalg.svd(Q)
+    R = U @ V_T
+    return R
 

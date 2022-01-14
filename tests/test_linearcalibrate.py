@@ -123,8 +123,8 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeIntrinsicMatrixFrombClosedForm(self):
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
             [0, 0, 1],
         ])
         b = createbVectorFromIntrinsicMatrix(Aexpected)
@@ -135,8 +135,8 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeIntrinsicMatrixFrombCholesky(self):
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
             [0, 0, 1],
         ])
         b = createbVectorFromIntrinsicMatrix(Aexpected)
@@ -147,8 +147,8 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeIntrinsicMatrix(self):
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
             [0, 0, 1],
         ])
         width, height = 640, 480
