@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import sympy
 
@@ -111,7 +113,9 @@ class HomographyJacobian:
         epsilon = 1e-100
         X = mu.col(modelPoints[:,0]) + epsilon
         Y = mu.col(modelPoints[:,1]) + epsilon
-        functionResults = self._jacobianBlockFunctions(*h, X, Y)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            functionResults = self._jacobianBlockFunctions(*h, X, Y)
         N = modelPoints.shape[0]
         blockValues = structureJacobianResults(functionResults, N)
         return blockValues
@@ -161,7 +165,9 @@ def computeJacobianBlock(functionBlock, intrinsicValues, extrinsicValues, modelP
     Y = mu.col(modelPoints[:,1]) + epsilon
     Z = mu.col(modelPoints[:,2]) + epsilon
     N = modelPoints.shape[0]
-    functionResults = functionBlock(*P, X, Y, Z)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        functionResults = functionBlock(*P, X, Y, Z)
     blockValues = structureJacobianResults(functionResults, N)
     return blockValues
 
@@ -187,6 +193,8 @@ def createJacRadTan() -> ProjectionJacobian:
 
 
 def createLambdaFunction(expression, orderedSymbols):
-    f = sympy.lambdify(orderedSymbols, expression, "numpy")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        f = sympy.lambdify(orderedSymbols, expression, "numpy")
     return f
 

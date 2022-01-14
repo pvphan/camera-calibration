@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 import numpy as np
 import sympy
@@ -79,10 +80,12 @@ class TestHomographyJacobian(unittest.TestCase):
         H1 = np.eye(3)
         h = H1.ravel()
         modelPoints = np.arange(15).reshape(-1, 3)
+        N = modelPoints.shape[0]
+        numModelParams = 2
 
         J = homographyJac.compute(h, modelPoints)
 
-        self.assertEqual(J.shape, (modelPoints.shape[0] * 2, h.shape[0] + 2))
+        self.assertEqual(J.shape, (N * 2, h.shape[0] + numModelParams))
 
 
 class TestEvaluation(unittest.TestCase):
@@ -105,7 +108,9 @@ class TestEvaluation(unittest.TestCase):
             [1, 20, 30, 70],
             [1, 1, 2, 3],
         ], dtype=np.float32)
-        blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
         blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
 
     def test_createJacobianBlockExpression(self):
