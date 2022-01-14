@@ -12,7 +12,12 @@ from src import mathutils as mu
 class Calibrator:
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
-        self._jac = jacobian.ProjectionJacobian(self._distortionModel)
+        self._jac = None
+
+    def _initializeJacobian(self):
+        # this takes ~7 sec, so only do this once and only when required
+        if self._jac is None:
+            self._jac = jacobian.ProjectionJacobian(self._distortionModel)
 
     def calibrate(self, allDetections, maxIters=50):
         """
@@ -71,6 +76,7 @@ class Calibrator:
         Uses Levenberg-Marquardt to solve non-linear optimization. Jacobian matrices
             are compute by jacobian.py
         """
+        self._initializeJacobian()
         Pt = self._composeParameterVector(Ainitial, Winitial, kInitial)
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
         ydot = getSensorPoints(allDetections)
