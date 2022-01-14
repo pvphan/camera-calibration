@@ -16,6 +16,8 @@ class Checkerboard:
                 cornerPositions.append((x, y, 0))
         return np.array(cornerPositions).reshape(-1, 3)
 
-    def getCornerPositions(self) -> np.ndarray:
-        return self._cornerPositions
+    def getCornerPositions(self, ids=None) -> np.ndarray:
+        if ids is None:
+            return self._cornerPositions
+        return self._cornerPositions[ids]
 

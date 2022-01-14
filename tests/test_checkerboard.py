@@ -15,10 +15,17 @@ class TestCheckerboard(unittest.TestCase):
         cls.checkerboard = checkerboard.Checkerboard(
                 cls.numCornersWidth, cls.numCornersHeight, spacing)
 
-    def test_getCornerPositions(self):
+    def test_getCornerPositions1(self):
         cornerPositions = self.checkerboard.getCornerPositions()
         self.assertIsInstance(cornerPositions, np.ndarray)
         expectedNumPositions = self.numCornersWidth * self.numCornersHeight
+        self.assertEqual(cornerPositions.shape, (expectedNumPositions, 3))
+
+    def test_getCornerPositions2(self):
+        ids = [0, 1, 2]
+        cornerPositions = self.checkerboard.getCornerPositions(ids)
+        self.assertIsInstance(cornerPositions, np.ndarray)
+        expectedNumPositions = len(ids)
         self.assertEqual(cornerPositions.shape, (expectedNumPositions, 3))
 
 

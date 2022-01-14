@@ -118,7 +118,7 @@ def computeIntrinsicMatrix(Hs: list):
     U, S, V_T = np.linalg.svd(V)
     b = V_T[-1]
 
-    A = computeIntrinsicMatrixFrombClosedForm(b)
+    A = computeIntrinsicMatrixFrombCholesky(b)
     return A
 
 
