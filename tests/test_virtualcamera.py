@@ -35,9 +35,10 @@ class TestVirtualCamera(unittest.TestCase):
         distortionModel = MagicMock()
         u = np.arange(2 * cornerPositions.shape[0]).reshape(-1, 2)
         distortionModel.projectWithDistortion.return_value = u
+        noiseModel = None
 
         virtualCamera = virtualcamera.VirtualCamera(intrinsicMatrix, distortionCoeffients,
-                distortionModel, imageWidth, imageHeight)
+                distortionModel, imageWidth, imageHeight, noiseModel)
 
         R = mu.eulerToRotationMatrix((0, 0, 180))
         t = (0.05, 0.05, 2)

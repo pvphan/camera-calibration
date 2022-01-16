@@ -14,7 +14,7 @@ class Calibrator:
         self._distortionModel = distortionModel
         self._jac = None
 
-    def calibrate(self, allDetections, maxIters=50):
+    def calibrate(self, allDetections, maxIters):
         """
         Input:
             allDetections -- list of tuples (one for each view).
@@ -31,7 +31,7 @@ class Calibrator:
                 allDetections)
         sse, Afinal, Wfinal, kFinal = self.refineCalibrationParameters(
                 Ainitial, Winitial, kInitial, allDetections,
-                maxIters=maxIters, shouldPrint=True)
+                maxIters, shouldPrint=True)
         return sse, Afinal, Wfinal, kFinal
 
     def estimateCalibrationParameters(self, allDetections):
@@ -111,7 +111,7 @@ class Calibrator:
         return y
 
     def refineCalibrationParameters(self, Ainitial, Winitial, kInitial, allDetections,
-            maxIters=100, shouldPrint=False):
+            maxIters, shouldPrint=False):
         """
         Input:
             Ainitial -- initial estimate of intrinsic matrix
@@ -154,13 +154,16 @@ class Calibrator:
             if Pt1_error < Pt_error:
                 Pt += Δ
                 λ /= 10
+                prevError = Pt1_error
             else:
                 λ *= 10
+                prevError = Pt_error
 
             if shouldPrint:
                 self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error))
 
-            if λ < 1e-150 or Pt_error < 1e-12:
+            print(λ)
+            if λ < 1e-150 or λ > 1e3 or Pt_error < 1e-12:
                 break
 
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)

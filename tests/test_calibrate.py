@@ -40,7 +40,9 @@ class TestCalibrate(unittest.TestCase):
 
         width, height = 640, 480
         cls.kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(cls.Aexpected, width, height, cls.kExpected)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                cls.Aexpected, width, height, cls.kExpected, noiseModel)
         cls.Wexpected = cls.syntheticDataset.getAllBoardPosesInCamera()
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6

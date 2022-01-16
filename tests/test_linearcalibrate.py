@@ -46,7 +46,9 @@ class TestCalibrate(unittest.TestCase):
 
         width, height = 640, 480
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, kExpected)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                A, width, height, kExpected, noiseModel)
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
 
@@ -75,7 +77,9 @@ class TestCalibrate(unittest.TestCase):
         ])
         width, height = 640, 480
         k = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, k)
+        noiseModel = None
+        dataSet = dataset.createSyntheticDatasetRadTan(
+                Aexpected, width, height, k, noiseModel)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
 
         Hs = linearcalibrate.estimateHomographies(allDetections)
@@ -118,8 +122,9 @@ class TestCalibrate(unittest.TestCase):
         ])
         width, height = 640, 480
         k = (0, 0, 0, 0, 0)
+        noiseModel = None
         dataSet = dataset.createSyntheticDatasetRadTan(
-                A, width, height, k)
+                A, width, height, k, noiseModel)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Wexpected = dataSet.getAllBoardPosesInCamera()
         Hs = linearcalibrate.estimateHomographies(allDetections)
@@ -161,7 +166,9 @@ class TestCalibrate(unittest.TestCase):
         ])
         width, height = 640, 480
         k = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, k)
+        noiseModel = None
+        dataSet = dataset.createSyntheticDatasetRadTan(
+                Aexpected, width, height, k, noiseModel)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Hs = linearcalibrate.estimateHomographies(allDetections)
 
