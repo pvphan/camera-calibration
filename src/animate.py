@@ -10,6 +10,7 @@ from __context__ import src
 from src import calibrate
 from src import dataset
 from src import distortion
+from src import noise
 from src import visualize
 
 
@@ -74,8 +75,9 @@ def createAnimation(outputFilePath):
     else:
         k = (-0.5, 0.2, 0.07, -0.03, 0.05)
         distortionModel = distortion.RadialTangentialModel()
+    noiseModel = noise.NoiseModel(0.25)
     syntheticDataset = dataset.createSyntheticDataset(A, width, height, k,
-            distortionModel)
+            distortionModel, noiseModel)
     allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
     calibrator = calibrate.Calibrator(distortionModel)
 

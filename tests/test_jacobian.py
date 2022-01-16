@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 import numpy as np
 import sympy
@@ -30,7 +31,9 @@ class TestProjectionJacobian(unittest.TestCase):
             [0, 0,  1],
         ])
         k = (k1, k2, p1, p2, k3)
-        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                A, width, height, k, noiseModel)
         W = cls.syntheticDataset.getAllBoardPosesInCamera()
         distortionModel = distortion.RadialTangentialModel()
         calibrator = calibrate.Calibrator(distortionModel)
@@ -73,6 +76,19 @@ class TestProjectionJacobian(unittest.TestCase):
         self.assertGreater(np.sum(np.abs(Q)), 0)
 
 
+class TestHomographyJacobian(unittest.TestCase):
+    def test_compute(self):
+        homographyJac = jacobian.HomographyJacobian()
+        H1 = np.eye(3)
+        h = H1.ravel()
+        modelPoints = np.arange(15).reshape(-1, 3)
+        N = modelPoints.shape[0]
+
+        J = homographyJac.compute(h, modelPoints)
+
+        self.assertEqual(J.shape, (N * 2, h.shape[0]))
+
+
 class TestEvaluation(unittest.TestCase):
     def test_evaluateBlock(self):
         a, b, c, d, e, f, g, h = sympy.symbols("a b c d e f g h")
@@ -93,7 +109,9 @@ class TestEvaluation(unittest.TestCase):
             [1, 20, 30, 70],
             [1, 1, 2, 3],
         ], dtype=np.float32)
-        blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            blockValues = functionBlock(*[P[:,i] for i in range(4)], X, Y, Z)
         blockValuesReshaped = np.moveaxis(blockValues, 2, 0).reshape(-1, blockValues.shape[1])
 
     def test_createJacobianBlockExpression(self):

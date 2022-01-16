@@ -8,6 +8,7 @@ from __context__ import src
 from src import calibrate
 from src import dataset
 from src import distortion
+from src import linearcalibrate
 from src import mathutils as mu
 
 
@@ -39,7 +40,9 @@ class TestCalibrate(unittest.TestCase):
 
         width, height = 640, 480
         cls.kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(cls.Aexpected, width, height, cls.kExpected)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                cls.Aexpected, width, height, cls.kExpected, noiseModel)
         cls.Wexpected = cls.syntheticDataset.getAllBoardPosesInCamera()
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
@@ -128,6 +131,14 @@ class TestCalibrate(unittest.TestCase):
         totalError = self.calibrator._computeReprojectionError(Pexpected, allDetections)
 
         self.assertAlmostEqual(totalError, 0)
+
+    def test__refineHomographies(self):
+        allDetections = self.syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        Hs = linearcalibrate.estimateHomographies(allDetections)
+
+        Hsref = self.calibrator._refineHomographies(Hs, allDetections)
+
+        self.assertEqual(len(Hs), len(Hsref))
 
     def assertAllClose(self, A, B, atol=1e-9):
         self.assertTrue(np.allclose(A, B, atol=atol),

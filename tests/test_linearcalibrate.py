@@ -46,7 +46,9 @@ class TestCalibrate(unittest.TestCase):
 
         width, height = 640, 480
         kExpected = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, kExpected)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                A, width, height, kExpected, noiseModel)
         cls.numIntrinsicParams = 10
         cls.numExtrinsicParamsPerView = 6
 
@@ -75,7 +77,9 @@ class TestCalibrate(unittest.TestCase):
         ])
         width, height = 640, 480
         k = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, k)
+        noiseModel = None
+        dataSet = dataset.createSyntheticDatasetRadTan(
+                Aexpected, width, height, k, noiseModel)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
 
         Hs = linearcalibrate.estimateHomographies(allDetections)
@@ -112,19 +116,28 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeExtrinsics(self):
         A = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [420, 0, 327],
+            [0, 415, 243],
             [0, 0, 1],
         ])
+        width, height = 640, 480
+        k = (0, 0, 0, 0, 0)
+        noiseModel = None
+        dataSet = dataset.createSyntheticDatasetRadTan(
+                A, width, height, k, noiseModel)
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        Wexpected = dataSet.getAllBoardPosesInCamera()
+        Hs = linearcalibrate.estimateHomographies(allDetections)
 
-        worldToCameraTransforms = linearcalibrate.computeExtrinsics(self.Hs, A)
+        Wcomputed = linearcalibrate.computeExtrinsics(Hs, A)
 
-        self.assertEqual(len(self.Hs), len(worldToCameraTransforms))
+        self.assertEqual(len(Hs), len(allDetections))
+        self.assertAllClose(Wexpected, Wcomputed)
 
     def test_computeIntrinsicMatrixFrombClosedForm(self):
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
             [0, 0, 1],
         ])
         b = createbVectorFromIntrinsicMatrix(Aexpected)
@@ -135,8 +148,8 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeIntrinsicMatrixFrombCholesky(self):
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
             [0, 0, 1],
         ])
         b = createbVectorFromIntrinsicMatrix(Aexpected)
@@ -147,13 +160,15 @@ class TestCalibrate(unittest.TestCase):
 
     def test_computeIntrinsicMatrix(self):
         Aexpected = np.array([
-            [400, 0, 320],
-            [0, 400, 240],
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
             [0, 0, 1],
         ])
         width, height = 640, 480
         k = (0, 0, 0, 0, 0)
-        dataSet = dataset.createSyntheticDatasetRadTan(Aexpected, width, height, k)
+        noiseModel = None
+        dataSet = dataset.createSyntheticDatasetRadTan(
+                Aexpected, width, height, k, noiseModel)
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         Hs = linearcalibrate.estimateHomographies(allDetections)
 

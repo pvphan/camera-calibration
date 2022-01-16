@@ -33,7 +33,9 @@ class TestRadialTangentialModel(TestCommon):
         ])
         width, height = 640, 480
         k = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(A, width, height, k)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                A, width, height, k, noiseModel)
 
     def test_createExpressionIntrinsicProjection(self):
         expr = self.distortionModel.getProjectionExpression()
@@ -102,7 +104,9 @@ class TestFisheyeModel(TestCommon):
         ])
         width, height = 640, 480
         cls.k = (k1, k2, k3, k4)
-        cls.syntheticDataset = dataset.createSyntheticDatasetFisheye(cls.A, width, height, cls.k)
+        noiseModel = None
+        cls.syntheticDataset = dataset.createSyntheticDatasetFisheye(
+                cls.A, width, height, cls.k, noiseModel)
 
     def test_createExpressionIntrinsicProjection(self):
         expr = self.distortionModel.getProjectionExpression()

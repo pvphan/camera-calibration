@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import sympy
 
@@ -83,6 +85,42 @@ class ProjectionJacobian:
         return J
 
 
+class HomographyJacobian:
+    def __init__(self):
+        X, Y, _ = symbolic.getModelPointSymbols()
+        h = symbolic.getHomographySymbols()
+        H = np.array(h, dtype=object).reshape(3,3)
+        pointHom = mu.col((X, Y, 1))
+        uvExpr = H @ pointHom
+        uvExpr = (uvExpr / uvExpr[2,:])[:2,:]
+        uExprs, vExprs = uvExpr.ravel()
+        orderedSymbols = list(h) + [X, Y]
+        jacobianBlockExpr = createJacobianBlockExpression(uvExpr, h)
+        self._jacobianBlockFunctions = createLambdaFunction(
+                jacobianBlockExpr, orderedSymbols)
+
+    def compute(self, h, modelPoints):
+        """
+        Input:
+            h -- vector containing the elements of the homography H, where
+                    h = (H11, H12, H13, H21, H22, H23, H31, H32, H33)
+            modelPoints -- (N, 3) model points which are projected into the camera
+
+        Output:
+            J -- the Jacobian matrix containing the partial derivatives of
+                    the standard projection of all model points into the sensor
+        """
+        epsilon = 1e-100
+        X = mu.col(modelPoints[:,0]) + epsilon
+        Y = mu.col(modelPoints[:,1]) + epsilon
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            functionResults = self._jacobianBlockFunctions(*h, X, Y)
+        N = modelPoints.shape[0]
+        blockValues = structureJacobianResults(functionResults, N)
+        return blockValues
+
+
 def createJacobianBlockExpression(uvExpression, derivativeSymbols):
     """
     Input:
@@ -127,7 +165,14 @@ def computeJacobianBlock(functionBlock, intrinsicValues, extrinsicValues, modelP
     Y = mu.col(modelPoints[:,1]) + epsilon
     Z = mu.col(modelPoints[:,2]) + epsilon
     N = modelPoints.shape[0]
-    functionResults = functionBlock(*P, X, Y, Z)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        functionResults = functionBlock(*P, X, Y, Z)
+    blockValues = structureJacobianResults(functionResults, N)
+    return blockValues
+
+
+def structureJacobianResults(functionResults, N):
     blockValues = np.zeros((2*N, functionResults.shape[1]))
     for i in range(functionResults.shape[1]):
         uResult = functionResults[0,i]
@@ -148,6 +193,8 @@ def createJacRadTan() -> ProjectionJacobian:
 
 
 def createLambdaFunction(expression, orderedSymbols):
-    f = sympy.lambdify(orderedSymbols, expression, "numpy")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        f = sympy.lambdify(orderedSymbols, expression, "numpy")
     return f
 

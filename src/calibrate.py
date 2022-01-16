@@ -12,9 +12,9 @@ from src import mathutils as mu
 class Calibrator:
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
-        self._jac = jacobian.ProjectionJacobian(self._distortionModel)
+        self._jac = None
 
-    def calibrate(self, allDetections, maxIters=50):
+    def calibrate(self, allDetections, maxIters):
         """
         Input:
             allDetections -- list of tuples (one for each view).
@@ -31,7 +31,7 @@ class Calibrator:
                 allDetections)
         sse, Afinal, Wfinal, kFinal = self.refineCalibrationParameters(
                 Ainitial, Winitial, kInitial, allDetections,
-                maxIters=maxIters, shouldPrint=True)
+                maxIters, shouldPrint=True)
         return sse, Afinal, Wfinal, kFinal
 
     def estimateCalibrationParameters(self, allDetections):
@@ -47,13 +47,71 @@ class Calibrator:
             kInitial -- initial estimate of distortion coefficients
         """
         Hs = linearcalibrate.estimateHomographies(allDetections)
-        Ainitial = linearcalibrate.computeIntrinsicMatrix(Hs)
-        Winitial = linearcalibrate.computeExtrinsics(Hs, Ainitial)
+        Hsref = self._refineHomographies(Hs, allDetections)
+        Ainitial = linearcalibrate.computeIntrinsicMatrix(Hsref)
+        Winitial = linearcalibrate.computeExtrinsics(Hsref, Ainitial)
         kInitial = self._distortionModel.estimateDistortion(Ainitial, allDetections, Winitial)
         return Ainitial, Winitial, kInitial
 
+    def _refineHomographies(self, Hs, allDetections):
+        homographyJac = jacobian.HomographyJacobian()
+        Hsref = []
+        for H, detections in zip(Hs, allDetections):
+            sensorPoints, modelPoints = detections
+            Href = self._refineHomography(H, sensorPoints, modelPoints, homographyJac)
+            Hsref.append(Href)
+        return Hsref
+
+    def _refineHomography(self, H, sensorPoints, modelPoints, jac):
+        """
+        Use Levenberg-Marquardt nonlinear optimization to refine the homography
+        """
+        ydot = sensorPoints
+
+        ts = time.time()
+        λ = 1e-3
+        maxIters = 20
+        shouldPrint = True
+        Pt = H.ravel()
+        for iter in range(maxIters):
+            J = jac.compute(Pt, modelPoints)
+
+            JTJ = J.T @ J
+            diagJTJ = np.diag(np.diagonal(JTJ))
+            Ht = Pt.reshape(3,3)
+            y = self._projectPointsHomography(Ht, modelPoints)
+
+            # compute residuum
+            r = ydot.reshape(-1, 1) - y.reshape(-1, 1)
+            Δ = (np.linalg.inv(JTJ + λ*diagJTJ) @ J.T @ r).ravel()
+
+            # evaluate if Pt + Δ reduces the error or not
+            Pt_error = self._computeTotalError(ydot, y)
+
+            Pt1 = Pt + Δ
+            Ht1 = Pt1.reshape(3,3)
+            yt1 = self._projectPointsHomography(Ht1, modelPoints)
+            Pt1_error = self._computeTotalError(ydot, yt1)
+
+            if Pt1_error < Pt_error:
+                Pt += Δ
+                λ /= 10
+            else:
+                λ *= 10
+
+            if λ < 1e-150 or Pt_error < 1e-12:
+                break
+
+        Href = Pt.reshape(3,3)
+        Href /= Href[2,2]
+        return Href
+
+    def _projectPointsHomography(self, H, modelPoints):
+        y = mu.unhom((H @ mu.hom(modelPoints[:,:2]).T).T)
+        return y
+
     def refineCalibrationParameters(self, Ainitial, Winitial, kInitial, allDetections,
-            maxIters=50, shouldPrint=False):
+            maxIters, shouldPrint=False):
         """
         Input:
             Ainitial -- initial estimate of intrinsic matrix
@@ -71,6 +129,7 @@ class Calibrator:
         Uses Levenberg-Marquardt to solve non-linear optimization. Jacobian matrices
             are compute by jacobian.py
         """
+        self._initializeJacobian()
         Pt = self._composeParameterVector(Ainitial, Winitial, kInitial)
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
         ydot = getSensorPoints(allDetections)
@@ -95,22 +154,34 @@ class Calibrator:
             if Pt1_error < Pt_error:
                 Pt += Δ
                 λ /= 10
+                prevError = Pt1_error
             else:
                 λ *= 10
+                prevError = Pt_error
 
             if shouldPrint:
                 self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error))
 
-            if λ < 1e-150 or Pt_error < 1e-12:
+            print(λ)
+            if λ < 1e-150 or λ > 1e3 or Pt_error < 1e-12:
                 break
 
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
         return Pt_error, Arefined, Wrefined, kRefined
 
+    def _initializeJacobian(self):
+        # this takes ~7 sec, so only do this once and only when required
+        if self._jac is None:
+            self._jac = jacobian.ProjectionJacobian(self._distortionModel)
+
     def _computeReprojectionError(self, P, allDetections):
         allModelPoints = [modelPoints for sensorPoints, modelPoints in allDetections]
         y = self.projectAllPoints(P, allModelPoints)
         ydot = getSensorPoints(allDetections)
+        totalError = self._computeTotalError(ydot, y)
+        return totalError
+
+    def _computeTotalError(self, ydot, y):
         totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
         return totalError
 
