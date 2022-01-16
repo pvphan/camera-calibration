@@ -65,8 +65,6 @@ class Calibrator:
     def _refineHomography(self, H, sensorPoints, modelPoints, jac):
         """
         Use Levenberg-Marquardt nonlinear optimization to refine the homography
-
-        TODO: refactor to DRY out LM (pass in value function)
         """
         ydot = sensorPoints
 
