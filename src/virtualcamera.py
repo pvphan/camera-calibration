@@ -4,16 +4,19 @@ from __context__ import src
 from src import checkerboard
 from src import distortion
 from src import mathutils as mu
+from src import noise
 
 
 class VirtualCamera:
     def __init__(self, intrinsicMatrix: np.ndarray, distortionVector: tuple,
-            distortionModel: distortion.DistortionModel, imageWidth: int, imageHeight: int):
+            distortionModel: distortion.DistortionModel, imageWidth: int, imageHeight: int,
+            noiseModel: noise.NoiseModel):
         self._intrinsicMatrix = intrinsicMatrix
         self._distortionVector = distortionVector
         self._distortionModel = distortionModel
         self._imageWidth = imageWidth
         self._imageHeight = imageHeight
+        self._noiseModel = noiseModel
 
     def getIntrinsicMatrix(self):
         return self._intrinsicMatrix
@@ -37,6 +40,9 @@ class VirtualCamera:
         cP = mu.transform(cMw, wP)
         u = self._distortionModel.projectWithDistortion(self._intrinsicMatrix,
                 cP, self._distortionVector)
+
+        if self._noiseModel is not None:
+            u = self._noiseModel.applyNoise(u)
 
         pointInImageSlice = np.s_[
                 (u[:,0] > 0) & (u[:,0] < self._imageWidth)
