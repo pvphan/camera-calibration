@@ -14,7 +14,7 @@ def readCacheFile(checkerBoard, detectionsCachePath):
     sensorPoints = detectionsData[()]["uvs"].reshape(-1, 2)
     ids = detectionsData[()]["ids"].ravel()
     modelPoints = checkerBoard.getCornerPositions(ids)
-    return sensorPoints, modelPoints
+    return sensorPoints.astype(np.float64), modelPoints.astype(np.float64)
 
 
 def main():
@@ -31,7 +31,6 @@ def main():
     allDetections = []
     for detectionsCachePath in detectionsCachePaths:
         detections = readCacheFile(checkerBoard, detectionsCachePath)
-
         allDetections.append(detections)
 
         if shouldVisualize:
@@ -40,7 +39,7 @@ def main():
             sensorPoints, modelPoints = detections
             visualize.writeDetectionsImage(sensorPoints, width, height, outputFilePath)
     maxIters = 100
-    sse, Afinal, Wfinal, kFinal = mainmodule.calibrateCamera(allDetections[:4], "radtan", maxIters)
+    sse, Afinal, Wfinal, kFinal = mainmodule.calibrateCamera(allDetections, "radtan", maxIters)
 
 
 if __name__ == "__main__":
