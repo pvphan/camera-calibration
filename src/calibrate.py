@@ -160,9 +160,9 @@ class Calibrator:
                 prevError = Pt_error
 
             if shouldPrint:
-                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error, λ))
+                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error), λ)
 
-            if λ < 1e-150 or λ > 1e3 or Pt_error < 1e-12:
+            if λ < 1e-150 or Pt_error < 1e-12:
                 break
 
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
@@ -263,10 +263,10 @@ class Calibrator:
         k = P[numIntrinsicParams:numIntrinsicParams+numDistortionParameters]
         return A, W, k
 
-    def _printIterationStats(self, iter, ts, Pt, error):
+    def _printIterationStats(self, iter, ts, Pt, error, λ):
         At, Wt, kt = self._decomposeParameterVector(Pt)
         print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error={error:0.3f}, "
-                f"λ={λ:0.5f}")
+                f"λ={λ:e}")
         print(f"A:\n{At}")
         print(f"k:\n{kt}")
 
