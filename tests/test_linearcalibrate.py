@@ -9,8 +9,6 @@ from src import linearcalibrate
 from src import dataset
 from src import mathutils as mu
 
-import cv2
-
 
 class TestLinearCalibrate(unittest.TestCase):
     @classmethod
@@ -75,7 +73,6 @@ class TestLinearCalibrate(unittest.TestCase):
         x, X = getExampleData()
 
         Hcomputed = linearcalibrate.estimateHomography(x, X[:,:2])
-        Hexpected, mask = cv2.findHomography(X[:,:2], x)
 
         self.assertEqual(Hcomputed.shape, (3,3))
 
@@ -185,6 +182,30 @@ class TestLinearCalibrate(unittest.TestCase):
         A = linearcalibrate.computeIntrinsicMatrix(Hs)
 
         self.assertAllClose(A, Aexpected, atol=1e-6)
+
+    def test_matrixBfromVector(self):
+        Aexpected = np.array([
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
+            [0, 0, 1],
+        ])
+
+        b = createbVectorFromIntrinsicMatrix(Aexpected)
+        B11, B12, B22, B13, B23, B33 = b
+        B = linearcalibrate.matrixBfromVector(b)
+        Ainv = np.linalg.inv(Aexpected)
+        Bexpected = Ainv.T @ Ainv
+
+        self.assertEqual(B[0,0], B11)
+        self.assertEqual(B[0,1], B12)
+        self.assertEqual(B[1,0], B12)
+        self.assertEqual(B[1,1], B22)
+        self.assertEqual(B[0,2], B13)
+        self.assertEqual(B[2,0], B13)
+        self.assertEqual(B[2,1], B23)
+        self.assertEqual(B[1,2], B23)
+        self.assertEqual(B[2,2], B33)
+        self.assertAllClose(Bexpected, B)
 
     def assertAllClose(self, A, B, atol=1e-9):
         self.assertTrue(np.allclose(A, B, atol=atol),

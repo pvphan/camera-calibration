@@ -118,7 +118,7 @@ def createSyntheticDatasetFisheye(A, width, height, k, noiseModel):
 
 
 def createSyntheticDataset(A, width, height, k, distortionModel, noiseModel):
-    checkerBoard = checkerboard.Checkerboard(9, 6, 0.100)
+    checkerBoard = checkerboard.Checkerboard(25, 18, 0.030)
     virtualCamera = virtualcamera.VirtualCamera(A, k, distortionModel, width, height,
             noiseModel)
     numViews = 10

@@ -39,6 +39,32 @@ class TestMain(unittest.TestCase):
         self.assertAllClose(Wexpected, Wcomputed)
         self.assertAllClose(kExpected, kComputed)
 
+    def test_calibrateCamera2(self):
+        width, height = 1440, 1080
+        Aexpected = np.array([
+            [1432.1, 0, 719.2],
+            [0, 1432.1, 564.3],
+            [0, 0, 1],
+        ])
+        #kExpected = (-0.2674, 0.1716, 1.4287e-05, 0.000177, -0.052701)
+        kExpected = (-0.2674, 0.1716, 0, 0, -0.052701)
+        #kExpected = (0, 0, 0, 0, 0)
+        noiseModel = None
+        syntheticDataset = dataset.createSyntheticDatasetRadTan(
+                Aexpected, width, height, kExpected, noiseModel)
+        Wexpected = syntheticDataset.getAllBoardPosesInCamera()
+        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        distortionType = "radtan"
+        maxIters = 100
+
+        sse, Acomputed, Wcomputed, kComputed = main.calibrateCamera(
+                allDetections, distortionType, maxIters)
+
+        self.assertAlmostEqual(sse, 0)
+        self.assertAllClose(Aexpected, Acomputed)
+        self.assertAllClose(Wexpected, Wcomputed)
+        self.assertAllClose(kExpected, kComputed)
+
     def test_calibrateCameraWithNoise(self):
         width, height = self.width, self.height
         Aexpected = self.Aexpected

@@ -47,8 +47,11 @@ class Calibrator:
             kInitial -- initial estimate of distortion coefficients
         """
         Hs = linearcalibrate.estimateHomographies(allDetections)
-        Hsref = self._refineHomographies(Hs, allDetections)
+        Hsref = Hs
+        #Hsref = self._refineHomographies(Hs, allDetections)
         Ainitial = linearcalibrate.computeIntrinsicMatrix(Hsref)
+        print("Ainitial")
+        print(Ainitial)
         Winitial = linearcalibrate.computeExtrinsics(Hsref, Ainitial)
         kInitial = self._distortionModel.estimateDistortion(Ainitial, allDetections, Winitial)
         return Ainitial, Winitial, kInitial

@@ -3,8 +3,6 @@ import numpy as np
 from __context__ import src
 from src import mathutils as mu
 
-import cv2
-
 
 def estimateHomographies(allDetections: list):
     """
@@ -32,32 +30,30 @@ def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
         Xb -- 2D model points
 
     Output:
-        H -- homography matrix which relates Xa and Xb
+        aHb -- homography matrix which relates Xa and Xb
 
     Rearrange into the formulation:
 
         M * h = 0
 
     M represents the model and sensor point correspondences
-    h is a vector representation of the homography H we are trying to find:
+    h is a vector representation of the homography aHb we are trying to find:
         h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
     """
-    Hexpected, mask = cv2.findHomography(Xb[:,:2], Xa[:,:2])
-    return Hexpected
-    #mu.validateShape(Xa.shape, (None, 2))
-    #mu.validateShape(Xb.shape, (None, 2))
-    #N = Xa.shape[0]
-    #M = np.zeros((2*N, 9))
-    #for i in range(N):
-    #    ui, vi = Xa[i][:2]
-    #    Xi, Yi = Xb[i][:2]
-    #    M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
-    #    M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
-    #U, S, V_T = np.linalg.svd(M)
-    #h = V_T[-1]
-    #Hp = h.reshape(3,3)
-    #H = Hp / Hp[2,2]
-    #return H
+    mu.validateShape(Xa.shape, (None, 2))
+    mu.validateShape(Xb.shape, (None, 2))
+    N = Xa.shape[0]
+    M = np.zeros((2*N, 9))
+    for i in range(N):
+        ui, vi = Xa[i][:2]
+        Xi, Yi = Xb[i][:2]
+        M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
+        M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
+    U, S, V_T = np.linalg.svd(M)
+    h = V_T[-1]
+    Hp = h.reshape(3,3)
+    aHb = Hp / Hp[2,2]
+    return aHb
 
 
 def computeIntrinsicMatrix(Hs: list):
@@ -122,7 +118,11 @@ def computeIntrinsicMatrix(Hs: list):
     U, S, V_T = np.linalg.svd(V)
     b = tuple(V_T[-1])
 
-    A = computeIntrinsicMatrixFrombCholesky(b)
+    #A = computeIntrinsicMatrixFrombCholesky(b)
+    #A = computeIntrinsicMatrixFrombClosedForm_old(b)
+    A = computeIntrinsicMatrixFrombClosedForm(b)
+    if np.sum(np.isnan(A)) > 0:
+        raise ValueError(f"Computed intrinsic matrix contains NaN: \n{A}")
     return A
 
 
@@ -205,13 +205,20 @@ def computeIntrinsicMatrixFrombClosedForm(b):
     B22 = B[1,1]
     B23 = B[1,2]
     B33 = B[2,2]
+    print("B11", B11)
 
     v0 = (B12 * B13 - B11 * B23) / (B11 * B22 - B12**2)
+    print("v0", v0)
     λ = B33 - (B13**2 + v0 * (B12 * B13 - B11 * B23)) / B11
+    print("λ", λ)
     α = np.sqrt(λ / B11)
+    print("α", α)
     β = np.sqrt((λ * B11) / (B11 * B22 - B12**2))
+    print("β", β)
     γ = -B12 * α**2 * β / λ
+    print("γ", γ)
     u0 = γ * v0 / β - B13 * α**2 / λ
+    print("u0", u0)
 
     A = np.array([
         [α, γ, u0],
