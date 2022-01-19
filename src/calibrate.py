@@ -160,9 +160,8 @@ class Calibrator:
                 prevError = Pt_error
 
             if shouldPrint:
-                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error))
+                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error, λ))
 
-            print(λ)
             if λ < 1e-150 or λ > 1e3 or Pt_error < 1e-12:
                 break
 
@@ -266,7 +265,8 @@ class Calibrator:
 
     def _printIterationStats(self, iter, ts, Pt, error):
         At, Wt, kt = self._decomposeParameterVector(Pt)
-        print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error={error:0.3f}")
+        print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error={error:0.3f}, "
+                f"λ={λ:0.5f}")
         print(f"A:\n{At}")
         print(f"k:\n{kt}")
 

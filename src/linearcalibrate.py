@@ -116,7 +116,7 @@ def computeIntrinsicMatrix(Hs: list):
         V[2*i,:]   = vecHomography(H, 0, 1)
         V[2*i+1,:] = vecHomography(H, 0, 0) - vecHomography(H, 1, 1)
     U, S, V_T = np.linalg.svd(V)
-    b = V_T[-1]
+    b = tuple(V_T[-1])
 
     A = computeIntrinsicMatrixFrombCholesky(b)
     return A
@@ -227,7 +227,7 @@ def matrixBfromVector(b):
     return B
 
 
-def computeIntrinsicMatrixFrombCholesky(b):
+def computeIntrinsicMatrixFrombCholesky(b: tuple):
     """
     Computes the intrinsic matrix from the vector b using
     Cholesky decomposition.
@@ -256,10 +256,10 @@ def computeIntrinsicMatrixFrombCholesky(b):
     sign = +1
     if B0 < 0 or B2 < 0 or B5 < 0:
         sign = -1
-    B = sign * np.array([
-        [B0, B1, B3],
-        [B1, B2, B4],
-        [B3, B4, B5],
+    B = np.array([
+        [sign * B0, B1, B3],
+        [B1, sign * B2, B4],
+        [B3, B4, sign * B5],
     ])
     L = np.linalg.cholesky(B)
     A = np.linalg.inv(L.T)
