@@ -8,7 +8,7 @@ Non-linear optimization is done through minimizing projection error and computin
 Generates synthetic datasets for testing and rudimentary visualization.
 Can animate of the reprojection error each iteration of the calibration.
 Dockerized for convenience of development, testing, and maybe deployment.
-Supports radial-tangential `(k1, k2, p1, p2, p3)` and fisheye `(k1, k2, k3, k4)` distortion models.
+Supports radial-tangential `(k1, k2, p1, p2, k3)` and fisheye `(k1, k2, k3, k4)` distortion models.
 
 
 Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
