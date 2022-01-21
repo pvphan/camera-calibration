@@ -226,37 +226,57 @@ class FisheyeModel(DistortionModel):
                 #   projecting the 3D model point to camera coordinates using the standard
                 #   projection matrix (f=1)
                 cXij = mu.transform(cMb, bXij)
+                #print("cXij", cXij)
                 xij = mu.projectStandard(cXij)
+                #print("xij", xij)
                 rij = np.linalg.norm(xij)
+                #print("rij", rij)
 
                 # the measured sensor points with distortion
                 udotij, vdotij = udot
+                #print("udotij", udotij)
+                #print("vdotij", vdotij)
 
                 # the projected sensor points without distortion
                 u, v = mu.project(A, np.eye(4), cXij)
+                #print("u", u)
+                #print("v", v)
 
                 xn, yn = xij.ravel()
                 θij = np.arctan(rij)
-                Dij = np.array([
-                    [
-                        fx * (u - uc) * (θij/rij) * θij**2,
-                        fx * (u - uc) * (θij/rij) * θij**4,
-                        fx * (u - uc) * (θij/rij) * θij**6,
-                        fx * (u - uc) * (θij/rij) * θij**8,
-                    ],
-                    [
-                        fy * (v - vc) * (θij/rij) * θij**2,
-                        fy * (v - vc) * (θij/rij) * θij**4,
-                        fy * (v - vc) * (θij/rij) * θij**6,
-                        fy * (v - vc) * (θij/rij) * θij**8,
-                    ],
-                ])
-                D = np.vstack((D, Dij))
 
                 Ddotij = np.array([
                     [udotij - u],
                     [vdotij - v],
                 ])
+
+                if θij == 0.0:
+                    print("θij", θij)
+                    Dij = np.array([
+                        [0.0, 0.0, 0.0, 0.0],
+                        [0.0, 0.0, 0.0, 0.0],
+                    ])
+                    Ddotij = np.array([
+                        [0.0],
+                        [0.0],
+                    ])
+                else:
+                    Dij = np.array([
+                        [
+                            (u - uc) * (θij/rij) * θij**2,
+                            (u - uc) * (θij/rij) * θij**4,
+                            (u - uc) * (θij/rij) * θij**6,
+                            (u - uc) * (θij/rij) * θij**8,
+                        ],
+                        [
+                            (v - vc) * (θij/rij) * θij**2,
+                            (v - vc) * (θij/rij) * θij**4,
+                            (v - vc) * (θij/rij) * θij**6,
+                            (v - vc) * (θij/rij) * θij**8,
+                        ],
+                    ])
+                D = np.vstack((D, Dij))
+
                 Ddot = np.vstack((Ddot, Ddotij))
         k = np.linalg.pinv(D) @ Ddot
         return tuple(k.ravel())
