@@ -153,6 +153,19 @@ class TestFisheyeModel(TestCommon):
         allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
         allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
         kExpected = dataSet.getDistortionVector()
+        width = dataSet.getImageWidth()
+        height = dataSet.getImageHeight()
+        imageSize = (width, height)
+        objectPoints = [opts.reshape(-1, 1, 3) for _, opts in allDetections]
+        imagePoints = [ipts.reshape(-1, 1, 2) for ipts, _ in allDetections]
+
+        K = np.zeros((3,3))
+        D = np.zeros((1,4))
+        retval, K, D, rvecs, tvecs = cv2.fisheye.calibrate(
+                objectPoints,
+                imagePoints,
+                imageSize, K, D)
+        breakpoint()
 
         kComputed = self.distortionModel.estimateDistortion(A, allDetections, allBoardPosesInCamera)
 
