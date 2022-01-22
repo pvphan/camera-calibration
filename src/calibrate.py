@@ -10,6 +10,9 @@ from src import mathutils as mu
 
 
 class Calibrator:
+    _λmin = 1e-10
+    _λmax = 1e+10
+    _Pt_error_min = 1e-12
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
         self._jac = None
@@ -162,7 +165,7 @@ class Calibrator:
             else:
                 λ *= 10
 
-            if not (1e-15 < λ < 1e+15) or Pt_error < 1e-12:
+            if not (self._λmin < λ < self._λmax) or Pt_error < self._Pt_error_min:
                 break
 
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
