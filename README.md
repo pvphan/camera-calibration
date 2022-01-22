@@ -37,6 +37,7 @@ This is an example of the reprojection animation of a calibration on a checkerbo
 
 ## Maybe later:
 
+- [ ] Fix bug in distortion when projecting points outside of field of view
 - [ ] Button up as python package, add instructions to README
 
 
