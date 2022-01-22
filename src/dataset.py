@@ -121,7 +121,7 @@ def createSyntheticDataset(A, width, height, k, distortionModel, noiseModel):
     checkerBoard = checkerboard.Checkerboard(25, 18, 0.030)
     virtualCamera = virtualcamera.VirtualCamera(A, k, distortionModel, width, height,
             noiseModel)
-    numViews = 10
+    numViews = 15
     dataSet = Dataset(checkerBoard, virtualCamera, numViews)
     return dataSet
 
@@ -136,3 +136,28 @@ def createDetectionsFromPath(filePath):
         allDetections.append((sensorPoints, modelPoints))
     return allDetections
 
+
+def createRealisticRadTanDataset():
+    width, height = 1440, 1080
+    Aexpected = np.array([
+        [1432.1, 0, 719.2],
+        [0, 1432.1, 564.3],
+        [0, 0, 1],
+    ])
+    #kExpected = (-0.2674, 0.1716, 1.4287e-05, 0.000177, -0.052701)
+    #kExpected = (-0.2674, 0.1716, 0, 0, -0.052701)
+    #kExpected = (-0.2674, 0, 0, 0, 0)
+    #kExpected = (-0.05, 0, 0, 0, 0) # works
+    #kExpected = (-0.10, 0, 0, 0, 0) # didn't break
+    #kExpected = (-0.20, 0, 0, 0, 0) # didn't break
+    #kExpected = (-0.40, 0, 0, 0, 0) # broke!
+    #kExpected = (-0.35, 0, 0, 0, 0) # broke!
+    #kExpected = (-0.30, 0, 0, 0, 0) # broke!
+    #kExpected = (-0.25, 0, 0, 0, 0) # broke!
+    #kExpected = (-0.225, 0, 0, 0, 0) # broke!
+    kExpected = (-0.2125, 0, 0, 0, 0) # broke!
+    #kExpected = (0, 0, 0, 0, 0)
+    noiseModel = None
+    realisticDataset = createSyntheticDatasetRadTan(
+            Aexpected, width, height, kExpected, noiseModel)
+    return realisticDataset

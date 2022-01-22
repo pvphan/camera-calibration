@@ -17,7 +17,7 @@ class TestMain(unittest.TestCase):
             [0, 0, 1],
         ])
         self.kRadTan = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        self.kFisheye = (0.5, 0.2, 0.07, -0.03)
+        self.kFisheye = (-0.5, -0.2, 0.0, -0.03)
 
     def test_calibrateCamera(self):
         width, height = self.width, self.height
@@ -40,20 +40,12 @@ class TestMain(unittest.TestCase):
         self.assertAllClose(kExpected, kComputed)
 
     def test_calibrateCamera2(self):
-        width, height = 1440, 1080
-        Aexpected = np.array([
-            [1432.1, 0, 719.2],
-            [0, 1432.1, 564.3],
-            [0, 0, 1],
-        ])
-        #kExpected = (-0.2674, 0.1716, 1.4287e-05, 0.000177, -0.052701)
-        kExpected = (-0.2674, 0.1716, 0, 0, -0.052701)
-        #kExpected = (0, 0, 0, 0, 0)
-        noiseModel = None
-        syntheticDataset = dataset.createSyntheticDatasetRadTan(
-                Aexpected, width, height, kExpected, noiseModel)
-        Wexpected = syntheticDataset.getAllBoardPosesInCamera()
-        allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
+        realisticDataset = dataset.createRealisticRadTanDataset()
+        realisticDataset.writeDatasetImages("/tmp/output/radtan1")
+        Aexpected = realisticDataset.getIntrinsicMatrix()
+        Wexpected = realisticDataset.getAllBoardPosesInCamera()
+        kExpected = realisticDataset.getDistortionVector()
+        allDetections = realisticDataset.getCornerDetectionsInSensorCoordinates()
         distortionType = "radtan"
         maxIters = 100
 

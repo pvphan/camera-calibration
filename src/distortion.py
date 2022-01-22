@@ -259,6 +259,10 @@ class FisheyeModel(DistortionModel):
                     [vdotij - v],
                 ])
                 Ddot = np.vstack((Ddot, Ddotij))
-        k = np.linalg.pinv(D) @ Ddot
+        try:
+            k = np.linalg.pinv(D) @ Ddot
+        except np.linalg.LinAlgError as e:
+            print("Estimating distortion failed, returning 0s")
+            return tuple([0] * numDistortionParameters)
         return tuple(k.ravel())
 

@@ -45,8 +45,9 @@ class VirtualCamera:
             u = self._noiseModel.applyNoise(u)
 
         pointInImageSlice = np.s_[
-                (u[:,0] > 0) & (u[:,0] < self._imageWidth)
-                & (u[:,1] > 0) & (u[:,1] < self._imageHeight)
+                (u[:,0] >= 0) & (u[:,0] < self._imageWidth)
+                & (u[:,1] >= 0) & (u[:,1] < self._imageHeight)
+                & (cP[:,2] > 0)
         ]
         return u[pointInImageSlice], wP[pointInImageSlice]
 
