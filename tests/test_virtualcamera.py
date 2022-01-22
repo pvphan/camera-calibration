@@ -45,9 +45,10 @@ class TestVirtualCamera(unittest.TestCase):
         cameraPoseInBoard = mu.poseFromRT(R, t)
         boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
 
-        measuredPointsInSensor, measuredPointsInBoard = virtualCamera.measureBoardPoints(
+        measuredIds, measuredPointsInSensor, measuredPointsInBoard = virtualCamera.measureBoardPoints(
                 checkerboard, boardPoseInCamera)
 
+        self.assertEqual(measuredPointsInSensor.shape[0], measuredIds.shape[0])
         self.assertEqual(measuredPointsInSensor.shape[0], measuredPointsInBoard.shape[0])
         self.assertEqual(measuredPointsInSensor.shape[1], 2)
         self.assertEqual(measuredPointsInBoard.shape[1], 3)

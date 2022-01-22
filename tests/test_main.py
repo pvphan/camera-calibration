@@ -38,8 +38,9 @@ class TestMain(unittest.TestCase):
         self.assertAllClose(Wexpected, Wcomputed)
         self.assertAllClose(kExpected, kComputed)
 
-    def test_calibrateCamera2(self):
+    def test_calibrateCameraRealistic(self):
         realisticDataset = dataset.createRealisticRadTanDataset()
+        realisticDataset.writeDatasetImages("/tmp/output/test_calibrateCameraRealistic")
         Aexpected = realisticDataset.getIntrinsicMatrix()
         Wexpected = realisticDataset.getAllBoardPosesInCamera()
         kExpected = realisticDataset.getDistortionVector()

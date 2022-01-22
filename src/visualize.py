@@ -12,25 +12,25 @@ def drawLine(image, pt1, pt2):
     pass
 
 
-def writeDetectionsImage(measuredPointsInSensor, w, h, outputPath):
-    image = createDetectionsImage(measuredPointsInSensor, w, h)
+def writeDetectionsImage(ids, measuredPointsInSensor, w, h, outputPath):
+    image = createDetectionsImage(ids, measuredPointsInSensor, w, h)
     imageio.imwrite(outputPath, image)
 
 
-def createDetectionsImage(measuredPointsInSensor, w, h, color=teal):
+def createDetectionsImage(ids, measuredPointsInSensor, w, h, color=teal):
     gray = (64, 64, 64)
     image = createBlankImage(w, h, color=gray)
     length = 9
-    drawCrosses(image, measuredPointsInSensor, length, color)
+    drawCrosses(image, measuredPointsInSensor, length, color, ids)
     return image
 
 
-def drawCrosses(image, points, length, color):
-    for point in points:
-        drawCross(image, point, length, color)
+def drawCrosses(image, points, length, color, ids):
+    for id, point in zip(ids, points):
+        drawCross(image, point, length, color, id)
 
 
-def drawCross(image, point, length, color):
+def drawCross(image, point, length, color, id):
     h, w = image.shape[:2]
     u, v = np.rint(point).astype(int)
     if not (0 <= u < w and 0 <= v < h):
@@ -41,6 +41,10 @@ def drawCross(image, point, length, color):
     colRange = np.clip(colRange, 0, w-1)
     image[v, colRange] = color
     image[rowRange, u] = color
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 0.5
+    thickness = 1
+    cv2.putText(image, str(id), (u, v), font, fontScale, color, thickness, cv2.LINE_AA)
 
 
 def createBlankImage(w, h, color=None):

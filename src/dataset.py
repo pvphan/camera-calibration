@@ -15,11 +15,11 @@ from src import visualize
 
 
 class Dataset:
-    #_minDistanceFromBoard = 0.5
-    #_maxDistanceFromBoard = 1.0
-    _minDistanceFromBoard = 0.2
-    _maxDistanceFromBoard = 0.5
-    _rollPitchBounds = (-20, +20)
+    _minDistanceFromBoard = 0.5
+    _maxDistanceFromBoard = 1.0
+    #_minDistanceFromBoard = 0.2
+    #_maxDistanceFromBoard = 0.5
+    _rollPitchBounds = (-60, +60)
     _yawBounds = (-180, +180)
     def __init__(self, checkerboard: checkerboard.Checkerboard,
             virtualCamera: virtualcamera.VirtualCamera, numViews: int):
@@ -27,11 +27,12 @@ class Dataset:
         self._virtualCamera = virtualCamera
 
         boardCornerPositions = self._checkerboard.getCornerPositions()
-        self._allDetections, self._allBoardPosesInCamera = self._computeDetections(
+        self._allIdsDetections, self._allBoardPosesInCamera = self._computeDetections(
                 numViews, boardCornerPositions)
 
     def getCornerDetectionsInSensorCoordinates(self):
-        return self._allDetections
+        allDetections = [(b, c) for a, b, c in self._allIdsDetections]
+        return allDetections
 
     def getAllBoardPosesInCamera(self):
         return self._allBoardPosesInCamera
@@ -52,9 +53,9 @@ class Dataset:
         os.makedirs(outputFolderPath, exist_ok=True)
         w = self._virtualCamera.getImageWidth()
         h = self._virtualCamera.getImageHeight()
-        for i, (measuredPointsInSensor, measuredPointsInBoard) in enumerate(self._allDetections):
+        for i, (ids, measuredPointsInSensor, measuredPointsInBoard) in enumerate(self._allIdsDetections):
             outputPath = os.path.join(outputFolderPath, f"{i:03d}.png")
-            visualize.writeDetectionsImage(measuredPointsInSensor, w, h, outputPath)
+            visualize.writeDetectionsImage(ids, measuredPointsInSensor, w, h, outputPath)
 
     def _computeDetections(self, numViews: int, boardCornerPositions: np.ndarray):
         numBoardCorners = boardCornerPositions.shape[0]
@@ -75,10 +76,10 @@ class Dataset:
 
             boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
             allBoardPosesInCamera.append(boardPoseInCamera)
-            measuredPointsInSensor, measuredPointsInBoard = (
+            detectedIds, measuredPointsInSensor, measuredPointsInBoard = (
                     self._virtualCamera.measureBoardPoints(self._checkerboard,
                             boardPoseInCamera))
-            allDetections.append((measuredPointsInSensor, measuredPointsInBoard))
+            allDetections.append((detectedIds, measuredPointsInSensor, measuredPointsInBoard))
         return allDetections, allBoardPosesInCamera
 
     def _computeCameraPoseInBoard(self, boardPositionToAimAt, rotationEulerAngles,

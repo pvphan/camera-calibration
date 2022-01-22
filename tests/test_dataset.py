@@ -28,6 +28,7 @@ class TestDataset(unittest.TestCase):
         checkerboard.getCornerPositions.return_value = cornerPositions
 
         virtualCamera = MagicMock()
+        measuredIds = (0, 1)
         measuredPointsInSensor = np.array([
             [100.0, 200.0],
             [300.0, 400.0],
@@ -36,8 +37,8 @@ class TestDataset(unittest.TestCase):
             [0.100, 0.200, 0],
             [0.300, 0.400, 0],
         ])
-        virtualCamera.measureBoardPoints.return_value = (measuredPointsInSensor,
-                measuredPointsInBoard)
+        virtualCamera.measureBoardPoints.return_value = (
+                measuredIds, measuredPointsInSensor, measuredPointsInBoard)
         cls.imageWidth = 640
         cls.imageHeight = 480
         virtualCamera.getImageWidth.return_value = cls.imageWidth
