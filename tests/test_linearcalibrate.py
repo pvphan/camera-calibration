@@ -141,7 +141,7 @@ class TestLinearCalibrate(unittest.TestCase):
         self.assertEqual(len(Hs), len(allDetections))
         self.assertAllClose(Wexpected, Wcomputed, atol=1e-6)
 
-    def test_computeIntrinsicMatrixFrombClosedForm(self):
+    def test_computeIntrinsicMatrixFrombClosedFormZhang(self):
         Aexpected = np.array([
             [410.05, 0, 320.2],
             [0, 395.34, 240.7],
@@ -149,7 +149,19 @@ class TestLinearCalibrate(unittest.TestCase):
         ])
         b = createbVectorFromIntrinsicMatrix(Aexpected)
 
-        Acomputed = linearcalibrate.computeIntrinsicMatrixFrombClosedForm(b)
+        Acomputed = linearcalibrate.computeIntrinsicMatrixFrombClosedFormZhang(b)
+
+        self.assertAllClose(Aexpected, Acomputed)
+
+    def test_computeIntrinsicMatrixFrombClosedFormBurger(self):
+        Aexpected = np.array([
+            [410.05, 0, 320.2],
+            [0, 395.34, 240.7],
+            [0, 0, 1],
+        ])
+        b = createbVectorFromIntrinsicMatrix(Aexpected)
+
+        Acomputed = linearcalibrate.computeIntrinsicMatrixFrombClosedFormBurger(b)
 
         self.assertAllClose(Aexpected, Acomputed)
 

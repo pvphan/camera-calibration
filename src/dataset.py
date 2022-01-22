@@ -31,7 +31,8 @@ class Dataset:
                 numViews, boardCornerPositions)
 
     def getCornerDetectionsInSensorCoordinates(self):
-        allDetections = [(b, c) for a, b, c in self._allIdsDetections]
+        allDetections = [(sensorPoints, modelPoints)
+                for ids, sensorPoints, modelPoints in self._allIdsDetections]
         return allDetections
 
     def getAllBoardPosesInCamera(self):
@@ -76,9 +77,11 @@ class Dataset:
 
             boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
             allBoardPosesInCamera.append(boardPoseInCamera)
+            #shouldBreakPoint = viewIndex == 4
+            shouldBreakPoint = False
             detectedIds, measuredPointsInSensor, measuredPointsInBoard = (
                     self._virtualCamera.measureBoardPoints(self._checkerboard,
-                            boardPoseInCamera))
+                            boardPoseInCamera, shouldBreakPoint))
             allDetections.append((detectedIds, measuredPointsInSensor, measuredPointsInBoard))
         return allDetections, allBoardPosesInCamera
 

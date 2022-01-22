@@ -119,8 +119,8 @@ def computeIntrinsicMatrix(Hs: list):
     b = tuple(V_T[-1])
 
     #A = computeIntrinsicMatrixFrombCholesky(b)
-    #A = computeIntrinsicMatrixFrombClosedForm_old(b)
-    A = computeIntrinsicMatrixFrombClosedForm(b)
+    A = computeIntrinsicMatrixFrombClosedFormBurger(b)
+    #A = computeIntrinsicMatrixFrombClosedFormZhang(b)
     if np.sum(np.isnan(A)) > 0:
         raise ValueError(f"Computed intrinsic matrix contains NaN: \n{A}")
     return A
@@ -156,7 +156,7 @@ def vecHomography(H: np.ndarray, p: int, q: int):
     return v
 
 
-def computeIntrinsicMatrixFrombClosedForm_old(b):
+def computeIntrinsicMatrixFrombClosedFormBurger(b):
     """
     Computes the intrinsic matrix from the vector b using the closed
     form solution given in Burger, equations 99 - 104.
@@ -187,7 +187,7 @@ def computeIntrinsicMatrixFrombClosedForm_old(b):
     return A
 
 
-def computeIntrinsicMatrixFrombClosedForm(b):
+def computeIntrinsicMatrixFrombClosedFormZhang(b):
     """
     Computes the intrinsic matrix from the vector b using the closed
     form solution given in Burger, equations 99 - 104.

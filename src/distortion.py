@@ -37,7 +37,7 @@ class DistortionModel:
         uvExpr = self.projectWithDistortion(A, cP, k, isSymbolic=isSymbolic)
         return uvExpr
 
-    def projectWithDistortion(self, A, X, k, isSymbolic=False):
+    def projectWithDistortion(self, A, X, k, shouldBreakPoint, isSymbolic=False):
         """
         Input:
             A -- intrinsic matrix
@@ -51,7 +51,7 @@ class DistortionModel:
         xd -- distorted normalized points in camera
         """
         x = mu.projectStandard(X)
-        xd = self.distortPoints(x, k, isSymbolic=isSymbolic)
+        xd = self.distortPoints(x, k, shouldBreakPoint, isSymbolic=isSymbolic)
         Ap = A[:2,:3]
         distortedPointsInSensor = (Ap @ mu.hom(xd).T).T
         return distortedPointsInSensor
@@ -73,7 +73,7 @@ class RadialTangentialModel(DistortionModel):
     def getDistortionSymbols(self):
         return tuple(sympy.symbols("k1 k2 p1 p2 k3"))
 
-    def distortPoints(self, x: np.ndarray, k: tuple, isSymbolic=False):
+    def distortPoints(self, x: np.ndarray, k: tuple, shouldBreakPoint, isSymbolic=False):
         """
         Inputs:
             x -- normalized points (undistorted), (N,2)
@@ -93,12 +93,15 @@ class RadialTangentialModel(DistortionModel):
             yn = x[:,1]
             r = np.linalg.norm(x, axis=1)
 
+        r[r > 1.0] = np.nan
         radialComponent = (1 + k1 * r**2 + k2 * r**4 + k3 * r**6)
         tangentialComponentX = (2 * p1 * xn * yn + p2 * (r**2 + 2 * xn**2))
         tangentialComponentY = (p1 * (r**2 + 2 * yn**2) + 2 * p2 * xn * yn)
 
         xd = radialComponent * xn + tangentialComponentX
         yd = radialComponent * yn + tangentialComponentY
+        if shouldBreakPoint:
+            breakpoint()
 
         return np.hstack((mu.col(xd), mu.col(yd)))
 
@@ -204,6 +207,7 @@ class FisheyeModel(DistortionModel):
             r = np.linalg.norm(x, axis=1)
             θ = np.arctan(r)
 
+        r[r > 1.0] = np.nan
         radialComponent = (θ / r) * (1 + k1 * θ**2 + k2 * θ**4 + k3 * θ**6 + k4 * θ**8)
 
         xd = radialComponent * xn
