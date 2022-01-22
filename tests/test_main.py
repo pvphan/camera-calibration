@@ -25,6 +25,7 @@ class TestMain(unittest.TestCase):
         noiseModel = None
         syntheticDataset = dataset.createSyntheticDatasetRadTan(
                 Aexpected, width, height, kExpected, noiseModel)
+        syntheticDataset.writeDatasetImages("/tmp/output/test_calibrateCamera")
         Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
         distortionType = "radtan"
@@ -83,12 +84,6 @@ class TestMain(unittest.TestCase):
             [0, 0, 1],
         ], dtype=np.float64)
         kExpected = (-0.155, -0.02, 0.0, -0.03)
-        #Aexpected = np.array([
-        #    [822.61200461, -6.10438848, 707.24365012],
-        #    [0, 823.27643386, 547.2882299],
-        #    [0, 0, 1],
-        #], dtype=np.float64)
-        #kExpected = (-0.14133456, -0.06162946, -0.08821207, 0.12775954)
 
         noiseModel = None
         syntheticDataset = dataset.createSyntheticDatasetFisheye(

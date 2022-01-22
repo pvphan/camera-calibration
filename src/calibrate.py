@@ -103,7 +103,7 @@ class Calibrator:
             else:
                 λ *= 10
 
-            if λ < 1e-150 or Pt_error < 1e-12:
+            if not (self._λmin < λ < self._λmax) or Pt_error < self._Pt_error_min:
                 break
 
         Href = Pt.reshape(3,3)
