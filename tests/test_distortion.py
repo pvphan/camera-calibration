@@ -61,17 +61,23 @@ class TestRadialTangentialModel(TestCommon):
         self.assertFalse(np.allclose(normalizedPointsNx2, distortedPoints))
 
     def test_projectWithDistortion(self):
+        chosenIndex = 8
         realisticDataset = dataset.createRealisticRadTanDataset()
+        allDetections = realisticDataset.getCornerDetectionsInSensorCoordinates()
+        allBoardPoses = realisticDataset.getAllBoardPosesInCamera()
+        wP = allDetections[chosenIndex][1]
+        cMw = allBoardPoses[chosenIndex]
+        cP = mu.transform(cMw, wP)
         A = realisticDataset.getIntrinsicMatrix()
         k = realisticDataset.getDistortionVector()
 
-        projectedPoints = self.distortionModel.projectWithDistortion(A, self.pointsInWorld, k)
+        projectedPoints = self.distortionModel.projectWithDistortion(A, cP, k)
 
         rvec = (0, 0, 0)
         tvec = (0, 0, 0)
-        projectedPointsOpencv = cv2.projectPoints(self.pointsInWorld, rvec, tvec, A, k)[0].reshape(-1, 2)
+        projectedPointsOpencv = cv2.projectPoints(cP, rvec, tvec, A, k)[0].reshape(-1, 2)
 
-        self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))
+        self.assertEqual(projectedPoints.shape, (cP.shape[0], 2))
         self.assertFalse(np.isnan(np.sum(projectedPoints)))
         self.assertAllClose(projectedPointsOpencv, projectedPoints)
 

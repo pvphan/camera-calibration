@@ -50,8 +50,6 @@ class Calibrator:
         Hsref = Hs
         #Hsref = self._refineHomographies(Hs, allDetections)
         Ainitial = linearcalibrate.computeIntrinsicMatrix(Hsref)
-        print("Ainitial")
-        print(Ainitial)
         Winitial = linearcalibrate.computeExtrinsics(Hsref, Ainitial)
         kInitial = self._distortionModel.estimateDistortion(Ainitial, allDetections, Winitial)
         return Ainitial, Winitial, kInitial
@@ -139,6 +137,7 @@ class Calibrator:
 
         ts = time.time()
         λ = 1e-3
+        prevError = np.inf
         for iter in range(maxIters):
             J = self._jac.compute(Pt, allModelPoints)
 
@@ -154,16 +153,17 @@ class Calibrator:
             Pt_error = self._computeReprojectionError(Pt, allDetections)
             Pt1_error = self._computeReprojectionError(Pt + Δ, allDetections)
 
+            if shouldPrint:
+                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error), λ)
+
             if Pt1_error < Pt_error:
                 Pt += Δ
                 λ /= 10
+                if prevError - Pt1_error < 1e-12:
+                    break
                 prevError = Pt1_error
             else:
                 λ *= 10
-                prevError = Pt_error
-
-            if shouldPrint:
-                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error), λ)
 
             if λ < 1e-150 or Pt_error < 1e-12:
                 break

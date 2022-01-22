@@ -205,20 +205,13 @@ def computeIntrinsicMatrixFrombClosedForm(b):
     B22 = B[1,1]
     B23 = B[1,2]
     B33 = B[2,2]
-    print("B11", B11)
 
     v0 = (B12 * B13 - B11 * B23) / (B11 * B22 - B12**2)
-    print("v0", v0)
     λ = B33 - (B13**2 + v0 * (B12 * B13 - B11 * B23)) / B11
-    print("λ", λ)
     α = np.sqrt(λ / B11)
-    print("α", α)
     β = np.sqrt((λ * B11) / (B11 * B22 - B12**2))
-    print("β", β)
     γ = -B12 * α**2 * β / λ
-    print("γ", γ)
     u0 = γ * v0 / β - B13 * α**2 / λ
-    print("u0", u0)
 
     A = np.array([
         [α, γ, u0],

@@ -15,8 +15,8 @@ from src import visualize
 
 
 class Dataset:
-    _minDistanceFromBoard = 0.3
-    _maxDistanceFromBoard = 0.8
+    _minDistanceFromBoard = 0.5
+    _maxDistanceFromBoard = 1.0
     _rollPitchBounds = (-20, +20)
     _yawBounds = (-180, +180)
     def __init__(self, checkerboard: checkerboard.Checkerboard,
@@ -144,19 +144,7 @@ def createRealisticRadTanDataset():
         [0, 1432.1, 564.3],
         [0, 0, 1],
     ])
-    #kExpected = (-0.2674, 0.1716, 1.4287e-05, 0.000177, -0.052701)
-    #kExpected = (-0.2674, 0.1716, 0, 0, -0.052701)
-    #kExpected = (-0.2674, 0, 0, 0, 0)
-    #kExpected = (-0.05, 0, 0, 0, 0) # works
-    #kExpected = (-0.10, 0, 0, 0, 0) # didn't break
-    #kExpected = (-0.20, 0, 0, 0, 0) # didn't break
-    #kExpected = (-0.40, 0, 0, 0, 0) # broke!
-    #kExpected = (-0.35, 0, 0, 0, 0) # broke!
-    #kExpected = (-0.30, 0, 0, 0, 0) # broke!
-    #kExpected = (-0.25, 0, 0, 0, 0) # broke!
-    #kExpected = (-0.225, 0, 0, 0, 0) # broke!
-    kExpected = (-0.2125, 0, 0, 0, 0) # broke!
-    #kExpected = (0, 0, 0, 0, 0)
+    kExpected = (-0.2674, 0.1716, 1.4287e-05, 0.000177, -0.052701)
     noiseModel = None
     realisticDataset = createSyntheticDatasetRadTan(
             Aexpected, width, height, kExpected, noiseModel)
