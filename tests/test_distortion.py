@@ -92,6 +92,17 @@ class TestRadialTangentialModel(TestCommon):
 
         self.assertAllClose(kExpected, kComputed)
 
+    def test_estimateDistortionRealistic(self):
+        dataSet = dataset.createRealisticRadTanDataset()
+        A = dataSet.getIntrinsicMatrix()
+        allDetections = dataSet.getCornerDetectionsInSensorCoordinates()
+        allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
+        kExpected = dataSet.getDistortionVector()
+
+        kComputed = self.distortionModel.estimateDistortion(A, allDetections, allBoardPosesInCamera)
+
+        self.assertAllClose(kExpected, kComputed)
+
 
 class TestFisheyeModel(TestCommon):
     @classmethod

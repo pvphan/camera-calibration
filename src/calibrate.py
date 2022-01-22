@@ -10,6 +10,7 @@ from src import mathutils as mu
 
 
 class Calibrator:
+    _λinitial = 1e-3
     _λmin = 1e-10
     _λmax = 1e+10
     _Pt_error_min = 1e-12
@@ -138,8 +139,7 @@ class Calibrator:
         ydot = getSensorPoints(allDetections)
 
         ts = time.time()
-        λ = 1e-3
-        prevError = np.inf
+        λ = self._λinitial
         for iter in range(maxIters):
             J = self._jac.compute(Pt, allModelPoints)
 

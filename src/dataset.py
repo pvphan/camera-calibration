@@ -15,15 +15,20 @@ from src import visualize
 
 
 class Dataset:
-    _minDistanceFromBoard = 0.5
-    _maxDistanceFromBoard = 1.0
+    #_minDistanceFromBoard = 0.5
+    #_maxDistanceFromBoard = 1.0
+    _minDistanceFromBoard = 0.2
+    _maxDistanceFromBoard = 0.5
     _rollPitchBounds = (-20, +20)
     _yawBounds = (-180, +180)
     def __init__(self, checkerboard: checkerboard.Checkerboard,
             virtualCamera: virtualcamera.VirtualCamera, numViews: int):
         self._checkerboard = checkerboard
         self._virtualCamera = virtualCamera
-        self._allDetections, self._allBoardPosesInCamera = self._computeDetections(numViews)
+
+        boardCornerPositions = self._checkerboard.getCornerPositions()
+        self._allDetections, self._allBoardPosesInCamera = self._computeDetections(
+                numViews, boardCornerPositions)
 
     def getCornerDetectionsInSensorCoordinates(self):
         return self._allDetections
@@ -51,8 +56,7 @@ class Dataset:
             outputPath = os.path.join(outputFolderPath, f"{i:03d}.png")
             visualize.writeDetectionsImage(measuredPointsInSensor, w, h, outputPath)
 
-    def _computeDetections(self, numViews: int):
-        boardCornerPositions = self._checkerboard.getCornerPositions()
+    def _computeDetections(self, numViews: int, boardCornerPositions: np.ndarray):
         numBoardCorners = boardCornerPositions.shape[0]
         allDetections = []
         allBoardPosesInCamera = []

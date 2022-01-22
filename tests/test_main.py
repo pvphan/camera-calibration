@@ -74,8 +74,12 @@ class TestMain(unittest.TestCase):
         self.assertAllClose(kExpected, kComputed, atol=0.05)
 
     def test_calibrateCameraFisheye(self):
-        width, height = self.width, self.height
-        Aexpected = self.Aexpected
+        width, height = 1440, 1080
+        Aexpected = np.array([
+            [803.1, 0, 720.5],
+            [0, 803.1, 549.2],
+            [0, 0, 1],
+        ], dtype=np.float64)
         kExpected = (-0.155, -0.02, 0.0, -0.03)
         noiseModel = None
         syntheticDataset = dataset.createSyntheticDatasetFisheye(
