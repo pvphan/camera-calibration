@@ -1,6 +1,5 @@
 import unittest
 
-import cv2
 import numpy as np
 
 from __context__ import src
@@ -73,13 +72,8 @@ class TestRadialTangentialModel(TestCommon):
 
         projectedPoints = self.distortionModel.projectWithDistortion(A, cP, k)
 
-        rvec = (0, 0, 0)
-        tvec = (0, 0, 0)
-        projectedPointsOpencv = cv2.projectPoints(cP, rvec, tvec, A, k)[0].reshape(-1, 2)
-
         self.assertEqual(projectedPoints.shape, (cP.shape[0], 2))
         self.assertFalse(np.isnan(np.sum(projectedPoints)))
-        self.assertAllClose(projectedPointsOpencv, projectedPoints)
 
     def test_estimateDistortion(self):
         dataSet = self.syntheticDataset
@@ -145,13 +139,6 @@ class TestFisheyeModel(TestCommon):
         projectedPoints = self.distortionModel.projectWithDistortion(self.A, self.pointsInWorld, self.k,
                 isSymbolic=isSymbolic)
 
-        rvec = (0, 0, 0)
-        tvec = (0, 0, 0)
-        projectedPointsOpencv = cv2.fisheye.projectPoints(
-                self.pointsInWorld.reshape(-1, 1, 3), rvec, tvec,
-                self.A, self.k)[0].reshape(-1, 2)
-        self.assertAllClose(projectedPointsOpencv, projectedPoints)
-
         self.assertEqual(projectedPoints.shape, (self.pointsInWorld.shape[0], 2))
         self.assertFalse(np.isnan(np.sum(projectedPoints)))
 
@@ -162,19 +149,9 @@ class TestFisheyeModel(TestCommon):
         allBoardPosesInCamera = dataSet.getAllBoardPosesInCamera()
         kExpected = dataSet.getDistortionVector()
 
-        #width = dataSet.getImageWidth()
-        #height = dataSet.getImageHeight()
-        #imageSize = (width, height)
-        #objectPoints = [xyz.reshape(-1, 1, 3) for uv, xyz in allDetections]
-        #imagePoints = [uv.reshape(-1, 1, 2) for uv, xyz in allDetections]
-
-        #retval, K, D, rvecs, tvecs = cv2.fisheye.calibrate(
-        #        objectPoints, imagePoints,
-        #        imageSize, None, None)
-
         kComputed = self.distortionModel.estimateDistortion(A, allDetections, allBoardPosesInCamera)
 
-        #self.assertAllClose(kExpected, kComputed)
+        self.assertAllClose(kExpected, kComputed)
 
 
 if __name__ == "__main__":

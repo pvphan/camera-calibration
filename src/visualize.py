@@ -41,10 +41,6 @@ def drawCross(image, point, length, color, id):
     colRange = np.clip(colRange, 0, w-1)
     image[v, colRange] = color
     image[rowRange, u] = color
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 0.5
-    thickness = 1
-    cv2.putText(image, str(id), (u, v), font, fontScale, color, thickness, cv2.LINE_AA)
 
 
 def createBlankImage(w, h, color=None):

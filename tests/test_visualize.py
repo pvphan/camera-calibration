@@ -15,8 +15,9 @@ class TestVisualize(unittest.TestCase):
         point = (25, 50)
         length = 7
         color = (maxValue, maxValue, maxValue)
+        id = 0
         self.assertEqual(np.sum(image), 0)
-        visualize.drawCross(image, point, length, color)
+        visualize.drawCross(image, point, length, color, id)
         self.assertEqual(np.sum(image), maxValue * len(color) * (2 * length - 1))
 
     def test_drawCrossOutOfBounds(self):
@@ -27,8 +28,9 @@ class TestVisualize(unittest.TestCase):
         point = (200, -50)
         length = 7
         color = (maxValue, maxValue, maxValue)
+        id = 0
         self.assertEqual(np.sum(image), 0)
-        visualize.drawCross(image, point, length, color)
+        visualize.drawCross(image, point, length, color, id)
         self.assertEqual(np.sum(image), 0)
 
 
