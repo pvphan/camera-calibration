@@ -159,13 +159,10 @@ class Calibrator:
             if Pt1_error < Pt_error:
                 Pt += Δ
                 λ /= 10
-                if prevError - Pt1_error < 1e-12:
-                    break
-                prevError = Pt1_error
             else:
                 λ *= 10
 
-            if λ < 1e-150 or Pt_error < 1e-12:
+            if not (1e-15 < λ < 1e+15) or Pt_error < 1e-12:
                 break
 
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)

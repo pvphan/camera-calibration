@@ -17,7 +17,6 @@ class TestMain(unittest.TestCase):
             [0, 0, 1],
         ])
         self.kRadTan = (-0.5, 0.2, 0.07, -0.03, 0.05)
-        self.kFisheye = (-0.5, -0.2, 0.0, -0.03)
 
     def test_calibrateCamera(self):
         width, height = self.width, self.height
@@ -41,7 +40,6 @@ class TestMain(unittest.TestCase):
 
     def test_calibrateCamera2(self):
         realisticDataset = dataset.createRealisticRadTanDataset()
-        realisticDataset.writeDatasetImages("/tmp/output/radtan1")
         Aexpected = realisticDataset.getIntrinsicMatrix()
         Wexpected = realisticDataset.getAllBoardPosesInCamera()
         kExpected = realisticDataset.getDistortionVector()
@@ -78,10 +76,11 @@ class TestMain(unittest.TestCase):
     def test_calibrateCameraFisheye(self):
         width, height = self.width, self.height
         Aexpected = self.Aexpected
-        kExpected = self.kFisheye
+        kExpected = (-0.155, -0.02, 0.0, -0.03)
         noiseModel = None
         syntheticDataset = dataset.createSyntheticDatasetFisheye(
                 Aexpected, width, height, kExpected, noiseModel)
+        syntheticDataset.writeDatasetImages("/tmp/output/test_calibrateCameraFisheye")
         Wexpected = syntheticDataset.getAllBoardPosesInCamera()
         allDetections = syntheticDataset.getCornerDetectionsInSensorCoordinates()
         distortionType = "fisheye"
