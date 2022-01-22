@@ -17,8 +17,6 @@ from src import visualize
 class Dataset:
     _minDistanceFromBoard = 0.5
     _maxDistanceFromBoard = 1.0
-    #_minDistanceFromBoard = 0.2
-    #_maxDistanceFromBoard = 0.5
     _rollPitchBounds = (-60, +60)
     _yawBounds = (-180, +180)
     def __init__(self, checkerboard: checkerboard.Checkerboard,
@@ -77,11 +75,9 @@ class Dataset:
 
             boardPoseInCamera = np.linalg.inv(cameraPoseInBoard)
             allBoardPosesInCamera.append(boardPoseInCamera)
-            #shouldBreakPoint = viewIndex == 4
-            shouldBreakPoint = False
             detectedIds, measuredPointsInSensor, measuredPointsInBoard = (
                     self._virtualCamera.measureBoardPoints(self._checkerboard,
-                            boardPoseInCamera, shouldBreakPoint))
+                            boardPoseInCamera))
             allDetections.append((detectedIds, measuredPointsInSensor, measuredPointsInBoard))
         return allDetections, allBoardPosesInCamera
 

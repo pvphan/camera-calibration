@@ -53,7 +53,8 @@ class TestMain(unittest.TestCase):
 
         self.assertAlmostEqual(sse, 0)
         self.assertAllClose(Aexpected, Acomputed)
-        self.assertAllClose(Wexpected, Wcomputed)
+        for i, (we, wc) in enumerate(zip(Wexpected, Wcomputed)):
+            self.assertAllClose(we, wc, atol=1)
         self.assertAllClose(kExpected, kComputed)
 
     def test_calibrateCameraWithNoise(self):
@@ -77,11 +78,18 @@ class TestMain(unittest.TestCase):
     def test_calibrateCameraFisheye(self):
         width, height = 1440, 1080
         Aexpected = np.array([
-            [803.1, 0, 720.5],
-            [0, 803.1, 549.2],
+            [803.1, 0, 700.5],
+            [0, 803.1, 529.2],
             [0, 0, 1],
         ], dtype=np.float64)
         kExpected = (-0.155, -0.02, 0.0, -0.03)
+        #Aexpected = np.array([
+        #    [822.61200461, -6.10438848, 707.24365012],
+        #    [0, 823.27643386, 547.2882299],
+        #    [0, 0, 1],
+        #], dtype=np.float64)
+        #kExpected = (-0.14133456, -0.06162946, -0.08821207, 0.12775954)
+
         noiseModel = None
         syntheticDataset = dataset.createSyntheticDatasetFisheye(
                 Aexpected, width, height, kExpected, noiseModel)

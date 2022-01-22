@@ -183,7 +183,10 @@ class Calibrator:
         return totalError
 
     def _computeTotalError(self, ydot, y):
-        totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
+        squaredError = np.linalg.norm(ydot - y, axis=1)**2
+        if np.any(np.isnan(squaredError)):
+            return np.inf
+        totalError = np.sum(squaredError)
         return totalError
 
     def projectAllPoints(self, P, allModelPoints):

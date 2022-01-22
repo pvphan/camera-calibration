@@ -31,18 +31,18 @@ class VirtualCamera:
         return self._imageHeight
 
     def measureBoardPoints(self, checkerboard: checkerboard.Checkerboard,
-            boardPoseInCamera: np.ndarray, shouldBreakPoint):
+            boardPoseInCamera: np.ndarray):
         wP = checkerboard.getCornerPositions()
         cMw = boardPoseInCamera
-        u, pointInImageSlice = self._measurePoints(cMw, wP, shouldBreakPoint)
+        u, pointInImageSlice = self._measurePoints(cMw, wP)
         numCorners = wP.shape[0]
         ids = np.arange(numCorners)
         return ids[pointInImageSlice], u[pointInImageSlice], wP[pointInImageSlice]
 
-    def _measurePoints(self, cMw, wP, shouldBreakPoint):
+    def _measurePoints(self, cMw, wP):
         cP = mu.transform(cMw, wP)
         u = self._distortionModel.projectWithDistortion(self._intrinsicMatrix,
-                cP, self._distortionVector, shouldBreakPoint)
+                cP, self._distortionVector)
 
         if self._noiseModel is not None:
             u = self._noiseModel.applyNoise(u)
