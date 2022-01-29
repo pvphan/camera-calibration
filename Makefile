@@ -10,15 +10,11 @@ RUN_FLAGS = \
 
 
 animation: image
-	docker -it run ${RUN_FLAGS} \
+	docker run ${RUN_FLAGS} \
 		python3 src/animate.py
 
-testci: image
-	docker run ${RUN_FLAGS} \
-		python3 -m unittest discover -s tests/
-
 test: image
-	docker -it run ${RUN_FLAGS} \
+	docker run ${RUN_FLAGS} \
 		python3 -m unittest discover -s tests/
 
 shell: image
@@ -28,5 +24,3 @@ shell: image
 image:
 	docker build --tag ${IMAGE_TAG} .
 
-uploadImage: image
-	docker push ${IMAGE_TAG}
