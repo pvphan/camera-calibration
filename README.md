@@ -1,6 +1,6 @@
 # Camera Calibration using Zhang's Method
 
-[![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
+![Build Status](https://github.com/pvphan/camera-calibration/actions/workflows/main/badge.svg)
 
 A simple Python library for calibrating camera intrinsics from sensor (2D) and model point (3D) correspondences.
 Written with few external dependencies (numpy, sympy, imageio) for a more manual implementation and a deeper understanding.
