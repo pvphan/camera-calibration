@@ -13,5 +13,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: check environment
+        run: echo $DISPLAY
       - name: Run tests
-        run: make test
+        run: make testci
