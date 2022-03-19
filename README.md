@@ -1,6 +1,6 @@
 # Camera Calibration using Zhang's Method
 
-[![Build Status](https://app.travis-ci.com/pvphan/camera-calibration.svg?branch=main)](https://app.travis-ci.com/pvphan/camera-calibration)
+![Build Status](https://github.com/pvphan/camera-calibration/actions/workflows/main.yml/badge.svg)
 
 A simple Python library for calibrating camera intrinsics from sensor (2D) and model point (3D) correspondences.
 Written with few external dependencies (numpy, sympy, imageio) for a more manual implementation and a deeper understanding.
@@ -8,7 +8,7 @@ Non-linear optimization is done through minimizing projection error and computin
 Generates synthetic datasets for testing and rudimentary visualization.
 Can animate the reprojection error each iteration of the calibration.
 Dockerized for convenience of development, testing, and maybe deployment.
-Supports radial-tangential `(k1, k2, p1, p2, p3)` and fisheye `(k1, k2, k3, k4)` distortion models.
+Supports radial-tangential `(k1, k2, p1, p2, k3)` and fisheye `(k1, k2, k3, k4)` distortion models.
 
 
 Does not include any feature detection for sensor points. Takes sets of points as inputs, not images.
