@@ -184,8 +184,6 @@ class Calibrator:
 
     def _computeTotalError(self, ydot, y):
         squaredError = np.linalg.norm(ydot - y, axis=1)**2
-        if np.any(np.isnan(squaredError)):
-            return np.inf
         totalError = np.sum(squaredError)
         return totalError
 

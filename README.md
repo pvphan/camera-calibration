@@ -4,6 +4,7 @@
 
 A simple Python library for calibrating camera intrinsics from sensor (2D) and model point (3D) correspondences.
 Written with few external dependencies (numpy, sympy, imageio) for a more manual implementation and a deeper understanding.
+OpenCV is imported only for debug and sanity checking implementation.
 Non-linear optimization is done through minimizing projection error and computing partial derivatives with [`sympy`](https://docs.sympy.org/latest/index.html) to populate the Jacobian matrix.
 Generates synthetic datasets for testing and rudimentary visualization.
 Can animate the reprojection error each iteration of the calibration.
