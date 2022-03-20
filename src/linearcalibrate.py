@@ -118,8 +118,8 @@ def computeIntrinsicMatrix(Hs: list):
     U, S, V_T = np.linalg.svd(V)
     b = tuple(V_T[-1])
 
-    #A = computeIntrinsicMatrixFrombCholesky(b)
-    A = computeIntrinsicMatrixFrombClosedFormBurger(b)
+    A = computeIntrinsicMatrixFrombCholesky(b)
+    #A = computeIntrinsicMatrixFrombClosedFormBurger(b)
     #A = computeIntrinsicMatrixFrombClosedFormZhang(b)
     if np.sum(np.isnan(A)) > 0:
         raise ValueError(f"Computed intrinsic matrix contains NaN: \n{A}")
@@ -260,10 +260,10 @@ def computeIntrinsicMatrixFrombCholesky(b: tuple):
     sign = +1
     if B0 < 0 or B2 < 0 or B5 < 0:
         sign = -1
-    B = np.array([
-        [sign * B0, B1, B3],
-        [B1, sign * B2, B4],
-        [B3, B4, sign * B5],
+    B = sign * np.array([
+        [B0, B1, B3],
+        [B1, B2, B4],
+        [B3, B4, B5],
     ])
     L = np.linalg.cholesky(B)
     A = np.linalg.inv(L.T)
