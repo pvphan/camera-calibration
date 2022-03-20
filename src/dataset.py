@@ -17,7 +17,7 @@ from src import visualize
 class Dataset:
     _minDistanceFromBoard = 0.5
     _maxDistanceFromBoard = 1.0
-    _rollPitchBounds = (-20, +20)
+    _rollPitchBounds = (-30, +30)
     _yawBounds = (-180, +180)
     def __init__(self, checkerboard: checkerboard.Checkerboard,
             virtualCamera: virtualcamera.VirtualCamera, numViews: int):
