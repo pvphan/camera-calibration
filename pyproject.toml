@@ -1,9 +1,0 @@
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "imageio==2.13.5",
-    "numpy==1.21.5",
-    "sympy==1.9",
-]
-build-backend = "setuptools.build_meta"
