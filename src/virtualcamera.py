@@ -34,9 +34,12 @@ class VirtualCamera:
             boardPoseInCamera: np.ndarray):
         wP = checkerboard.getCornerPositions()
         cMw = boardPoseInCamera
-        return self.measurePoints(cMw, wP)
+        u, pointInImageSlice = self._measurePoints(cMw, wP)
+        numCorners = wP.shape[0]
+        ids = np.arange(numCorners)
+        return ids[pointInImageSlice], u[pointInImageSlice], wP[pointInImageSlice]
 
-    def measurePoints(self, cMw, wP):
+    def _measurePoints(self, cMw, wP):
         cP = mu.transform(cMw, wP)
         u = self._distortionModel.projectWithDistortion(self._intrinsicMatrix,
                 cP, self._distortionVector)
@@ -47,6 +50,7 @@ class VirtualCamera:
         pointInImageSlice = np.s_[
                 (u[:,0] > 0) & (u[:,0] < self._imageWidth)
                 & (u[:,1] > 0) & (u[:,1] < self._imageHeight)
+                & (cP[:,2] > 0)
         ]
-        return u[pointInImageSlice], wP[pointInImageSlice]
+        return u, pointInImageSlice
 

@@ -8,6 +8,8 @@ from src import symbolic
 
 
 class DistortionModel:
+    _maxFOV = 179.5
+    _shouldNaNByFOV = False
     def getProjectionExpression(self):
         """
         Creates the base expression for point projection (u, v) from P vector symbols
@@ -92,6 +94,9 @@ class RadialTangentialModel(DistortionModel):
             xn = x[:,0]
             yn = x[:,1]
             r = np.linalg.norm(x, axis=1)
+            if self._shouldNaNByFOV:
+                maxR = np.arctan(np.radians(self._maxFOV))
+                r[r > maxR] = np.nan
 
         radialComponent = (1 + k1 * r**2 + k2 * r**4 + k3 * r**6)
         tangentialComponentX = (2 * p1 * xn * yn + p2 * (r**2 + 2 * xn**2))
@@ -203,6 +208,9 @@ class FisheyeModel(DistortionModel):
             yn = x[:,1]
             r = np.linalg.norm(x, axis=1)
             θ = np.arctan(r)
+            if self._shouldNaNByFOV:
+                maxR = np.arctan(np.radians(self._maxFOV))
+                r[r > maxR] = np.nan
 
         radialComponent = (θ / r) * (1 + k1 * θ**2 + k2 * θ**4 + k3 * θ**6 + k4 * θ**8)
 
@@ -237,6 +245,7 @@ class FisheyeModel(DistortionModel):
 
                 xn, yn = xij.ravel()
                 θij = np.arctan(rij)
+
                 Dij = np.array([
                     [
                         fx * (u - uc) * (θij/rij) * θij**2,

@@ -30,14 +30,14 @@ def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
         Xb -- 2D model points
 
     Output:
-        H -- homography matrix which relates Xa and Xb
+        aHb -- homography matrix which relates Xa and Xb
 
     Rearrange into the formulation:
 
         M * h = 0
 
     M represents the model and sensor point correspondences
-    h is a vector representation of the homography H we are trying to find:
+    h is a vector representation of the homography aHb we are trying to find:
         h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
     """
     mu.validateShape(Xa.shape, (None, 2))
@@ -52,8 +52,8 @@ def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
     U, S, V_T = np.linalg.svd(M)
     h = V_T[-1]
     Hp = h.reshape(3,3)
-    H = Hp / Hp[2,2]
-    return H
+    aHb = Hp / Hp[2,2]
+    return aHb
 
 
 def computeIntrinsicMatrix(Hs: list):
@@ -116,9 +116,13 @@ def computeIntrinsicMatrix(Hs: list):
         V[2*i,:]   = vecHomography(H, 0, 1)
         V[2*i+1,:] = vecHomography(H, 0, 0) - vecHomography(H, 1, 1)
     U, S, V_T = np.linalg.svd(V)
-    b = V_T[-1]
+    b = tuple(V_T[-1])
 
     A = computeIntrinsicMatrixFrombCholesky(b)
+    #A = computeIntrinsicMatrixFrombClosedFormBurger(b)
+    #A = computeIntrinsicMatrixFrombClosedFormZhang(b)
+    if np.sum(np.isnan(A)) > 0:
+        raise ValueError(f"Computed intrinsic matrix contains NaN: \n{A}")
     return A
 
 
@@ -152,7 +156,7 @@ def vecHomography(H: np.ndarray, p: int, q: int):
     return v
 
 
-def computeIntrinsicMatrixFrombClosedForm_old(b):
+def computeIntrinsicMatrixFrombClosedFormBurger(b):
     """
     Computes the intrinsic matrix from the vector b using the closed
     form solution given in Burger, equations 99 - 104.
@@ -183,7 +187,7 @@ def computeIntrinsicMatrixFrombClosedForm_old(b):
     return A
 
 
-def computeIntrinsicMatrixFrombClosedForm(b):
+def computeIntrinsicMatrixFrombClosedFormZhang(b):
     """
     Computes the intrinsic matrix from the vector b using the closed
     form solution given in Burger, equations 99 - 104.
@@ -227,7 +231,7 @@ def matrixBfromVector(b):
     return B
 
 
-def computeIntrinsicMatrixFrombCholesky(b):
+def computeIntrinsicMatrixFrombCholesky(b: tuple):
     """
     Computes the intrinsic matrix from the vector b using
     Cholesky decomposition.

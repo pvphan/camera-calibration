@@ -10,6 +10,10 @@ from src import mathutils as mu
 
 
 class Calibrator:
+    _λinitial = 1e-3
+    _λmin = 1e-10
+    _λmax = 1e+10
+    _Pt_error_min = 1e-12
     def __init__(self, distortionModel: distortion.DistortionModel):
         self._distortionModel = distortionModel
         self._jac = None
@@ -99,7 +103,7 @@ class Calibrator:
             else:
                 λ *= 10
 
-            if λ < 1e-150 or Pt_error < 1e-12:
+            if not (self._λmin < λ < self._λmax) or Pt_error < self._Pt_error_min:
                 break
 
         Href = Pt.reshape(3,3)
@@ -135,7 +139,7 @@ class Calibrator:
         ydot = getSensorPoints(allDetections)
 
         ts = time.time()
-        λ = 1e-3
+        λ = self._λinitial
         for iter in range(maxIters):
             J = self._jac.compute(Pt, allModelPoints)
 
@@ -151,19 +155,16 @@ class Calibrator:
             Pt_error = self._computeReprojectionError(Pt, allDetections)
             Pt1_error = self._computeReprojectionError(Pt + Δ, allDetections)
 
+            if shouldPrint:
+                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error), λ)
+
             if Pt1_error < Pt_error:
                 Pt += Δ
                 λ /= 10
-                prevError = Pt1_error
             else:
                 λ *= 10
-                prevError = Pt_error
 
-            if shouldPrint:
-                self._printIterationStats(iter, ts, Pt, min(Pt1_error, Pt_error))
-
-            print(λ)
-            if λ < 1e-150 or λ > 1e3 or Pt_error < 1e-12:
+            if not (self._λmin < λ < self._λmax) or Pt_error < self._Pt_error_min:
                 break
 
         Arefined, Wrefined, kRefined = self._decomposeParameterVector(Pt)
@@ -182,7 +183,8 @@ class Calibrator:
         return totalError
 
     def _computeTotalError(self, ydot, y):
-        totalError = np.sum(np.linalg.norm(ydot - y, axis=1)**2)
+        squaredError = np.linalg.norm(ydot - y, axis=1)**2
+        totalError = np.sum(squaredError)
         return totalError
 
     def projectAllPoints(self, P, allModelPoints):
@@ -264,9 +266,10 @@ class Calibrator:
         k = P[numIntrinsicParams:numIntrinsicParams+numDistortionParameters]
         return A, W, k
 
-    def _printIterationStats(self, iter, ts, Pt, error):
+    def _printIterationStats(self, iter, ts, Pt, error, λ):
         At, Wt, kt = self._decomposeParameterVector(Pt)
-        print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error={error:0.3f}")
+        print(f"\niter {iter}: ({time.time() - ts:0.3f}s), error={error:0.3f}, "
+                f"λ={λ:e}")
         print(f"A:\n{At}")
         print(f"k:\n{kt}")
 

@@ -14,13 +14,13 @@ def readCacheFile(checkerBoard, detectionsCachePath):
     sensorPoints = detectionsData[()]["uvs"].reshape(-1, 2)
     ids = detectionsData[()]["ids"].ravel()
     modelPoints = checkerBoard.getCornerPositions(ids)
-    return sensorPoints, modelPoints
+    return sensorPoints.astype(np.float64), modelPoints.astype(np.float64)
 
 
 def main():
     shouldVisualize = False
-    detectionsCachePaths = sorted(glob("/tmp/output/detectioncache0/*_right.npy"))
-    outputFolderPath = "/tmp/output/test0"
+    detectionsCachePaths = sorted(glob("/tmp/output/dataset1/detectioncache/*_left.npy"))
+    outputFolderPath = "/tmp/output/test1"
     numCornersWidth = 25
     numCornersHeight = 18
     spacing = 0.030
@@ -30,16 +30,16 @@ def main():
     os.makedirs(outputFolderPath, exist_ok=True)
     allDetections = []
     for detectionsCachePath in detectionsCachePaths:
-        fileName = os.path.basename(detectionsCachePath)
-        outputFilePath = os.path.join(outputFolderPath, fileName.replace(".npy", ".png"))
         detections = readCacheFile(checkerBoard, detectionsCachePath)
-        sensorPoints, modelPoints = detections
+        allDetections.append(detections)
 
         if shouldVisualize:
+            fileName = os.path.basename(detectionsCachePath)
+            outputFilePath = os.path.join(outputFolderPath, fileName.replace(".npy", ".png"))
+            sensorPoints, modelPoints = detections
             visualize.writeDetectionsImage(sensorPoints, width, height, outputFilePath)
-
-        allDetections.append(detections)
-    sse, Afinal, Wfinal, kFinal = mainmodule.calibrateCamera(allDetections, "radtan")
+    maxIters = 100
+    sse, Afinal, Wfinal, kFinal = mainmodule.calibrateCamera(allDetections, "radtan", maxIters)
 
 
 if __name__ == "__main__":
