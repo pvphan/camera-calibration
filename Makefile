@@ -18,7 +18,7 @@ test: image
 		python3 -m unittest discover -s tests/
 
 shell: image
-	docker -it run ${RUN_FLAGS} \
+	docker run -it ${RUN_FLAGS} \
 		bash
 
 image:
