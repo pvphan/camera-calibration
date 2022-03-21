@@ -55,7 +55,7 @@ class TestLinearCalibrate(unittest.TestCase):
     def test_estimateHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
-        X[:,2] = 1
+        X /= mu.col(X[:,2])
         Hexpected = np.array([
             [410, 10, 320],
             [20, 385, 240],
