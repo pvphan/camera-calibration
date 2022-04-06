@@ -79,6 +79,15 @@ def estimateHomographyWithNormalization(Xa, Xb):
 
 
 def computeNormalizationMatrix(X):
+    """
+    Compute a matrix which converts a set of points to their 'normalized'
+    form, i.e.
+
+    xNorm = M * X
+
+    where the mean Euclidean distance of the of points in xNorm is sqrt(2)
+    and the centroid of the points is the origin.
+    """
     pass
 
 

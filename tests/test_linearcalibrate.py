@@ -76,6 +76,28 @@ class TestLinearCalibrate(unittest.TestCase):
 
         self.assertEqual(Hcomputed.shape, (3,3))
 
+    def test_computeNormalizationMatrix(self):
+        points = np.array([
+            [20, 400],
+            [700, 200],
+            [70, 250],
+            [170, 350],
+            [170, 50],
+        ]
+        normMatrix = linearcalibrate.computeNormalizationMatrix(points)
+        normalizedPoints = (normMatrix @ points.T).T
+
+        centroid = np.mean(normalizedPoints)
+        self.assertAllClose(centroid, (0,0))
+        self.assertClose()
+
+    def test_estimateHomographyWithNormalization(self):
+        x, X = getExampleData()
+
+        Hcomputed = linearcalibrate.estimateHomographyWithNormalization(x, X[:,:2])
+
+        self.assertEqual(Hcomputed.shape, (3,3))
+
     def test_estimateHomographies(self):
         Aexpected = np.array([
             [400, 0, 320],
