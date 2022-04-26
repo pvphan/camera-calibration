@@ -92,13 +92,6 @@ class TestLinearCalibrate(unittest.TestCase):
         averageMagnitude = np.mean(np.linalg.norm(normalizedPoints, axis=1))
         self.assertAlmostEqual(np.sqrt(2), averageMagnitude)
 
-    def test_estimateHomographyWithNormalization(self):
-        x, X = getExampleData()
-
-        Hcomputed = linearcalibrate.estimateHomographyWithNormalization(x, X[:,:2])
-
-        self.assertEqual(Hcomputed.shape, (3,3))
-
     def test_estimateHomographies(self):
         Aexpected = np.array([
             [400, 0, 320],

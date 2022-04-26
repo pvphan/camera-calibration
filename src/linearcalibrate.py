@@ -21,7 +21,7 @@ def estimateHomographies(allDetections: list):
     return Hs
 
 
-def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
+def estimateHomography_old(Xa: np.ndarray, Xb: np.ndarray):
     """
     Estimate homography using DLT
 
@@ -56,9 +56,7 @@ def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
     return aHb
 
 
-def estimateHomographyWithNormalization(Xa, Xb):
-    # doesn't pass the unit test, also equation in the summary doesn't match
-    #   the derivation from Burger section 3.2
+def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
     mu.validateShape(Xa.shape, (None, 2))
     mu.validateShape(Xb.shape, (None, 2))
     Na = computeNormalizationMatrix(Xa)
@@ -66,14 +64,14 @@ def estimateHomographyWithNormalization(Xa, Xb):
     N = Xa.shape[0]
     M = np.zeros((2*N, 9))
     for i in range(N):
-        ui, vi = mu.unhom(Na @ mu.hom(Xa[i][:2]))
-        Xi, Yi = mu.unhom(Nb @ mu.hom(Xb[i][:2]))
+        ui, vi = mu.unhom(Na @ mu.hom(Xa[i]))
+        Xi, Yi = mu.unhom(Nb @ mu.hom(Xb[i]))
         M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
         M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
     U, S, V_T = np.linalg.svd(M)
     h = V_T[-1]
     Hp = h.reshape(3,3)
-    H = np.linalg.inv(Nb) @ Hp @ Na
+    H = np.linalg.inv(Na) @ Hp @ Nb
     H /= H[2,2]
     return H
 
