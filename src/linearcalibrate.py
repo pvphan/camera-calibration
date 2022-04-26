@@ -21,41 +21,6 @@ def estimateHomographies(allDetections: list):
     return Hs
 
 
-def estimateHomography_old(Xa: np.ndarray, Xb: np.ndarray):
-    """
-    Estimate homography using DLT
-
-    Inputs:
-        Xa -- 2D points in sensor
-        Xb -- 2D model points
-
-    Output:
-        aHb -- homography matrix which relates Xa and Xb
-
-    Rearrange into the formulation:
-
-        M * h = 0
-
-    M represents the model and sensor point correspondences
-    h is a vector representation of the homography aHb we are trying to find:
-        h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
-    """
-    mu.validateShape(Xa.shape, (None, 2))
-    mu.validateShape(Xb.shape, (None, 2))
-    N = Xa.shape[0]
-    M = np.zeros((2*N, 9))
-    for i in range(N):
-        ui, vi = Xa[i][:2]
-        Xi, Yi = Xb[i][:2]
-        M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
-        M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
-    U, S, V_T = np.linalg.svd(M)
-    h = V_T[-1]
-    Hp = h.reshape(3,3)
-    aHb = Hp / Hp[2,2]
-    return aHb
-
-
 def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
     mu.validateShape(Xa.shape, (None, 2))
     mu.validateShape(Xb.shape, (None, 2))
