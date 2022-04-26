@@ -95,15 +95,18 @@ def computeNormalizationMatrix(X):
     Xshifted = X - Xmean
     Xmagnitudes = np.linalg.norm(Xshifted, axis=1)
     meanMagnitude = np.mean(Xmagnitudes)
-    Xshiftedscaled = Xshifted / meanMagnitude * np.sqrt(2)
     scaleFactor = np.sqrt(2) / meanMagnitude
-    print("scaleFactor")
-    print(scaleFactor)
-    M = scaleFactor * np.array([
+    M1 = np.array([
         [1, 0, -Xmean[0]],
         [0, 1, -Xmean[1]],
         [0, 0, 1],
     ])
+    M2 = np.array([
+        [scaleFactor, 0, 0],
+        [0, scaleFactor, 0],
+        [0, 0, 1],
+    ])
+    M = M2 @ M1
     return M
 
 
