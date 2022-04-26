@@ -83,13 +83,15 @@ class TestLinearCalibrate(unittest.TestCase):
             [70, 250],
             [170, 350],
             [170, 50],
-        ]
+        ])
         normMatrix = linearcalibrate.computeNormalizationMatrix(points)
         normalizedPoints = (normMatrix @ points.T).T
 
-        centroid = np.mean(normalizedPoints)
+        centroid = np.mean(normalizedPoints, axis=0)
         self.assertAllClose(centroid, (0,0))
-        self.assertClose()
+        self.assertAlmostEqual(np.sqrt(2))
+
+        # TODO: test that the mean distance of points from origin is sqrt(2)
 
     def test_estimateHomographyWithNormalization(self):
         x, X = getExampleData()

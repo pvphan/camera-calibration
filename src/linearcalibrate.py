@@ -80,15 +80,28 @@ def estimateHomographyWithNormalization(Xa, Xb):
 
 def computeNormalizationMatrix(X):
     """
-    Compute a matrix which converts a set of points to their 'normalized'
-    form, i.e.
+    Compute a matrix M which maps a set of points X to their 'normalized'
+    form Xnorm, i.e.
 
-    xNorm = M * X
+        Xnorm = M * X
 
-    where the mean Euclidean distance of the of points in xNorm is sqrt(2)
+    where the mean Euclidean distance of the of points in Xnorm is sqrt(2)
     and the centroid of the points is the origin.
+
+    Xnorm = M * X
+    (2,N) = (2,2) (2,N)
     """
-    pass
+    Xmean = np.mean(X, axis=0)
+    Xshifted = X - Xmean
+    Xmagnitudes = np.linalg.norm(Xshifted, axis=1)
+    meanMagnitude = np.mean(Xmagnitudes)
+    Xshiftedscaled = Xshifted / meanMagnitude * np.sqrt(2)
+    scaleFactor = np.sqrt(2) / meanMagnitude
+    M = scaleFactor * np.array([
+        [Xmean[0], 0],
+        [0, Xmean[1]],
+    ])
+    return M
 
 
 def computeIntrinsicMatrix(Hs: list):
