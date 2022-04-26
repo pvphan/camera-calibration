@@ -97,9 +97,12 @@ def computeNormalizationMatrix(X):
     meanMagnitude = np.mean(Xmagnitudes)
     Xshiftedscaled = Xshifted / meanMagnitude * np.sqrt(2)
     scaleFactor = np.sqrt(2) / meanMagnitude
+    print("scaleFactor")
+    print(scaleFactor)
     M = scaleFactor * np.array([
-        [Xmean[0], 0],
-        [0, Xmean[1]],
+        [1, 0, -Xmean[0]],
+        [0, 1, -Xmean[1]],
+        [0, 0, 1],
     ])
     return M
 
