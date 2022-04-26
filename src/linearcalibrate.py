@@ -22,6 +22,19 @@ def estimateHomographies(allDetections: list):
 
 
 def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
+    """
+    Estimate homography using DLT
+    Inputs:
+        Xa -- 2D points in sensor
+        Xb -- 2D model points
+    Output:
+        aHb -- homography matrix which relates Xa and Xb
+    Rearrange into the formulation:
+        M * h = 0
+    M represents the model and sensor point correspondences
+    h is a vector representation of the homography aHb we are trying to find:
+        h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
+    """
     mu.validateShape(Xa.shape, (None, 2))
     mu.validateShape(Xb.shape, (None, 2))
     Na = computeNormalizationMatrix(Xa)
@@ -46,13 +59,10 @@ def computeNormalizationMatrix(X):
     Compute a matrix M which maps a set of points X to their 'normalized'
     form Xnorm, i.e.
 
-        Xnorm = M * X
+        Xnorm = unhom(M * hom(X))
 
     where the mean Euclidean distance of the of points in Xnorm is sqrt(2)
     and the centroid of the points is the origin.
-
-    Xnorm = M * X
-    (2,N) = (2,2) (2,N)
     """
     Xmean = np.mean(X, axis=0)
     Xshifted = X - Xmean
