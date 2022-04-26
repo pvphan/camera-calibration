@@ -24,36 +24,63 @@ def estimateHomographies(allDetections: list):
 def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
     """
     Estimate homography using DLT
-
     Inputs:
         Xa -- 2D points in sensor
         Xb -- 2D model points
-
     Output:
         aHb -- homography matrix which relates Xa and Xb
-
     Rearrange into the formulation:
-
         M * h = 0
-
     M represents the model and sensor point correspondences
     h is a vector representation of the homography aHb we are trying to find:
         h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
     """
     mu.validateShape(Xa.shape, (None, 2))
     mu.validateShape(Xb.shape, (None, 2))
+    Na = computeNormalizationMatrix(Xa)
+    Nb = computeNormalizationMatrix(Xb)
     N = Xa.shape[0]
     M = np.zeros((2*N, 9))
     for i in range(N):
-        ui, vi = Xa[i][:2]
-        Xi, Yi = Xb[i][:2]
+        ui, vi = mu.unhom(Na @ mu.hom(Xa[i]))
+        Xi, Yi = mu.unhom(Nb @ mu.hom(Xb[i]))
         M[2*i,:]   = (-Xi, -Yi, -1,   0,   0,  0, ui * Xi, ui * Yi, ui)
         M[2*i+1,:] = (  0,   0,  0, -Xi, -Yi, -1, vi * Xi, vi * Yi, vi)
     U, S, V_T = np.linalg.svd(M)
     h = V_T[-1]
     Hp = h.reshape(3,3)
-    aHb = Hp / Hp[2,2]
-    return aHb
+    H = np.linalg.inv(Na) @ Hp @ Nb
+    H /= H[2,2]
+    return H
+
+
+def computeNormalizationMatrix(X):
+    """
+    Compute a matrix M which maps a set of points X to their 'normalized'
+    form Xnorm, i.e.
+
+        Xnorm = unhom(M * hom(X))
+
+    where the mean Euclidean distance of the of points in Xnorm is sqrt(2)
+    and the centroid of the points is the origin.
+    """
+    Xmean = np.mean(X, axis=0)
+    Xshifted = X - Xmean
+    Xmagnitudes = np.linalg.norm(Xshifted, axis=1)
+    meanMagnitude = np.mean(Xmagnitudes)
+    scaleFactor = np.sqrt(2) / meanMagnitude
+    M1 = np.array([
+        [1, 0, -Xmean[0]],
+        [0, 1, -Xmean[1]],
+        [0, 0, 1],
+    ])
+    M2 = np.array([
+        [scaleFactor, 0, 0],
+        [0, scaleFactor, 0],
+        [0, 0, 1],
+    ])
+    M = M2 @ M1
+    return M
 
 
 def computeIntrinsicMatrix(Hs: list):

@@ -55,7 +55,7 @@ class TestLinearCalibrate(unittest.TestCase):
     def test_estimateHomography(self):
         numPoints = 10
         X = generateRandomPointsInFrontOfCamera(numPoints)
-        X[:,2] = 1
+        X /= mu.col(X[:,2])
         Hexpected = np.array([
             [410, 10, 320],
             [20, 385, 240],
@@ -75,6 +75,22 @@ class TestLinearCalibrate(unittest.TestCase):
         Hcomputed = linearcalibrate.estimateHomography(x, X[:,:2])
 
         self.assertEqual(Hcomputed.shape, (3,3))
+
+    def test_computeNormalizationMatrix(self):
+        points = np.array([
+            [20, 400],
+            [700, 200],
+            [70, 250],
+            [170, 350],
+            [170, 50],
+        ])
+        normMatrix = linearcalibrate.computeNormalizationMatrix(points)
+        normalizedPoints = mu.unhom((normMatrix @ mu.hom(points).T).T)
+
+        centroid = np.mean(normalizedPoints, axis=0)
+        self.assertAllClose(centroid, (0,0))
+        averageMagnitude = np.mean(np.linalg.norm(normalizedPoints, axis=1))
+        self.assertAlmostEqual(np.sqrt(2), averageMagnitude)
 
     def test_estimateHomographies(self):
         Aexpected = np.array([
