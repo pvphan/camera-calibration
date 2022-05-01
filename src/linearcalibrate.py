@@ -28,12 +28,16 @@ def estimateHomography(Xa: np.ndarray, Xb: np.ndarray):
         Xa -- 2D points in sensor
         Xb -- 2D model points
     Output:
-        aHb -- homography matrix which relates Xa and Xb
+        aHb -- homography matrix which relates the model plane (points Xb)
+                to the sensor plane (points Xa)
     Rearrange into the formulation:
         M * h = 0
     M represents the model and sensor point correspondences
     h is a vector representation of the homography aHb we are trying to find:
         h = (h11, h12, h13, h21, h22, h23, h31, h32, h33).T
+
+    Prior to constructing M, the points Xa and Xb need to be 'normalized'
+    so that the results of SVD are more well behaved.
     """
     mu.validateShape(Xa.shape, (None, 2))
     mu.validateShape(Xb.shape, (None, 2))
@@ -63,17 +67,20 @@ def computeNormalizationMatrix(X):
 
     where the mean Euclidean distance of the of points in Xnorm is sqrt(2)
     and the centroid of the points is the origin.
+
+    For more on why this is necessary, see 'Multiple View Geometry in Computer Vision,
+    2nd edition', Hartley & Zisserman, §4.4.4, pg 108.
     """
     Xmean = np.mean(X, axis=0)
-    Xshifted = X - Xmean
-    Xmagnitudes = np.linalg.norm(Xshifted, axis=1)
-    meanMagnitude = np.mean(Xmagnitudes)
-    scaleFactor = np.sqrt(2) / meanMagnitude
     M1 = np.array([
         [1, 0, -Xmean[0]],
         [0, 1, -Xmean[1]],
         [0, 0, 1],
     ])
+    Xshifted = X - Xmean
+    Xmagnitudes = np.linalg.norm(Xshifted, axis=1)
+    meanMagnitude = np.mean(Xmagnitudes)
+    scaleFactor = np.sqrt(2) / meanMagnitude
     M2 = np.array([
         [scaleFactor, 0, 0],
         [0, scaleFactor, 0],
@@ -146,8 +153,6 @@ def computeIntrinsicMatrix(Hs: list):
     b = tuple(V_T[-1])
 
     A = computeIntrinsicMatrixFrombCholesky(b)
-    #A = computeIntrinsicMatrixFrombClosedFormBurger(b)
-    #A = computeIntrinsicMatrixFrombClosedFormZhang(b)
     if np.sum(np.isnan(A)) > 0:
         raise ValueError(f"Computed intrinsic matrix contains NaN: \n{A}")
     return A
