@@ -348,7 +348,7 @@ def approximateRotationMatrix(Q: np.ndarray):
     Method from Zhang paper, Appendix C
 
     Notes:
-        minimize R in frobenius_norm(R - Q) subject to R^T * R = I
+        Find R which minimizes the frobenius_norm(R - Q) subject to R^T * R = I
 
         frobenius_norm(R - Q) = trace((R - Q)^T * (R - Q))
                               = 3 + trace(Q^T * Q) - 2*trace(R^T * Q)
