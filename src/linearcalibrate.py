@@ -319,13 +319,13 @@ def computeExtrinsics(Hs: list, A: np.ndarray):
         h1 = H[:,1]
         h2 = H[:,2]
 
-        λ = 1 / np.linalg.norm(Ainv @ h0)
+        λ = np.linalg.norm(Ainv @ h0)
 
-        r0 = λ * Ainv @ h0
-        r1 = λ * Ainv @ h1
+        r0 = (1 / λ) * Ainv @ h0
+        r1 = (1 / λ) * Ainv @ h1
         r2 = np.cross(r0, r1)
 
-        t = λ * Ainv @ h2
+        t = (1 / λ) * Ainv @ h2
 
         # Q is not in SO(3)
         Q = np.hstack((mu.col(r0), mu.col(r1), mu.col(r2)))
